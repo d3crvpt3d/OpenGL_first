@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #define WIDTH 	1200
@@ -57,12 +58,16 @@ int main(){
 	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
 
 	/* Shaders */
+
+	/* Load Shaders */
+
 	const char* vertex_shader =
 	"#version 410 core\n"
 	"in vec3 vp;"
 	"void main() {"
 	"  gl_Position = vec4( vp, 1.0 );"
 	"}";
+
 
 	const char* fragment_shader =
 	"#version 410 core\n"
@@ -71,6 +76,8 @@ int main(){
 	"  frag_colour = vec4( 0.5, 0.0, 0.5, 1.0 );"
 	"}";
 
+
+	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
 	glShaderSource( vs, 1, &vertex_shader, NULL );
 	glCompileShader( vs );
@@ -85,6 +92,7 @@ int main(){
 	
 	glLinkProgram( shader_program );
 
+	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
   	// Update window events.
   	glfwPollEvents();
