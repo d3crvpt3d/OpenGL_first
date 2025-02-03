@@ -45,17 +45,35 @@ int main(){
    -0.5f, -0.5f,  0.0f
 	};
 
-	GLuint vbo = 0;
-	glGenBuffers( 1, &vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), points, GL_STATIC_DRAW );
+	float colors[] = {
+  1.0f, 0.0f,  0.0f,
+  0.0f, 1.0f,  0.0f,
+  0.0f, 0.0f,  1.0f
+};
 
+	GLuint points_vbo = 0;
+	glGenBuffers( 1, &points_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
+	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), points, GL_STATIC_DRAW );
+	
+	GLuint colors_vbo = 0;
+	glGenBuffers( 1, &colors_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
+	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), colors, GL_STATIC_DRAW );
+
+
+	/* create VAO */
 	GLuint vao = 0;
-	glGenVertexArrays( 1, &vao );
-	glBindVertexArray( vao );
-	glEnableVertexAttribArray( 0 );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	/* enable */
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	/* Shaders */
 
@@ -63,17 +81,21 @@ int main(){
 
 	const char* vertex_shader =
 	"#version 410 core\n"
-	"in vec3 vp;"
+	"layout(location = 0) in vec3 vertex_position;"
+	"layout(location = 1) in vec3 vertex_color;"
+	"out vec3 color;"
 	"void main() {"
-	"  gl_Position = vec4( vp, 1.0 );"
+	"	color = vertex_color;"
+	"	gl_Position = vec4( vertex_position, 1.0 );"
 	"}";
 
 
 	const char* fragment_shader =
 	"#version 410 core\n"
-	"out vec4 frag_colour;"
+	"in vec3 color;"
+	"out vec4 frag_color;"
 	"void main() {"
-	"  frag_colour = vec4( 0.5, 0.0, 0.5, 1.0 );"
+	"  frag_color = vec4( color, 1.0 );"
 	"}";
 
 
@@ -101,6 +123,7 @@ int main(){
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
   	// Put the shader program, and the VAO, in focus in OpenGL's state machine.
+		float timeValue = glfwGetTime();
   	glUseProgram( shader_program );
   	glBindVertexArray( vao );
 
