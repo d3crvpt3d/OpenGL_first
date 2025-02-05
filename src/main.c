@@ -1,4 +1,5 @@
 #include "glad/gl.h"
+#include "main.h"
 #include <GLFW/glfw3.h>
 
 #include <stdint.h>
@@ -11,7 +12,7 @@
 
 void key_callback(GLFWwindow *, int , int, int, int);
 
-void updateProjectionMatrix(GLdouble *matrix, double deltaTime);
+void updateProjectionMatrix(GLfloat *matrix, Camera *camera);
 
 int main(){
 
@@ -61,9 +62,13 @@ int main(){
   	0.0f,  0.0f,  1.0f
 	};
 
-	float camera[] = {
-		0.0f, -1.0f,  0.0f, // x,y,z
-		0.0f, 0.0f					//yaw, pitch
+	
+
+	Camera camera = {
+		.x=0.0, .y=0.0, .z=-1.0,
+		.pitch=0.0, .yaw=0.0,
+		.front=0.0, .back=1000.0,
+		.aspectRatio=1.77
 	};
 
 	GLuint points_vbo = 0;
@@ -101,7 +106,7 @@ int main(){
 	"out vec3 color;"
 	"void main() {"
 	"	color = vertex_color;"
-	"	gl_Position = vec4(vertex_position, 1.0);" //TODO: fix projection_matrix
+	"	gl_Position = projection_matrix * vec4(vertex_position, 1.0);"
 	"}";
 
 
@@ -141,14 +146,14 @@ int main(){
 	GLint matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
 
 	/* Init as Idention Matrix */
-	GLdouble projMatrix[] = {
+	GLfloat projMatrix[] = {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0
 		};
 
-	double title_cd = 0.2; //Update title only every 200ms (if changed change reset value in main loop)
+	double title_cd = 0.5; //Update title only every 500ms (if changed change reset value in main loop)
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
@@ -164,7 +169,7 @@ int main(){
 			char tmp[16];
 			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
 			glfwSetWindowTitle(window, tmp);
-			title_cd = 0.2; //reset value of title cd
+			title_cd = 0.5; //reset value of title cd
 		}
   	
 		// Update window events.
@@ -174,9 +179,10 @@ int main(){
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		/* update shader projection matrix after updating its values in ram*/
-		updateProjectionMatrix(projMatrix, deltaTime);
+		//updateProjectionMatrix(projMatrix, &camera); //TODO: fix
+		
 		glUseProgram(shader_program);
-		glUniformMatrix4dv(matrix_location, 1, GL_FALSE, projMatrix);
+		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, projMatrix); //update gpu memory of projection matrix
 		glBindVertexArray( vao );
 
 
@@ -203,11 +209,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 /* update matrix based on time since last update */
-void updateProjectionMatrix(GLdouble *matrix, double currTime){
+void updateProjectionMatrix(GLfloat *matrix, Camera *camera){
 	
+	const float DEG2RAD = acos(-1.0f) / 180;
+
+	float tangent = tan(camera->fovY/2 * DEG2RAD);    // tangent of half fovY
+  float top = camera->front * tangent;              // half height of near plane
+  float right = top * camera->aspectRatio;          // half width of near plane
+
 	//rotate around y (up) axis
-	matrix[0]		=  cos(currTime);
-	matrix[2]		= -sin(currTime);
-	matrix[8]		=  sin(currTime);
-	matrix[10]	=  cos(currTime);
+	matrix[0]		=	camera->front/right;
+
+	matrix[5]		= camera->front/top;
+	
+	matrix[10]	=	-(camera->back + camera->front) / (camera->back - camera->front);
+	matrix[11]	= -1;
+
+	matrix[14]	= -(2 * camera->back * camera->front) / (camera->back - camera->front);
+	matrix[15]	= 0;
 }
