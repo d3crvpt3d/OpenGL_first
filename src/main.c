@@ -12,10 +12,12 @@
 
 void key_callback(GLFWwindow *, int , int, int, int);
 
-void updateCamera(Camera *camera, double);
-void updateProjectionMatrix(GLfloat *matrix, Camera *camera);
+char *loadShaders(const char* path);
+void updateCamera(Camera *camera, double currTime);
 
 int main(){
+
+	GLenum err;
 
 	GLFWwindow *window;
 	
@@ -64,12 +66,11 @@ int main(){
 	};
 
 	
-
 	Camera camera = {
 		.x=0.0, .y=0.0, .z=-1.0,
 		.pitch=0.0, .yaw=0.0,
 		.far=0.0, .near=1000.0,
-		.aspectRatio=16/9
+		.aspectRatio=16.0/9.0
 	};
 
 	GLuint points_vbo = 0;
@@ -87,38 +88,25 @@ int main(){
 	GLuint vao = 0;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	/* enable */
-	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
 
 	/* Load Shaders */
 
-	const char* vertex_shader =
-	"#version 410 core\n"
-	"layout(location = 0) in vec3 vertex_position;"
-	"layout(location = 1) in vec3 vertex_color;"
-	"uniform mat4 projection_matrix;"
-	"out vec3 color;"
-	"void main() {"
-	"	color = vertex_color;"
-	"	gl_Position = projection_matrix * vec4(vertex_position, 1.0);"
-	"}";
+	const char *vertex_shader = loadShaders("shaders/vertex.glsl");
+	const char *fragment_shader = loadShaders("shaders/fragment.glsl");
 
-
-	const char* fragment_shader =
-	"#version 410 core\n"
-	"in vec3 color;"
-	"out vec4 frag_color;"
-	"void main() {"
-	"	frag_color = vec4(color, 1.0);"
-	"}";
-
+	if(!vertex_shader || !fragment_shader){
+		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
+		return -1;
+	}
 
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -135,6 +123,25 @@ int main(){
 	
 	glLinkProgram( shader_program );
 
+	/* Check Compilation Errors */
+	GLint success;
+  glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
+  if (!success) {
+      char infoLog[512];
+      glGetShaderInfoLog(fs, 512, NULL, infoLog);
+      fprintf(stderr, "Fragment shader compilation failed: %s\n", infoLog);
+      free((void*)fragment_shader);
+      return -1;
+  }
+
+  glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
+  if (!success) {
+      char infoLog[512];
+    	glGetShaderInfoLog(vs, 512, NULL, infoLog);
+      fprintf(stderr, "Vertex shader compilation failed: %s\n", infoLog);
+      free((void*)vertex_shader);
+      return -1;
+    }
 
 	//set up Input callbacks
 	glfwSetKeyCallback(window, key_callback);
@@ -144,15 +151,9 @@ int main(){
 	double deltaTime;
 
 	/* get location of matrix in shader */
-	GLint matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
+	GLint cameraPosLocation = glGetUniformLocation(shader_program, "cameraPos");
+	GLint cameraDirLocation = glGetUniformLocation(shader_program, "cameraDir");
 
-	/* Init as Idention Matrix */
-	GLfloat projMatrix[] = {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
-		};
 
 	double title_cd = 0.5; //Update title only every 500ms (if changed change reset value in main loop)
 
@@ -174,30 +175,36 @@ int main(){
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.5; //reset value of title cd
 		}
-  	
-		// Update window events.
-  	glfwPollEvents();
 
   	// Wipe the drawing surface clear.
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		/* update shader projection matrix after updating its values in ram*/
-		updateCamera(&camera, currTime);//TODO:
-		updateProjectionMatrix(projMatrix, &camera); //TODO: check fix
-		
+		updateCamera(&camera, currTime);//TODO: update yaw/pitch aswell
+
+		// select "shader_program"
 		glUseProgram(shader_program);
-		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, projMatrix); //update gpu memory of projection matrix
+
+		// update Uniforms
+		glUniform3f(cameraPosLocation, camera.x, camera.y, camera.z);
+		glUniform2f(cameraDirLocation, camera.yaw, camera.pitch);
+
+
+		//render scene
 		glBindVertexArray( vao );
-
-
-  	// Draw points 0-3 from the currently bound VAO with current in-use shader.
-  	glDrawArrays( GL_TRIANGLES, 0, 3 );
+		glDrawArrays( GL_TRIANGLES, 0, 3 );
   
   	// Put the stuff we've been drawing onto the visible area.
   	glfwSwapBuffers( window );
+		
+		// Update window events.
+  	glfwPollEvents();
 	}
 
 	glfwTerminate();
+
+	free((void*)vertex_shader);
+	free((void*)fragment_shader);
 
 	return 0;
 }
@@ -212,27 +219,31 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	//TODO:
 }
 
-//TODO:
-/* update matrix based on time since last update */
-void updateProjectionMatrix(GLfloat *matrix, Camera *camera){
-
-	float f = 1; //focal length (90° = 1)
-
-	//rotate around y (up) axis
-	matrix[0]		=	f/camera->aspectRatio;
-
-	matrix[5]		= f;
-	
-	matrix[10]	=	(camera->near + camera->far) / (camera->near - camera->far);
-	matrix[11]	= (2 * camera->far * camera->near) / (camera->near - camera->far);
-
-	matrix[14]	= -1;
-	matrix[15]	= 1;
-}
 
 //TODO:
 /* currently: rotate camera around object */
 void updateCamera(Camera *camera, double currTime){
-	camera->x = camera->x * cos(currTime) - camera->z * sin(currTime);
-	camera->z = camera->x * sin(currTime) + camera->z * cos(currTime);
+	camera->x = cos(currTime) - sin(currTime);
+	camera->z = sin(currTime) + cos(currTime);
+}
+
+char *loadShaders(const char* path){
+	FILE *fptr = fopen(path, "rb");
+
+	if(!fptr){
+		return NULL;
+	}
+
+	fseek(fptr, 0, SEEK_END);
+	uint64_t size = ftell(fptr);
+	fseek (fptr, 0, SEEK_SET);
+
+	char *buffer = (char *) malloc(size + 1);
+
+	fread(buffer, 1, size, fptr);
+	
+	buffer[size] = '\0';
+
+	fclose(fptr);
+	return buffer;
 }

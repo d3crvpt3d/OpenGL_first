@@ -1,13 +1,14 @@
 #pragma once
+#include <glad/gl.h>
 
 typedef struct Camera{
-	float x;
-	float y;
-	float z;
-	float fovY;
-	float yaw;
-	float pitch;
-	float far;
-	float near;
-	float aspectRatio;
+	GLfloat x;
+	GLfloat y;
+	GLfloat z;
+	GLfloat fovY;
+	GLfloat yaw;
+	GLfloat pitch;
+	GLfloat far;
+	GLfloat near;
+	GLfloat aspectRatio;
 } Camera;
