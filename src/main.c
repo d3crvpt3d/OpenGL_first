@@ -21,6 +21,11 @@ int main(){
 		return -1;
 	}
 
+	/* GLFW Window Hints */
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
+
+	/* Create GLFW window */
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Test Title!", NULL, NULL);
 
 	if(!window){
@@ -85,7 +90,6 @@ int main(){
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	/* Shaders */
 
 	/* Load Shaders */
 
@@ -93,11 +97,11 @@ int main(){
 	"#version 410 core\n"
 	"layout(location = 0) in vec3 vertex_position;"
 	"layout(location = 1) in vec3 vertex_color;"
-	"layout(location = 2) uniform mat4 projection_matrix;"
+	"uniform mat4 projection_matrix;"
 	"out vec3 color;"
 	"void main() {"
 	"	color = vertex_color;"
-	"	gl_Position = projection_matrix * vec4(vertex_position, 1.0);"
+	"	gl_Position = vec4(vertex_position, 1.0);" //TODO: fix projection_matrix
 	"}";
 
 
@@ -166,19 +170,15 @@ int main(){
 		// Update window events.
   	glfwPollEvents();
 
+  	// Wipe the drawing surface clear.
+  	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 		/* update shader projection matrix after updating its values in ram*/
 		updateProjectionMatrix(projMatrix, deltaTime);
 		glUseProgram(shader_program);
 		glUniformMatrix4dv(matrix_location, 1, GL_FALSE, projMatrix);
+		glBindVertexArray( vao );
 
-
-  	// Wipe the drawing surface clear.
-  	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-  	// Put the shader program, and the VAO, in focus in OpenGL's state machine.
-		float timeValue = glfwGetTime();
-  	glUseProgram( shader_program );
-  	glBindVertexArray( vao );
 
   	// Draw points 0-3 from the currently bound VAO with current in-use shader.
   	glDrawArrays( GL_TRIANGLES, 0, 3 );
