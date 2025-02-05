@@ -12,6 +12,7 @@
 
 void key_callback(GLFWwindow *, int , int, int, int);
 
+void updateCamera(Camera *camera, double);
 void updateProjectionMatrix(GLfloat *matrix, Camera *camera);
 
 int main(){
@@ -67,8 +68,8 @@ int main(){
 	Camera camera = {
 		.x=0.0, .y=0.0, .z=-1.0,
 		.pitch=0.0, .yaw=0.0,
-		.front=0.0, .back=1000.0,
-		.aspectRatio=1.77
+		.far=0.0, .near=1000.0,
+		.aspectRatio=16/9
 	};
 
 	GLuint points_vbo = 0;
@@ -154,6 +155,8 @@ int main(){
 		};
 
 	double title_cd = 0.5; //Update title only every 500ms (if changed change reset value in main loop)
+
+	
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
@@ -179,7 +182,8 @@ int main(){
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		/* update shader projection matrix after updating its values in ram*/
-		//updateProjectionMatrix(projMatrix, &camera); //TODO: fix
+		updateCamera(&camera, currTime);//TODO:
+		updateProjectionMatrix(projMatrix, &camera); //TODO: check fix
 		
 		glUseProgram(shader_program);
 		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, projMatrix); //update gpu memory of projection matrix
@@ -208,23 +212,27 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	//TODO:
 }
 
+//TODO:
 /* update matrix based on time since last update */
 void updateProjectionMatrix(GLfloat *matrix, Camera *camera){
-	
-	const float DEG2RAD = acos(-1.0f) / 180;
 
-	float tangent = tan(camera->fovY/2 * DEG2RAD);    // tangent of half fovY
-  float top = camera->front * tangent;              // half height of near plane
-  float right = top * camera->aspectRatio;          // half width of near plane
+	float f = 1; //focal length (90° = 1)
 
 	//rotate around y (up) axis
-	matrix[0]		=	camera->front/right;
+	matrix[0]		=	f/camera->aspectRatio;
 
-	matrix[5]		= camera->front/top;
+	matrix[5]		= f;
 	
-	matrix[10]	=	-(camera->back + camera->front) / (camera->back - camera->front);
-	matrix[11]	= -1;
+	matrix[10]	=	(camera->near + camera->far) / (camera->near - camera->far);
+	matrix[11]	= (2 * camera->far * camera->near) / (camera->near - camera->far);
 
-	matrix[14]	= -(2 * camera->back * camera->front) / (camera->back - camera->front);
-	matrix[15]	= 0;
+	matrix[14]	= -1;
+	matrix[15]	= 1;
+}
+
+//TODO:
+/* currently: rotate camera around object */
+void updateCamera(Camera *camera, double currTime){
+	camera->x = camera->x * cos(currTime) - camera->z * sin(currTime);
+	camera->z = camera->x * sin(currTime) + camera->z * cos(currTime);
 }

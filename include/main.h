@@ -7,7 +7,7 @@ typedef struct Camera{
 	float fovY;
 	float yaw;
 	float pitch;
-	float front;
-	float back;
+	float far;
+	float near;
 	float aspectRatio;
 } Camera;
