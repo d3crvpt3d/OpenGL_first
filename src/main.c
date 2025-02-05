@@ -4,9 +4,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define WIDTH 	1200
 #define HEIGHT 	675
+
+void key_callback(GLFWwindow *, int , int, int, int);
+
+void updateProjectionMatrix(GLdouble *matrix, double deltaTime);
 
 int main(){
 
@@ -23,10 +28,10 @@ int main(){
 		return -1;
 	}
 
-	//cap to monitor fps
-	glfwSwapInterval(1);
-
 	glfwMakeContextCurrent(window);
+
+	//1 = cap vsync to monitor fps
+	glfwSwapInterval(1);
 
 	int version_glad = gladLoadGL(glfwGetProcAddress);
 	if ( version_glad == 0 ) {
@@ -46,10 +51,15 @@ int main(){
 	};
 
 	float colors[] = {
-  1.0f, 0.0f,  0.0f,
-  0.0f, 1.0f,  0.0f,
-  0.0f, 0.0f,  1.0f
-};
+  	1.0f,  0.0f,  0.0f,
+  	0.0f,  1.0f,  0.0f,
+  	0.0f,  0.0f,  1.0f
+	};
+
+	float camera[] = {
+		0.0f, -1.0f,  0.0f, // x,y,z
+		0.0f, 0.0f					//yaw, pitch
+	};
 
 	GLuint points_vbo = 0;
 	glGenBuffers( 1, &points_vbo );
@@ -83,10 +93,11 @@ int main(){
 	"#version 410 core\n"
 	"layout(location = 0) in vec3 vertex_position;"
 	"layout(location = 1) in vec3 vertex_color;"
+	"layout(location = 2) uniform mat4 projection_matrix;"
 	"out vec3 color;"
 	"void main() {"
 	"	color = vertex_color;"
-	"	gl_Position = vec4( vertex_position, 1.0 );"
+	"	gl_Position = projection_matrix * vec4(vertex_position, 1.0);"
 	"}";
 
 
@@ -95,7 +106,7 @@ int main(){
 	"in vec3 color;"
 	"out vec4 frag_color;"
 	"void main() {"
-	"  frag_color = vec4( color, 1.0 );"
+	"	frag_color = vec4(color, 1.0);"
 	"}";
 
 
@@ -114,11 +125,53 @@ int main(){
 	
 	glLinkProgram( shader_program );
 
+
+	//set up Input callbacks
+	glfwSetKeyCallback(window, key_callback);
+
+	double currTime = glfwGetTime();
+	double lastTime;
+	double deltaTime;
+
+	/* get location of matrix in shader */
+	GLint matrix_location = glGetUniformLocation(shader_program, "projection_matrix");
+
+	/* Init as Idention Matrix */
+	GLdouble projMatrix[] = {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+		};
+
+	double title_cd = 0.2; //Update title only every 200ms (if changed change reset value in main loop)
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
-  	// Update window events.
+		
+		/* Calculate delta Time of last frame */
+		lastTime = currTime;
+		currTime = glfwGetTime();
+		deltaTime = currTime - lastTime;
+		
+		// set fps as title
+		title_cd -= deltaTime;
+		if(title_cd <= 0.0 && deltaTime > 0.0 ){
+			double fps = 1.0 / deltaTime;
+			char tmp[16];
+			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
+			glfwSetWindowTitle(window, tmp);
+			title_cd = 0.2; //reset value of title cd
+		}
+  	
+		// Update window events.
   	glfwPollEvents();
-  
+
+		/* update shader projection matrix after updating its values in ram*/
+		updateProjectionMatrix(projMatrix, deltaTime);
+		glUseProgram(shader_program);
+		glUniformMatrix4dv(matrix_location, 1, GL_FALSE, projMatrix);
+
+
   	// Wipe the drawing surface clear.
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -137,4 +190,24 @@ int main(){
 	glfwTerminate();
 
 	return 0;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+	if(action == GLFW_PRESS){
+		fprintf(stderr, "Key %d was Pressed\n", key);
+	}
+	if(action == GLFW_RELEASE){
+		fprintf(stderr, "Key %d was Released\n", key);
+	}
+	//TODO:
+}
+
+/* update matrix based on time since last update */
+void updateProjectionMatrix(GLdouble *matrix, double currTime){
+	
+	//rotate around y (up) axis
+	matrix[0]		=  cos(currTime);
+	matrix[2]		= -sin(currTime);
+	matrix[8]		=  sin(currTime);
+	matrix[10]	=  cos(currTime);
 }
