@@ -7,11 +7,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#define WIDTH 	1200
-#define HEIGHT 	675
+#define WIDTH 	1920
+#define HEIGHT 	1080
+#define FLYSPEED 1.5
 
 char *loadShaders(const char* path);
-void updateCamera(Camera *camera, double currTime);
 
 int main(){
 
@@ -24,8 +24,9 @@ int main(){
 	}
 
 	/* GLFW Window Hints */
-	//glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
+  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
 
 	/* Create GLFW window */
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Test Title!", NULL, NULL);
@@ -38,7 +39,7 @@ int main(){
 	glfwMakeContextCurrent(window);
 
 	//1 = cap vsync to monitor fps
-	//glfwSwapInterval(1);
+	glfwSwapInterval(1);
 
 	int version_glad = gladLoadGL(glfwGetProcAddress);
 	if ( version_glad == 0 ) {
@@ -198,22 +199,22 @@ int main(){
 
     //check user input
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-      camera.z += deltaTime * 1.0;
+      camera.z += deltaTime * FLYSPEED;
     }
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-      camera.z -= deltaTime * 1.0;
+      camera.z -= deltaTime * FLYSPEED;
     }
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-      camera.x -= deltaTime * 1.0;
+      camera.x -= deltaTime * FLYSPEED;
     }
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-      camera.x += deltaTime * 1.0;
+      camera.x += deltaTime * FLYSPEED;
     }
     if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
-      camera.y += deltaTime * 1.0;
+      camera.y += deltaTime * FLYSPEED;
     }
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-      camera.y -= deltaTime * 1.0;
+      camera.y -= deltaTime * FLYSPEED;
     }
 	}
 
