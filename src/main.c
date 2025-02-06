@@ -38,7 +38,7 @@ int main(){
 	glfwMakeContextCurrent(window);
 
 	//1 = cap vsync to monitor fps
-	glfwSwapInterval(1);
+	//glfwSwapInterval(1);
 
 	int version_glad = gladLoadGL(glfwGetProcAddress);
 	if ( version_glad == 0 ) {
