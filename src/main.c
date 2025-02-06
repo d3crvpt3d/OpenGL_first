@@ -10,8 +10,6 @@
 #define WIDTH 	1200
 #define HEIGHT 	675
 
-void key_callback(GLFWwindow *, int , int, int, int);
-
 char *loadShaders(const char* path);
 void updateCamera(Camera *camera, double currTime);
 
@@ -26,7 +24,7 @@ int main(){
 	}
 
 	/* GLFW Window Hints */
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_SAMPLES, 4);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
 
 	/* Create GLFW window */
@@ -55,8 +53,8 @@ int main(){
 	/* create VBO */
 	float points[] = {
 		0.0f,  0.5f,  0.0f,
+   -0.5f, -0.5f,  0.0f,
    	0.5f, -0.5f,  0.0f,
-   -0.5f, -0.5f,  0.0f
 	};
 
 	float colors[] = {
@@ -83,7 +81,6 @@ int main(){
 	glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
 	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), colors, GL_STATIC_DRAW );
 
-
 	/* create VAO */
 	GLuint vao = 0;
 	glGenVertexArrays(1, &vao);
@@ -107,6 +104,9 @@ int main(){
 		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
 		return -1;
 	}
+
+  /* OpenGL Options */
+  glEnable(GL_CULL_FACE);
 
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -144,7 +144,6 @@ int main(){
     }
 
 	//set up Input callbacks
-	glfwSetKeyCallback(window, key_callback);
 
 	double currTime = glfwGetTime();
 	double lastTime;
@@ -155,7 +154,7 @@ int main(){
 	GLint cameraDirLocation = glGetUniformLocation(shader_program, "cameraDir");
 
 
-	double title_cd = 0.5; //Update title only every 500ms (if changed change reset value in main loop)
+	double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
 
 	
 	/* MAIN LOOP */
@@ -173,14 +172,11 @@ int main(){
 			char tmp[16];
 			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
 			glfwSetWindowTitle(window, tmp);
-			title_cd = 0.5; //reset value of title cd
+			title_cd = 0.1; //reset value of title cd
 		}
 
   	// Wipe the drawing surface clear.
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-		/* update shader projection matrix after updating its values in ram*/
-		updateCamera(&camera, currTime);//TODO: update yaw/pitch aswell
 
 		// select "shader_program"
 		glUseProgram(shader_program);
@@ -199,6 +195,26 @@ int main(){
 		
 		// Update window events.
   	glfwPollEvents();
+
+    //check user input
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+      camera.z += deltaTime * 1.0;
+    }
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+      camera.z -= deltaTime * 1.0;
+    }
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+      camera.x -= deltaTime * 1.0;
+    }
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+      camera.x += deltaTime * 1.0;
+    }
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
+      camera.y += deltaTime * 1.0;
+    }
+    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+      camera.y -= deltaTime * 1.0;
+    }
 	}
 
 	glfwTerminate();
@@ -209,23 +225,6 @@ int main(){
 	return 0;
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
-	if(action == GLFW_PRESS){
-		fprintf(stderr, "Key %d was Pressed\n", key);
-	}
-	if(action == GLFW_RELEASE){
-		fprintf(stderr, "Key %d was Released\n", key);
-	}
-	//TODO:
-}
-
-
-//TODO:
-/* currently: rotate camera around object */
-void updateCamera(Camera *camera, double currTime){
-	camera->x = cos(currTime) - sin(currTime);
-	camera->z = sin(currTime) + cos(currTime);
-}
 
 char *loadShaders(const char* path){
 	FILE *fptr = fopen(path, "rb");

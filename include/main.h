@@ -11,4 +11,5 @@ typedef struct Camera{
 	GLfloat far;
 	GLfloat near;
 	GLfloat aspectRatio;
+  GLfloat deltaTime;
 } Camera;

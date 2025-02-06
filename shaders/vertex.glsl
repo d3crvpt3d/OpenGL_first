@@ -10,5 +10,12 @@ out vec3 color;
 
 void main() {
 	color = vertex_color;
-	gl_Position = vec4(vertex_position, 1.0);
+
+  vec3 newVert = vec3(vertex_position - cameraPos);
+  
+	gl_Position = vec4(
+    newVert.xy/newVert.z,
+    1.0,
+    1.0
+    );
 }
