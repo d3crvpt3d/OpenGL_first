@@ -10,6 +10,7 @@
 #define WIDTH 	1920
 #define HEIGHT 	1080
 #define FLYSPEED 1.5
+#define RADPERPIXEL 0.00418879f //mouse sensitivity
 
 char *loadShaders(const char* path);
 
@@ -26,7 +27,7 @@ int main(){
 	/* GLFW Window Hints */
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
-  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
+  //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
 
 	/* Create GLFW window */
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Test Title!", NULL, NULL);
@@ -156,7 +157,11 @@ int main(){
 
 
 	double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
-
+	uint8_t esc_down = 0;
+	
+	//mouse position
+	double xpos, ypos;
+	double xpos_old = 0, ypos_old = 0;
 	
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
@@ -197,7 +202,9 @@ int main(){
 		// Update window events.
   	glfwPollEvents();
 
-    //check user input
+    /* USER INPUT */
+
+		//movement
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
       camera.z += deltaTime * FLYSPEED;
     }
@@ -216,6 +223,23 @@ int main(){
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
       camera.y -= deltaTime * FLYSPEED;
     }
+
+		//camera direction
+		glfwGetCursorPos(window, &xpos, &ypos);
+		camera.yaw 		+= (xpos - xpos_old) * RADPERPIXEL;
+		camera.pitch 	+= (ypos - ypos_old) * RADPERPIXEL;
+		xpos_old = xpos;
+		ypos_old = ypos;
+		
+		// toggle mouse capture
+		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !esc_down){
+			esc_down = 1;
+      glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);//toggle cursor
+			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
+		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE){
+			esc_down = 0;
+		}
 	}
 
 	glfwTerminate();
