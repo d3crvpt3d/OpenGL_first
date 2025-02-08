@@ -32,14 +32,14 @@ void main() {
 	);
 
 
-	vec3 pitch_yawVert = yaw * pitch * tranVert;
+	vec3 pitch_yawVert = pitch * yaw * tranVert;
 
 
 	// projection matrix
 	//calculate 2 times tan over two
 	mat4 projection = mat4( //TODO: fix
 		f,	0.0,	0.0,	0.0,
-		0.0,	1.0,	0.0,	0.0,
+		0.0,	f,	0.0,	0.0,
 		0.0,	0.0,	1.0,	1.0,
 		0.0,	0.0,	0.0,	0.0
 	);
