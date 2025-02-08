@@ -6,7 +6,7 @@ typedef struct Camera{
 	GLfloat y;
 	GLfloat z;
 
-	GLfloat fovY;
+	GLfloat f;
 	
 	GLfloat yaw;
 	GLfloat pitch;

@@ -72,7 +72,7 @@ int main(){
 		.pitch=0.0f, .yaw=0.0f,
 		.far=1000.0f, .near=0.001f,
 		.aspectRatio=16.0f/9.0f,
-		.fovY = 1
+		.f = 1
 	};
 
 	GLuint points_vbo = 0;
@@ -157,7 +157,7 @@ int main(){
 	GLint cameraPosLocation = glGetUniformLocation(shader_program, "cameraPos");
 	GLint yaw_pitchLocation = glGetUniformLocation(shader_program, "yaw_pitch");
 	GLint nearfar_location = glGetUniformLocation(shader_program, "near_far");
-	GLint fovY_location = glGetUniformLocation(shader_program, "fovY");
+	GLint f_location = glGetUniformLocation(shader_program, "f");
 	GLint ratio_location = glGetUniformLocation(shader_program, "ratio");
 
 
@@ -212,7 +212,7 @@ int main(){
 		glUniform3f(cameraPosLocation,	camera.x, 		camera.y,	camera.z);
 		glUniform2f(yaw_pitchLocation,	camera.yaw, 	camera.pitch);
 		glUniform2f(nearfar_location, 	camera.near,	camera.far);
-		glUniform1f(fovY_location, 			camera.fovY);
+		glUniform1f(f_location, 				camera.f);
 		glUniform1f(ratio_location, 		camera.aspectRatio);
 
 
@@ -230,21 +230,23 @@ int main(){
 
 		//movement //TODO: fix
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-      camera.z += deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
-			camera.x += deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
+      camera.x += deltaTime * FLYSPEED * -sin(-camera.yaw);
+			camera.z += deltaTime * FLYSPEED * cos(-camera.yaw);
 		}
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-      camera.z += deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
-			camera.x += deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
+      camera.x += deltaTime * FLYSPEED * sin(-camera.yaw);
+			camera.z += deltaTime * FLYSPEED * -cos(-camera.yaw);
     }
+		
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-      camera.x -= deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
-			camera.z -= deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
-    }
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-			camera.x += deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
-			camera.z += deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
+			camera.x += deltaTime * FLYSPEED * -cos(-camera.yaw);
+			camera.z += deltaTime * FLYSPEED * -sin(-camera.yaw);
 		}
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+			camera.x += deltaTime * FLYSPEED * cos(-camera.yaw);
+			camera.z += deltaTime * FLYSPEED * sin(-camera.yaw);
+		}
+
     if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
       camera.y += deltaTime * FLYSPEED;
     }
