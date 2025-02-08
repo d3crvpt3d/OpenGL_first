@@ -67,10 +67,11 @@ int main(){
 
 	
 	Camera camera = {
-		.x=0.0, .y=0.0, .z=-1.0,
-		.pitch=0.0, .yaw=0.0,
-		.far=0.0, .near=1000.0,
-		.aspectRatio=16.0/9.0
+		.x=0.0f, .y=0.0f, .z=-1.0f,
+		.pitch=0.0f, .yaw=0.0f,
+		.far=1000.0f, .near=0.01f,
+		.aspectRatio=16.0f/9.0f,
+		.fovY = 3.141592f
 	};
 
 	GLuint points_vbo = 0;

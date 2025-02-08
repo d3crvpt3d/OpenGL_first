@@ -30,13 +30,12 @@ void main() {
 	//calculate 2 times tan over two
 	float tot = tan(fovY/2);
 
-	mat4 perspective = mat4(
+	mat4 projection = mat4( //TODO: fix
 		1.0 / (ratio * tot),	0.0,		0.0, 																0.0,
 		0.0, 							1.0 / tot, 	0.0, 																0.0,
 		0.0, 							0.0,		near_far.y / (near_far.y - near_far.x),	-(near_far.y * near_far.x) / (near_far.y - near_far.x),
-		0.0, 							0.0, 		1.0,																		0.0,
+		0.0, 							0.0, 		1.0,																		0.0
 	);
 
-	gl_Position = perspective * vec4(rotVert, 1.0);
-
+	gl_Position = projection * vec4(tranVert, 1.0);
 }
