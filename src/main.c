@@ -153,7 +153,10 @@ int main(){
 
 	/* get location of matrix in shader */
 	GLint cameraPosLocation = glGetUniformLocation(shader_program, "cameraPos");
-	GLint cameraDirLocation = glGetUniformLocation(shader_program, "cameraDir");
+	GLint yaw_pitchLocation = glGetUniformLocation(shader_program, "yaw_pitch");
+	GLint nearfar_location = glGetUniformLocation(shader_program, "near_far");
+	GLint fovY_location = glGetUniformLocation(shader_program, "fovY");
+	GLint ratio_location = glGetUniformLocation(shader_program, "ratio");
 
 
 	double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
@@ -163,6 +166,9 @@ int main(){
 	double xpos, ypos;
 	double xpos_old = 0, ypos_old = 0;
 	
+	
+	// select "shader_program"
+	glUseProgram(shader_program);
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
@@ -184,12 +190,20 @@ int main(){
   	// Wipe the drawing surface clear.
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		// select "shader_program"
-		glUseProgram(shader_program);
+		//camera direction
+		glfwGetCursorPos(window, &xpos, &ypos);
+		camera.yaw 		+= (xpos - xpos_old) * RADPERPIXEL;
+		camera.pitch 	+= (ypos - ypos_old) * RADPERPIXEL;
+		xpos_old = xpos;
+		ypos_old = ypos;
 
+		
 		// update Uniforms
-		glUniform3f(cameraPosLocation, camera.x, camera.y, camera.z);
-		glUniform2f(cameraDirLocation, camera.yaw, camera.pitch);
+		glUniform3f(cameraPosLocation,	camera.x, 		camera.y,	camera.z);
+		glUniform2f(yaw_pitchLocation,	camera.yaw, 	camera.pitch);
+		glUniform2f(nearfar_location, 	camera.near,	camera.far);
+		glUniform1f(fovY_location, 			camera.fovY);
+		glUniform1f(ratio_location, 		camera.aspectRatio);
 
 
 		//render scene
@@ -223,13 +237,6 @@ int main(){
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
       camera.y -= deltaTime * FLYSPEED;
     }
-
-		//camera direction
-		glfwGetCursorPos(window, &xpos, &ypos);
-		camera.yaw 		+= (xpos - xpos_old) * RADPERPIXEL;
-		camera.pitch 	+= (ypos - ypos_old) * RADPERPIXEL;
-		xpos_old = xpos;
-		ypos_old = ypos;
 		
 		// toggle mouse capture
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !esc_down){
