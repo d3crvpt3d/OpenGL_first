@@ -11,6 +11,7 @@
 #define HEIGHT 	1080
 #define FLYSPEED 1.5
 #define RADPERPIXEL 0.00418879f //mouse sensitivity
+#define PI 3.1415927f
 
 char *loadShaders(const char* path);
 
@@ -69,9 +70,9 @@ int main(){
 	Camera camera = {
 		.x=0.0f, .y=0.0f, .z=-1.0f,
 		.pitch=0.0f, .yaw=0.0f,
-		.far=1000.0f, .near=0.01f,
+		.far=1000.0f, .near=0.001f,
 		.aspectRatio=16.0f/9.0f,
-		.fovY = 3.141592f
+		.fovY = 1
 	};
 
 	GLuint points_vbo = 0;
@@ -197,6 +198,14 @@ int main(){
 		camera.pitch 	+= (ypos - ypos_old) * RADPERPIXEL;
 		xpos_old = xpos;
 		ypos_old = ypos;
+
+		/* clamp pitch to 180° */
+		if(camera.pitch > PI){
+			camera.pitch = PI;
+		}
+		if(camera.pitch < -PI){
+			camera.pitch = -PI;
+		}
 
 		
 		// update Uniforms

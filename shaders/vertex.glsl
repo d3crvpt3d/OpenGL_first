@@ -17,25 +17,32 @@ void main() {
 	//translation
   vec3 tranVert = vertex_position - cameraPos;
   
-	// rotation
-	mat3 rotation = mat3(
-		cos(yaw_pitch.x), sin(yaw_pitch.y) * sin(yaw_pitch.x), -(cos(yaw_pitch.y) * sin(yaw_pitch.x)),
-		0.0, cos(yaw_pitch.y), sin(yaw_pitch.y),
-		sin(yaw_pitch.x), -(cos(yaw_pitch.x) * sin(yaw_pitch.y)), cos(yaw_pitch.y) * cos(yaw_pitch.x)
+
+	//pitch then yaw rotation
+	mat3 pitch = mat3(
+		1.0, 0.0, 0.0,
+		0.0, cos(-yaw_pitch.y), sin(-yaw_pitch.y),
+		0.0, -sin(-yaw_pitch.y), cos(-yaw_pitch.y)
 	);
 
-	vec3 rotVert = rotation * tranVert;
+	vec3 pitchVert = pitch * tranVert;
+
+	mat3 yaw = mat3(
+		cos(yaw_pitch.x), 0.0, sin(yaw_pitch.x),
+		0.0, 1.0, 0.0,
+		-sin(yaw_pitch.x), 0.0, cos(yaw_pitch.x)
+	);
+
+	vec3 pitch_yawVert = yaw * pitchVert;
 
 	// projection matrix
 	//calculate 2 times tan over two
-	float tot = tan(fovY/2);
-
 	mat4 projection = mat4( //TODO: fix
-		1.0 / (ratio * tot),	0.0,		0.0, 																0.0,
-		0.0, 							1.0 / tot, 	0.0, 																0.0,
-		0.0, 							0.0,		near_far.y / (near_far.y - near_far.x),	-(near_far.y * near_far.x) / (near_far.y - near_far.x),
-		0.0, 							0.0, 		1.0,																		0.0
+		1.0,	0.0,	0.0,	0.0,
+		0.0,	1.0,	0.0,	0.0,
+		0.0,	0.0,	1.0,	1.0,
+		0.0,	0.0,	0.0,	0.0
 	);
 
-	gl_Position = projection * vec4(tranVert, 1.0);
+	gl_Position = projection * vec4(pitch_yawVert, 1.0);
 }
