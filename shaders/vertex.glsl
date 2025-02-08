@@ -25,15 +25,15 @@ void main() {
 		0.0, -sin(-yaw_pitch.y), cos(-yaw_pitch.y)
 	);
 
-	vec3 pitchVert = pitch * tranVert;
-
 	mat3 yaw = mat3(
 		cos(yaw_pitch.x), 0.0, sin(yaw_pitch.x),
 		0.0, 1.0, 0.0,
 		-sin(yaw_pitch.x), 0.0, cos(yaw_pitch.x)
 	);
 
-	vec3 pitch_yawVert = yaw * pitchVert;
+
+	vec3 pitch_yawVert = yaw * pitch * tranVert;
+
 
 	// projection matrix
 	//calculate 2 times tan over two

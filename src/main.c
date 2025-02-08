@@ -228,19 +228,23 @@ int main(){
 
     /* USER INPUT */
 
-		//movement
+		//movement //TODO: fix
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-      camera.z += deltaTime * FLYSPEED;
-    }
+      camera.z += deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
+			camera.x += deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
+		}
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-      camera.z -= deltaTime * FLYSPEED;
+      camera.z += deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
+			camera.x += deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
     }
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-      camera.x -= deltaTime * FLYSPEED;
+      camera.x -= deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
+			camera.z -= deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
     }
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-      camera.x += deltaTime * FLYSPEED;
-    }
+			camera.x += deltaTime * FLYSPEED * (camera.x * cos(camera.yaw) - camera.z * sin(camera.yaw));
+			camera.z += deltaTime * FLYSPEED * (camera.x * sin(camera.yaw) + camera.z * cos(camera.yaw));
+		}
     if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
       camera.y += deltaTime * FLYSPEED;
     }
