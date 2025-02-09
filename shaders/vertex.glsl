@@ -3,6 +3,7 @@
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_color;
 
+//camera values
 uniform vec3 cameraPos;
 uniform vec2 yaw_pitch;
 uniform vec2 near_far;
@@ -12,7 +13,15 @@ uniform float ratio;
 out vec3 color;
 
 void main() {
+
+	/*-------- Phong Shading --------*/
+
+	//TODO:
+
+
 	color = vertex_color;
+
+	/*-------- Camera projection --------*/
 
 	//translation
   vec3 tranVert = vertex_position - cameraPos;
@@ -31,9 +40,7 @@ void main() {
 		-sin(yaw_pitch.x), 	0.0, 	cos(yaw_pitch.x)
 	);
 
-
 	vec3 pitch_yawVert = pitch * yaw * tranVert;
-
 
 	// projection matrix
 	//calculate 2 times tan over two
