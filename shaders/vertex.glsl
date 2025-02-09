@@ -1,27 +1,42 @@
 #version 410 core
 
+#define LIGHTS 1;
+
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_color;
+layout(location = 2) in vec3 vertex_normal;
 
-//camera values
+//Camera values
 uniform vec3 cameraPos;
 uniform vec2 yaw_pitch;
 uniform vec2 near_far;
 uniform float f;
 uniform float ratio;
 
+//Lights
+uniform vec3 LightPosition[LIGHTS];
+uniform vec3 LightColor[LIGHTS];
+uniform vec3 LightIntensity[LIGHTS];
+uniform vec3 LightDirection[LIGHTS];
+
+
 out vec3 color;
+out vec3 normal;
 
 void main() {
 
-	/*-------- Phong Shading --------*/
+	/*-------- Phong Lighting --------*/
 
-	//TODO:
+	cameraDirection = vec3(0.0, 0.0, 1.0);//TODO:
+	reflection = LightDirection - 2 * (LightDirection * vertex_normal) * vertex_normal;
 
-
-	color = vertex_color;
+	for(int i = 0; i < LIGHTS; i++){
+		color += LightIntensity[i] * ( LightColor * (normal * LightDirection) + pow((-cameraDirection * reflection), 25.0) );
+	}
 
 	/*-------- Camera projection --------*/
+
+	cameraDirection = pitch * yaw * vec3(0.0, 0.0, 1.0);
 
 	//translation
   vec3 tranVert = vertex_position - cameraPos;

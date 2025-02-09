@@ -17,3 +17,15 @@ typedef struct Camera{
 	GLfloat aspectRatio;
   GLfloat deltaTime;
 } Camera;
+
+typedef struct Light{
+	GLfloat x;
+	GLfloat y;
+	GLfloat z;
+
+	GLfloat direction[3];
+
+	GLfloat rgb[3];
+
+	GLfloat intensity;
+} Light;

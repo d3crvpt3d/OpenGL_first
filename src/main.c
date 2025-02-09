@@ -66,6 +66,11 @@ int main(){
   	0.0f,  0.0f,  1.0f
 	};
 
+	float normals[] = {
+  	0.0f,  0.0f, -1.0f,
+  	0.0f,  0.0f, -1.0f,
+  	0.0f,  0.0f, -1.0f
+	};
 	
 	Camera camera = {
 		.x=0.0f, .y=0.0f, .z=-1.0f,
@@ -73,6 +78,14 @@ int main(){
 		.far=1000.0f, .near=0.001f,
 		.aspectRatio=16.0f/9.0f,
 		.f = 1
+	};
+
+	//TODO: change to dynamic lights
+	Light lights[1] = {
+		0.0, 10.0, 2.0,//xyz
+		0.0, -10.0/sqrt(104.0), -2.0/sqrt(104.0),//direction (normal)
+		1.0, 1.0, 1.0,//color
+		0.8						//intensity 
 	};
 
 	GLuint points_vbo = 0;
@@ -84,6 +97,13 @@ int main(){
 	glGenBuffers( 1, &colors_vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
 	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), colors, GL_STATIC_DRAW );
+
+	
+	GLuint normals_vbo = 0;
+	glGenBuffers( 1, &normals_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, normals_vbo );
+	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), normals, GL_STATIC_DRAW );
+
 
 	/* create VAO */
 	GLuint vao = 0;
@@ -97,6 +117,10 @@ int main(){
 	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(2);
 
 
 	/* Load Shaders */
@@ -159,7 +183,18 @@ int main(){
 	GLint nearfar_location = glGetUniformLocation(shader_program, "near_far");
 	GLint f_location = glGetUniformLocation(shader_program, "f");
 	GLint ratio_location = glGetUniformLocation(shader_program, "ratio");
+	GLint light_location = glGetUniformLocation(shader_program, "LightPosition");
+	GLint lColor_location = glGetUniformLocation(shader_program, "LightColor");
+	GLint lI_location = glGetUniformLocation(shader_program, "LightIntensity");
+	GLint lDir_location = glGetUniformLocation(shader_program, "LightDirection");
 
+	glUseProgram(shader_program);
+	
+	//for once use static light
+	glUniform3f(light_location, lights[0].x, lights[0].y, lights[0].z);
+	glUniform3fv(lColor_location, 3, lights[0].rgb);
+	glUniform1f(lI_location, lights[0].intensity);
+	glUniform3fv(lDir_location, 3, lights[0].direction);
 
 	double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
 	uint8_t esc_down = 0;
@@ -168,9 +203,6 @@ int main(){
 	double xpos, ypos;
 	double xpos_old = 0, ypos_old = 0;
 	
-	
-	// select "shader_program"
-	glUseProgram(shader_program);
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
