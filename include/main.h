@@ -1,12 +1,20 @@
 #pragma once
-#include <glad/gl.h>
+#include <pthread.h>
+#include <stdint.h>
+#include "glad/gl.h"
+#include <GLFW/glfw3.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+#include "chunkGeneration.h"
 
 #define WIDTH 	1920
 #define HEIGHT 	1080
 #define FLYSPEED 2.0
 #define RADPERPIXEL 0.00418879f //mouse sensitivity
 #define PI 3.1415927f
-#define LIGHTS 1
+#define LIGHTS 1 //num lights
 
 typedef struct Camera{
 	GLfloat xyz[3];
@@ -16,8 +24,7 @@ typedef struct Camera{
 	GLfloat yaw;
 	GLfloat pitch;
 	
-	GLfloat far;
-	GLfloat near;
+	GLfloat near_far[2];
 	
 	GLfloat aspectRatio;
   GLfloat deltaTime;

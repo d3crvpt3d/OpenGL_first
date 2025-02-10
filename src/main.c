@@ -1,16 +1,17 @@
-#include "glad/gl.h"
 #include "main.h"
-#include <GLFW/glfw3.h>
-
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
 
 char *loadShaders(const char* path);
 
 int main(){
+
+	//create threads for chunk generation (10 in each direction by default)
+	Chunk *chunks = malloc(sizeof(Chunk) * 441);
+
+	if(!chunks){
+		fprinf(stderr,"Cannot malloc %u KB for Chunks", sizeof(Chunk) * 441 / 1000);
+		return -1;
+	}
+	uint64_t numChunks = 441;
 
 	GLenum err;
 
@@ -70,7 +71,7 @@ int main(){
 	Camera camera = {
 		.xyz={0.0f, 0.0f, -1.0f},
 		.pitch=0.0f, .yaw=0.0f,
-		.far=100.0f, .near=0.01f,
+		.near_far={0.01f, 100.0f},
 		.aspectRatio=16.0f/9.0f,
 		.f = 1.0f
 	};
@@ -225,18 +226,18 @@ int main(){
 		ypos_old = ypos;
 
 		/* clamp pitch to 180° */
-		if(camera.pitch > PI){
-			camera.pitch = PI;
+		if(camera.pitch > PI/2){
+			camera.pitch = PI/2;
 		}
-		if(camera.pitch < -PI){
-			camera.pitch = -PI;
+		if(camera.pitch < -PI/2){
+			camera.pitch = -PI/2;
 		}
 
 		
 		// update Uniforms
 		glUniform3fv(cameraPosLocation, 1, camera.xyz);
 		glUniform2f(yaw_pitchLocation,	camera.yaw, 	camera.pitch);
-		glUniform2f(nearfar_location, 	camera.near,	camera.far);
+		glUniform2fv(nearfar_location, 1, camera.near_far);
 		glUniform1f(f_location, 				camera.f);
 		glUniform1f(ratio_location, 		camera.aspectRatio);
 
@@ -288,6 +289,11 @@ int main(){
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE){
 			esc_down = 0;
 		}
+
+		/* Generate Chunks */
+
+		generateChunks((int32_t) camera.xyz[0], (int32_t) camera.xyz[1], (int32_t) camera.xyz[2], chunks);
+
 	}
 
 	glfwTerminate();
