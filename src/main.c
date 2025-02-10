@@ -7,11 +7,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#define WIDTH 	1920
-#define HEIGHT 	1080
-#define FLYSPEED 1.5
-#define RADPERPIXEL 0.00418879f //mouse sensitivity
-#define PI 3.1415927f
 
 char *loadShaders(const char* path);
 
@@ -73,19 +68,20 @@ int main(){
 	};
 	
 	Camera camera = {
-		.x=0.0f, .y=0.0f, .z=-1.0f,
+		.xyz={0.0f, 0.0f, -1.0f},
 		.pitch=0.0f, .yaw=0.0f,
-		.far=1000.0f, .near=0.001f,
+		.far=100.0f, .near=0.01f,
 		.aspectRatio=16.0f/9.0f,
-		.f = 1
+		.f = 1.0f
 	};
 
 	//TODO: change to dynamic lights
-	Light lights[1] = {
-		0.0, 10.0, 2.0,//xyz
-		0.0, -10.0/sqrt(104.0), -2.0/sqrt(104.0),//direction (normal)
-		1.0, 1.0, 1.0,//color
-		0.8						//intensity 
+	Light lights[LIGHTS] = {
+		{{0.0f, 10.0f, 2.0f},/*xyz*/
+		{0.0f, -10.0f/sqrt(104.0f), -2.0f/sqrt(104.0f)},/*direction (normal)*/
+		{1.0f, 1.0f, 1.0f},/*color*/
+		0.8f					/*intensity*/
+		}
 	};
 
 	GLuint points_vbo = 0;
@@ -183,18 +179,15 @@ int main(){
 	GLint nearfar_location = glGetUniformLocation(shader_program, "near_far");
 	GLint f_location = glGetUniformLocation(shader_program, "f");
 	GLint ratio_location = glGetUniformLocation(shader_program, "ratio");
-	GLint light_location = glGetUniformLocation(shader_program, "LightPosition");
-	GLint lColor_location = glGetUniformLocation(shader_program, "LightColor");
-	GLint lI_location = glGetUniformLocation(shader_program, "LightIntensity");
-	GLint lDir_location = glGetUniformLocation(shader_program, "LightDirection");
 
 	glUseProgram(shader_program);
 	
 	//for once use static light
-	glUniform3f(light_location, lights[0].x, lights[0].y, lights[0].z);
-	glUniform3fv(lColor_location, 3, lights[0].rgb);
-	glUniform1f(lI_location, lights[0].intensity);
-	glUniform3fv(lDir_location, 3, lights[0].direction);
+	glUniform3fv(glGetUniformLocation(shader_program, "LightPosition"), 1, lights[0].xyz);
+	glUniform3fv(glGetUniformLocation(shader_program, "LightColor"), 1, lights[0].rgb);
+	glUniform1f(glGetUniformLocation(shader_program, "LightIntensity"), lights[0].intensity);
+	glUniform3fv(glGetUniformLocation(shader_program, "LightDirection"), 1, lights[0].direction);
+	glUniform1ui(glGetUniformLocation(shader_program, "numLights"), LIGHTS);
 
 	double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
 	uint8_t esc_down = 0;
@@ -241,7 +234,7 @@ int main(){
 
 		
 		// update Uniforms
-		glUniform3f(cameraPosLocation,	camera.x, 		camera.y,	camera.z);
+		glUniform3fv(cameraPosLocation, 1, camera.xyz);
 		glUniform2f(yaw_pitchLocation,	camera.yaw, 	camera.pitch);
 		glUniform2f(nearfar_location, 	camera.near,	camera.far);
 		glUniform1f(f_location, 				camera.f);
@@ -262,28 +255,28 @@ int main(){
 
 		//movement //TODO: fix
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-      camera.x += deltaTime * FLYSPEED * -sin(-camera.yaw);
-			camera.z += deltaTime * FLYSPEED * cos(-camera.yaw);
+      camera.xyz[0] += deltaTime * FLYSPEED * -sin(-camera.yaw);
+			camera.xyz[2] += deltaTime * FLYSPEED * cos(-camera.yaw);
 		}
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-      camera.x += deltaTime * FLYSPEED * sin(-camera.yaw);
-			camera.z += deltaTime * FLYSPEED * -cos(-camera.yaw);
+      camera.xyz[0] += deltaTime * FLYSPEED * sin(-camera.yaw);
+			camera.xyz[2] += deltaTime * FLYSPEED * -cos(-camera.yaw);
     }
 		
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-			camera.x += deltaTime * FLYSPEED * -cos(-camera.yaw);
-			camera.z += deltaTime * FLYSPEED * -sin(-camera.yaw);
+			camera.xyz[0] += deltaTime * FLYSPEED * -cos(-camera.yaw);
+			camera.xyz[2] += deltaTime * FLYSPEED * -sin(-camera.yaw);
 		}
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-			camera.x += deltaTime * FLYSPEED * cos(-camera.yaw);
-			camera.z += deltaTime * FLYSPEED * sin(-camera.yaw);
+			camera.xyz[0] += deltaTime * FLYSPEED * cos(-camera.yaw);
+			camera.xyz[2] += deltaTime * FLYSPEED * sin(-camera.yaw);
 		}
 
     if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
-      camera.y += deltaTime * FLYSPEED;
+      camera.xyz[1] += deltaTime * FLYSPEED;
     }
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-      camera.y -= deltaTime * FLYSPEED;
+      camera.xyz[1] -= deltaTime * FLYSPEED;
     }
 		
 		// toggle mouse capture

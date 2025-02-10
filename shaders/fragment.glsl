@@ -12,6 +12,6 @@ void main() {
 
 	/* only sun */
 	
-	frag_color = color;
+	frag_color = vec4(vec3(gl_FragCoord.z), 1.0);
 
 }

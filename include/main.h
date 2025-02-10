@@ -1,10 +1,15 @@
 #pragma once
 #include <glad/gl.h>
 
+#define WIDTH 	1920
+#define HEIGHT 	1080
+#define FLYSPEED 2.0
+#define RADPERPIXEL 0.00418879f //mouse sensitivity
+#define PI 3.1415927f
+#define LIGHTS 1
+
 typedef struct Camera{
-	GLfloat x;
-	GLfloat y;
-	GLfloat z;
+	GLfloat xyz[3];
 
 	GLfloat f;
 	
@@ -19,9 +24,7 @@ typedef struct Camera{
 } Camera;
 
 typedef struct Light{
-	GLfloat x;
-	GLfloat y;
-	GLfloat z;
+	GLfloat xyz[3];
 
 	GLfloat direction[3];
 
