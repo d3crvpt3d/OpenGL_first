@@ -51,12 +51,11 @@ void main() {
 	vec3 pitch_yawVert = pitch * yaw * tranVert;
 
 	// projection matrix
-	//calculate 2 times tan over two
 	mat4 projection = mat4( //TODO: fix
-		f, 0.0,	0.0, 0.0,
-		0.0, f,	0.0, 0.0,
-		0.0, 0.0, near_far.y/(near_far.y-near_far.x), 1.0,
-		0.0, 0.0, -(near_far.x*near_far.y)/(near_far.y-near_far.x), 0.0
+		vec4(f, 	0.0,	0.0, 0.0),
+		vec4(0.0, f,		0.0, 0.0),
+		vec4(0.0, 0.0, 	near_far.y / (near_far.y - near_far.x), 1.0),
+		vec4(0.0, 0.0, 	near_far.x * near_far.y / (near_far.y - near_far.x), 0.0)
 	);
 
 	gl_Position = projection * vec4(pitch_yawVert, 1.0);

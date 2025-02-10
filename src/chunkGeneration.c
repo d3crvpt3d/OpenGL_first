@@ -1,5 +1,28 @@
 #include "chunkGeneration.h"
 
+//get num of processors
+#ifdef _WIN32
+	//Windows
+	
+	#include <windows.h>
+	
+	uint32_t get_max_threads(){
+		SYSTEM_INFO sysinfo;
+		GetSystemInfo(&sysinfo);
+		return sysinfo.dwNumberOfProcessors;
+	}
+#elif defined(__APPLE__) || defined(__linux__)
+	#include <unistd.h>
+
+	uint32_t get_max_threads() {
+		long n_processors = sysconf(_SC_NPROCESSORS_ONLN);
+		return (uint32_t)n_processors;
+	}
+#else
+	#error "unsupported platform"
+#endif
+
+
 void *generateChunk(void *position){
 
 
@@ -14,13 +37,13 @@ void generateChunks(int32_t x, int32_t y, int32_t z, Chunk *chunks){
 	ThreadPool *pool = (ThreadPool *) malloc(sizeof(ThreadPool));
 
 	if(!pool){
-		return NULL;
+		return;
 	}
 
 	pool->threads = (pthread_t *) malloc(sizeof(pthread_t) * get_max_threads());
 	if(!pool->thread_count){
 		free(pool);
-		return NULL;
+		return;
 	}
 	pool->thread_count = get_max_threads();
 
@@ -31,8 +54,8 @@ void generateChunks(int32_t x, int32_t y, int32_t z, Chunk *chunks){
 
 				if(chunks[0].data){
 					//TODO:
-					if(){
-
+					if(1){
+						;
 					}
 				}
 

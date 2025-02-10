@@ -8,7 +8,7 @@ int main(){
 	Chunk *chunks = malloc(sizeof(Chunk) * 441);
 
 	if(!chunks){
-		fprinf(stderr,"Cannot malloc %u KB for Chunks", sizeof(Chunk) * 441 / 1000);
+		fprintf(stderr,"Cannot malloc %u KB for Chunks", sizeof(Chunk) * 441 / 1000);
 		return -1;
 	}
 	uint64_t numChunks = 441;
@@ -51,9 +51,9 @@ int main(){
 	
 	/* create VBO */
 	float points[] = {
-		0.0f,  0.5f,  0.0f,
-   -0.5f, -0.5f,  0.0f,
-   	0.5f, -0.5f,  0.0f,
+		0.0f,  1.0f,  1.0f,
+   -1.0f, -1.0f,  1.0f,
+   	1.0f, -1.0f,  1.0f,
 	};
 
 	float colors[] = {
@@ -71,7 +71,7 @@ int main(){
 	Camera camera = {
 		.xyz={0.0f, 0.0f, -1.0f},
 		.pitch=0.0f, .yaw=0.0f,
-		.near_far={0.01f, 100.0f},
+		.near_far={0.1f, 10.0f},
 		.aspectRatio=16.0f/9.0f,
 		.f = 1.0f
 	};
@@ -291,8 +291,8 @@ int main(){
 		}
 
 		/* Generate Chunks */
-
-		generateChunks((int32_t) camera.xyz[0], (int32_t) camera.xyz[1], (int32_t) camera.xyz[2], chunks);
+		//TODO:
+		//generateChunks((int32_t) camera.xyz[0], (int32_t) camera.xyz[1], (int32_t) camera.xyz[2], chunks);
 
 	}
 
