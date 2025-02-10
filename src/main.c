@@ -23,6 +23,7 @@ int main(){
 
 	/* GLFW Window Hints */
 	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_DEPTH_BITS, 32);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
   //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
 
@@ -132,6 +133,7 @@ int main(){
 
   /* OpenGL Options */
   glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
 
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -218,7 +220,7 @@ int main(){
   	// Wipe the drawing surface clear.
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		//camera direction
+		//camera direction 
 		glfwGetCursorPos(window, &xpos, &ypos);
 		camera.yaw 		+= (xpos - xpos_old) * RADPERPIXEL;
 		camera.pitch 	+= (ypos - ypos_old) * RADPERPIXEL;
