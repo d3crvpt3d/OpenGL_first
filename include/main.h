@@ -21,8 +21,7 @@ typedef struct Camera{
 
 	GLfloat f;
 	
-	GLfloat yaw;
-	GLfloat pitch;
+	GLfloat yaw_pitch[2];
 	
 	GLfloat near_far[2];
 	

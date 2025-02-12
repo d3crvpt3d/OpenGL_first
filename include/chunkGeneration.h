@@ -8,14 +8,11 @@
 #define CHUNK_WDH 8
 #define RENDERDISTANCE 10
 #define CHUNK_THREADS 4
+#define CHUNKS (2*RENDERDISTANCE+1) * (2*RENDERDISTANCE+1)
 
 typedef struct {
 	GLuint data[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
 } Chunk;
-
-typedef struct {
-
-} World;
 
 typedef struct{
 	uint32_t x;

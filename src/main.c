@@ -1,6 +1,8 @@
 #include "main.h"
 
 char *loadShaders(const char* path);
+void calculateVPmatrix(GLfloat *vp, GLfloat cam_pos[3], GLfloat cam_dir[2], GLfloat far, GLfloat near, GLfloat f);
+
 
 int main(){
 
@@ -23,7 +25,7 @@ int main(){
 
 	/* GLFW Window Hints */
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_DEPTH_BITS, 32);
+	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
   //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
 
@@ -63,16 +65,11 @@ int main(){
   	0.0f,  0.0f,  1.0f
 	};
 
-	float normals[] = {
-  	0.0f,  0.0f, -1.0f,
-  	0.0f,  0.0f, -1.0f,
-  	0.0f,  0.0f, -1.0f
-	};
 	
 	Camera camera = {
 		.xyz={0.0f, 0.0f, -1.0f},
-		.pitch=0.0f, .yaw=0.0f,
-		.near_far={0.1f, 10.0f},
+		.yaw_pitch={0.0f, 0.0f},
+		.near_far={0.01f, 100.0f},
 		.aspectRatio=16.0f/9.0f,
 		.f = 1.0f
 	};
@@ -96,12 +93,6 @@ int main(){
 	glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
 	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), colors, GL_STATIC_DRAW );
 
-	
-	GLuint normals_vbo = 0;
-	glGenBuffers( 1, &normals_vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, normals_vbo );
-	glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), normals, GL_STATIC_DRAW );
-
 
 	/* create VAO */
 	GLuint vao = 0;
@@ -116,11 +107,6 @@ int main(){
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(1);
 
-	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(2);
-
-
 	/* Load Shaders */
 
 	const char *vertex_shader = loadShaders("shaders/vertex.glsl");
@@ -132,8 +118,7 @@ int main(){
 	}
 
   /* OpenGL Options */
-  glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
+  //glEnable(GL_CULL_FACE);
 
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -176,14 +161,13 @@ int main(){
 	double lastTime;
 	double deltaTime;
 
-	/* get location of matrix in shader */
-	GLint cameraPosLocation = glGetUniformLocation(shader_program, "cameraPos");
-	GLint yaw_pitchLocation = glGetUniformLocation(shader_program, "yaw_pitch");
-	GLint nearfar_location = glGetUniformLocation(shader_program, "near_far");
-	GLint f_location = glGetUniformLocation(shader_program, "f");
-	GLint ratio_location = glGetUniformLocation(shader_program, "ratio");
+	GLint VPmatrix_loc = glGetUniformLocation(shader_program, "VPmatrix");
 
 	glUseProgram(shader_program);
+
+	//opengl state changes
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 	
 	//for once use static light
 	glUniform3fv(glGetUniformLocation(shader_program, "LightPosition"), 1, lights[0].xyz);
@@ -199,6 +183,8 @@ int main(){
 	double xpos, ypos;
 	double xpos_old = 0, ypos_old = 0;
 	
+	GLfloat VPmatrix[16] = {0.0f};
+
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
@@ -220,59 +206,25 @@ int main(){
   	// Wipe the drawing surface clear.
   	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		//camera direction 
-		glfwGetCursorPos(window, &xpos, &ypos);
-		camera.yaw 		+= (xpos - xpos_old) * RADPERPIXEL;
-		camera.pitch 	+= (ypos - ypos_old) * RADPERPIXEL;
-		xpos_old = xpos;
-		ypos_old = ypos;
-
-		/* clamp pitch to 180° */
-		if(camera.pitch > PI/2){
-			camera.pitch = PI/2;
-		}
-		if(camera.pitch < -PI/2){
-			camera.pitch = -PI/2;
-		}
-
-		
-		// update Uniforms
-		glUniform3fv(cameraPosLocation, 1, camera.xyz);
-		glUniform2f(yaw_pitchLocation,	camera.yaw, 	camera.pitch);
-		glUniform2fv(nearfar_location, 1, camera.near_far);
-		glUniform1f(f_location, 				camera.f);
-		glUniform1f(ratio_location, 		camera.aspectRatio);
-
-
-		//render scene
-		glBindVertexArray( vao );
-		glDrawArrays( GL_TRIANGLES, 0, 3 );
-  
-  	// Put the stuff we've been drawing onto the visible area.
-  	glfwSwapBuffers( window );
-		
-		// Update window events.
-  	glfwPollEvents();
-
-    /* USER INPUT */
+		/* USER INPUT */
 
 		//movement //TODO: fix
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-      camera.xyz[0] += deltaTime * FLYSPEED * -sin(-camera.yaw);
-			camera.xyz[2] += deltaTime * FLYSPEED * cos(-camera.yaw);
+      camera.xyz[0] += deltaTime * FLYSPEED * -sin(-camera.yaw_pitch[0]);
+			camera.xyz[2] += deltaTime * FLYSPEED * cos(-camera.yaw_pitch[0]);
 		}
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-      camera.xyz[0] += deltaTime * FLYSPEED * sin(-camera.yaw);
-			camera.xyz[2] += deltaTime * FLYSPEED * -cos(-camera.yaw);
+      camera.xyz[0] += deltaTime * FLYSPEED * sin(-camera.yaw_pitch[0]);
+			camera.xyz[2] += deltaTime * FLYSPEED * -cos(-camera.yaw_pitch[0]);
     }
 		
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-			camera.xyz[0] += deltaTime * FLYSPEED * -cos(-camera.yaw);
-			camera.xyz[2] += deltaTime * FLYSPEED * -sin(-camera.yaw);
+			camera.xyz[0] += deltaTime * FLYSPEED * -cos(-camera.yaw_pitch[0]);
+			camera.xyz[2] += deltaTime * FLYSPEED * -sin(-camera.yaw_pitch[0]);
 		}
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-			camera.xyz[0] += deltaTime * FLYSPEED * cos(-camera.yaw);
-			camera.xyz[2] += deltaTime * FLYSPEED * sin(-camera.yaw);
+			camera.xyz[0] += deltaTime * FLYSPEED * cos(-camera.yaw_pitch[0]);
+			camera.xyz[2] += deltaTime * FLYSPEED * sin(-camera.yaw_pitch[0]);
 		}
 
     if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
@@ -292,6 +244,38 @@ int main(){
 			esc_down = 0;
 		}
 
+		
+		//camera direction 
+		glfwGetCursorPos(window, &xpos, &ypos);
+		camera.yaw_pitch[0] += (xpos - xpos_old) * RADPERPIXEL;
+		camera.yaw_pitch[1] += (ypos - ypos_old) * RADPERPIXEL;
+		xpos_old = xpos;
+		ypos_old = ypos;
+
+		/* clamp pitch to 180° */
+		if(camera.yaw_pitch[1] > PI/2){
+			camera.yaw_pitch[1] = PI/2;
+		}
+		if(camera.yaw_pitch[1] < -PI/2){
+			camera.yaw_pitch[1] = -PI/2;
+		}
+
+		/* Calculate VPmatrix */
+		calculateVPmatrix(VPmatrix, camera.xyz, camera.yaw_pitch, camera.near_far[1], camera.near_far[0], camera.f);
+
+		// update Uniforms
+		glUniformMatrix4fv(VPmatrix_loc, 1, GL_TRUE, VPmatrix);
+
+		//render scene
+		glBindVertexArray( vao );
+		glDrawArrays( GL_TRIANGLES, 0, 3 );
+  
+  	// Put the stuff we've been drawing onto the visible area.
+  	glfwSwapBuffers( window );
+		
+		// Update window events.
+  	glfwPollEvents();
+
 		/* Generate Chunks */
 		//TODO:
 		//generateChunks((int32_t) camera.xyz[0], (int32_t) camera.xyz[1], (int32_t) camera.xyz[2], chunks);
@@ -306,6 +290,28 @@ int main(){
 	return 0;
 }
 
+void calculateVPmatrix(GLfloat *vp, GLfloat cam_pos[3], GLfloat cam_dir[2], GLfloat far, GLfloat near, GLfloat f){
+	
+	vp[0] = f * cos(cam_dir[0]);
+	vp[2] = f  * sin(cam_dir[0]);
+	vp[3] = -(f  * cam_pos[0]  * cos(cam_dir[0])) - f * cam_pos[2] * sin(cam_dir[0]);
+
+	vp[4] = f * sin(cam_dir[1]) * sin(cam_dir[0]);
+	vp[5] = f * cos(cam_dir[1]);
+	vp[6] = -(f * cos(cam_dir[0]) * sin(cam_dir[1]));
+	vp[7] = -(f * cam_pos[1] * cos(cam_dir[1])) + f * cam_pos[2] * cos(cam_dir[0]) * sin(cam_dir[1]) - f * cam_pos[0] * sin(cam_dir[1]) * sin(cam_dir[0]);
+
+	vp[8] = -((far * cos(cam_dir[1]) * sin(cam_dir[0]))/(far - near));
+	vp[9] = (far * sin(cam_dir[1]))/(far - near);
+	vp[10] = (far * cos(cam_dir[1]) * cos(cam_dir[0]))/(far - near);
+	vp[11] = (far * near)/(far - near) - (far * cam_pos[2] * cos(cam_dir[1]) * cos(cam_dir[0]))/(far - near) - (far * cam_pos[1] * sin(cam_dir[1]))/(far - near) + (far * cam_pos[0] * cos(cam_dir[1]) * sin(cam_dir[0]))/(far - near);
+
+	vp[12] = -(cos(cam_dir[1]) * sin(cam_dir[0]));
+	vp[13] = sin(cam_dir[1]);
+	vp[14] = cos(cam_dir[1]) * cos(cam_dir[0]);
+	vp[15] = -(cam_pos[2] * cos(cam_dir[1]) * cos(cam_dir[0])) - cam_pos[1] * sin(cam_dir[1]) + cam_pos[0] * cos(cam_dir[1]) * sin(cam_dir[0]);
+
+}
 
 char *loadShaders(const char* path){
 	FILE *fptr = fopen(path, "rb");
