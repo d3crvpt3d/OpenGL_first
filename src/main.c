@@ -54,9 +54,9 @@ int main(){
 	
 	/* create VBO */
 	float points[] = {
-		0.0f,  1.0f,  1.0f,
-   -1.0f, -1.0f,  1.0f,
-   	1.0f, -1.0f,  1.0f,
+		1.0f,  0.0f,  0.0f,
+   0.0f, 1.0f,  0.0f,
+   	0.0f, 0.0f,  1.0f,
 	};
 
 	float colors[] = {
@@ -290,21 +290,22 @@ int main(){
 	return 0;
 }
 
+//TODO: fix
 void calculateVPmatrix(GLfloat *vp, GLfloat cam_pos[3], GLfloat cam_dir[2], GLfloat far, GLfloat near, GLfloat f){
-	
-	vp[0] = f * cos(cam_dir[0]);
-	vp[2] = f  * sin(cam_dir[0]);
-	vp[3] = -(f  * cam_pos[0]  * cos(cam_dir[0])) - f * cam_pos[2] * sin(cam_dir[0]);
 
-	vp[4] = f * sin(cam_dir[1]) * sin(cam_dir[0]);
-	vp[5] = f * cos(cam_dir[1]);
-	vp[6] = -(f * cos(cam_dir[0]) * sin(cam_dir[1]));
-	vp[7] = -(f * cam_pos[1] * cos(cam_dir[1])) + f * cam_pos[2] * cos(cam_dir[0]) * sin(cam_dir[1]) - f * cam_pos[0] * sin(cam_dir[1]) * sin(cam_dir[0]);
+	vp[0] = cos(cam_dir[0]) / f;
+	vp[2] = sin(cam_dir[0]) / f;
+	vp[3] = -(cam_pos[0] * cos(cam_dir[0]) / f) - (cam_pos[2] * sin(cam_dir[0])) / f;
 
-	vp[8] = -((far * cos(cam_dir[1]) * sin(cam_dir[0]))/(far - near));
-	vp[9] = (far * sin(cam_dir[1]))/(far - near);
-	vp[10] = (far * cos(cam_dir[1]) * cos(cam_dir[0]))/(far - near);
-	vp[11] = (far * near)/(far - near) - (far * cam_pos[2] * cos(cam_dir[1]) * cos(cam_dir[0]))/(far - near) - (far * cam_pos[1] * sin(cam_dir[1]))/(far - near) + (far * cam_pos[0] * cos(cam_dir[1]) * sin(cam_dir[0]))/(far - near);
+	vp[4] = sin(cam_dir[1]) * sin(cam_dir[0]) / f;
+	vp[5] = cos(cam_dir[1]) / f;
+	vp[6] = -(cos(cam_dir[0]) * sin(cam_dir[1]) / f);
+	vp[7] = -((cam_pos[1] * cos(cam_dir[1])) / f) + (cam_pos[2] * cos(cam_dir[0]) * sin(cam_dir[1])) / f - (cam_pos[0] * sin(cam_dir[1]) * sin(cam_dir[0])) / f;
+
+	vp[8] = -((far * cos(cam_dir[1]) * sin(cam_dir[0])) / (far - near));
+	vp[9] = (far * sin(cam_dir[1])) / (far - near);
+	vp[10] = (far * cos(cam_dir[1]) * cos(cam_dir[0])) / (far - near);
+	vp[11] = (far * near)/(far - near) - (far * cam_pos[2] * cos(cam_dir[1]) * cos(cam_dir[0])) / (far - near) - (far * cam_pos[1] * sin(cam_dir[1])) / (far - near) + (far * cam_pos[0] * cos(cam_dir[1]) * sin(cam_dir[0])) / (far - near);
 
 	vp[12] = -(cos(cam_dir[1]) * sin(cam_dir[0]));
 	vp[13] = sin(cam_dir[1]);

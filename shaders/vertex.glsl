@@ -25,5 +25,5 @@ void main() {
 
 	/*-------- Camera projection --------*/
 
-	gl_Position = VPmatrix * vec4(vertex_position, 1.0);
+	gl_Position = vec4((VPmatrix * vec4(vertex_position, 1.0)).xyz, 1.0);
 }
