@@ -1,8 +1,36 @@
 #include "main.h"
 
 char *loadShaders(const char* path);
-void calculateVPmatrix(GLfloat *vp, GLfloat cam_pos[3], GLfloat cam_dir[2], GLfloat far, GLfloat near, GLfloat f);
 
+void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
+	uint8_t mask = *m;
+
+	//f
+	if(mask & 0x80){
+		mask ^= 0x80;
+		glUniform1f(locations[0], cam->f);
+	}
+	//ratio
+	if(mask & 0x40){
+		mask ^= 0x40;
+		glUniform1f(locations[1], cam->aspectRatio);
+	}
+	//near
+	if(mask & 0x20){
+		mask ^= 0x20;
+		glUniform1f(locations[2], cam->near_far[0]);
+		glUniform1f(locations[3], cam->near_far[1]);
+	}
+	//far
+	if(mask & 0x10){
+		mask ^= 0x10;
+	}
+	if(mask & 0x10){
+		mask ^= 0x10;
+	}
+
+	*m = mask;
+}
 
 int main(){
 
@@ -54,22 +82,22 @@ int main(){
 	
 	/* create VBO */
 	float points[] = {
-		1.0f,  0.0f,  0.0f,
-   0.0f, 1.0f,  0.0f,
-   	0.0f, 0.0f,  1.0f,
+		0.0f, 	1.0f,  0.0f,
+   -0.866f,-0.5f,  0.0f,
+   	0.866f,-0.5f,  0.0f,
 	};
 
 	float colors[] = {
   	1.0f,  0.0f,  0.0f,
-  	0.0f,  1.0f,  0.0f,
+    0.0f,  1.0f,  0.0f,
   	0.0f,  0.0f,  1.0f
 	};
 
 	
 	Camera camera = {
-		.xyz={0.0f, 0.0f, -1.0f},
+		.xyz={0.0f, 0.25f, -1.0f},
 		.yaw_pitch={0.0f, 0.0f},
-		.near_far={0.01f, 100.0f},
+		.near_far={0.01f, 1000.0f},
 		.aspectRatio=16.0f/9.0f,
 		.f = 1.0f
 	};
@@ -161,7 +189,15 @@ int main(){
 	double lastTime;
 	double deltaTime;
 
-	GLint VPmatrix_loc = glGetUniformLocation(shader_program, "VPmatrix");
+	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
+	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
+
+
+	GLint nonFreqLocations[4];
+	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
+	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
+	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
+	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
 
 	glUseProgram(shader_program);
 
@@ -178,12 +214,12 @@ int main(){
 
 	double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
 	uint8_t esc_down = 0;
-	
+	uint8_t f_r_near_far_change = 0xFF; //if focal length, aspect-ratio, near or far changed
+
 	//mouse position
 	double xpos, ypos;
 	double xpos_old = 0, ypos_old = 0;
-	
-	GLfloat VPmatrix[16] = {0.0f};
+	glfwGetCursorPos(window, &xpos_old, &ypos_old);
 
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
@@ -233,6 +269,21 @@ int main(){
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
       camera.xyz[1] -= deltaTime * FLYSPEED;
     }
+
+		//zoom
+		if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
+			if(camera.f != 2.0f){
+				camera.f = 2.0f;
+				f_r_near_far_change |= 0x80;
+				fprintf(stderr, "2.0\n");
+			}
+		}else{
+			if(camera.f != 1.0f){
+				camera.f = 1.0f;
+				f_r_near_far_change |= 0x80;
+				fprintf(stderr, "1.0\n");
+			}
+		}
 		
 		// toggle mouse capture
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !esc_down){
@@ -260,11 +311,12 @@ int main(){
 			camera.yaw_pitch[1] = -PI/2;
 		}
 
-		/* Calculate VPmatrix */
-		calculateVPmatrix(VPmatrix, camera.xyz, camera.yaw_pitch, camera.near_far[1], camera.near_far[0], camera.f);
+		//check if f r near far changed
+		updateNonFreq(&camera, &f_r_near_far_change, nonFreqLocations);
 
 		// update Uniforms
-		glUniformMatrix4fv(VPmatrix_loc, 1, GL_TRUE, VPmatrix);
+		glUniform3fv(campos_loc, 1, camera.xyz);
+		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
 
 		//render scene
 		glBindVertexArray( vao );
@@ -288,30 +340,6 @@ int main(){
 	free((void*)fragment_shader);
 
 	return 0;
-}
-
-//TODO: fix
-void calculateVPmatrix(GLfloat *vp, GLfloat cam_pos[3], GLfloat cam_dir[2], GLfloat far, GLfloat near, GLfloat f){
-
-	vp[0] = cos(cam_dir[0]) / f;
-	vp[2] = sin(cam_dir[0]) / f;
-	vp[3] = -(cam_pos[0] * cos(cam_dir[0]) / f) - (cam_pos[2] * sin(cam_dir[0])) / f;
-
-	vp[4] = sin(cam_dir[1]) * sin(cam_dir[0]) / f;
-	vp[5] = cos(cam_dir[1]) / f;
-	vp[6] = -(cos(cam_dir[0]) * sin(cam_dir[1]) / f);
-	vp[7] = -((cam_pos[1] * cos(cam_dir[1])) / f) + (cam_pos[2] * cos(cam_dir[0]) * sin(cam_dir[1])) / f - (cam_pos[0] * sin(cam_dir[1]) * sin(cam_dir[0])) / f;
-
-	vp[8] = -((far * cos(cam_dir[1]) * sin(cam_dir[0])) / (far - near));
-	vp[9] = (far * sin(cam_dir[1])) / (far - near);
-	vp[10] = (far * cos(cam_dir[1]) * cos(cam_dir[0])) / (far - near);
-	vp[11] = (far * near)/(far - near) - (far * cam_pos[2] * cos(cam_dir[1]) * cos(cam_dir[0])) / (far - near) - (far * cam_pos[1] * sin(cam_dir[1])) / (far - near) + (far * cam_pos[0] * cos(cam_dir[1]) * sin(cam_dir[0])) / (far - near);
-
-	vp[12] = -(cos(cam_dir[1]) * sin(cam_dir[0]));
-	vp[13] = sin(cam_dir[1]);
-	vp[14] = cos(cam_dir[1]) * cos(cam_dir[0]);
-	vp[15] = -(cam_pos[2] * cos(cam_dir[1]) * cos(cam_dir[0])) - cam_pos[1] * sin(cam_dir[1]) + cam_pos[0] * cos(cam_dir[1]) * sin(cam_dir[0]);
-
 }
 
 char *loadShaders(const char* path){
