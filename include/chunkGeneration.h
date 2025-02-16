@@ -14,6 +14,9 @@
 #define RENDERSPAN (2*RENDERDISTANCE+1) //from x-renderdistance to x+renderdistance
 #define CHUNKS RENDERSPAN * RENDERSPAN * RENDERSPAN
 
+pthread_t chunkGenThread = 0;
+_Atomic uint8_t threadDone = 1;
+
 //raw chunk where each block is uint as blocktype (0 := air, so that "if(block[x][y][z])" works)
 typedef struct{
 	vec3i_t pos;
@@ -37,6 +40,6 @@ typedef struct{
 } ChunkQueue;
 
 //generate [size] Chunks for each Chunk [coord]
-void generateChunks(vec3i_t currChunkCoord);
+pthread_t generateChunks(vec3i_t currChunkCoord);
 
 void getChunkMemoryPosition(vec3i_t *dest, vec3i_t *coord);

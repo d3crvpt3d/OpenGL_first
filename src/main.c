@@ -314,7 +314,14 @@ int main(){
 		
 		/* create chunks async */
 		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
-		generateChunks(currChunk);
+		
+		//if chunk is not ready try to join
+		if(threadDone){
+			pthread_join(chunkGenThread, NULL);
+		}else{
+			threadDone = 0;
+			generateChunks(currChunk);
+		}
 
 
 		//check if (f r near far) changed

@@ -106,12 +106,12 @@ checkChunks(void *args){
 			}
 		}
 	}
+	//say that you finished and are ready to be joined
+	threadDone = 1;
 }
 
 //spawn thread for generation chunks
-void generateChunks(vec3i_t currChunkCoord){
+pthread_t generateChunks(vec3i_t currChunkCoord){
 
-	pthread_t chunkGenThread;
-	pthread_create(&chunkGenThread, NULL, checkChunks, &currChunkCoord);
-
+	return pthread_create(&chunkGenThread, NULL, checkChunks, &currChunkCoord);
 }
