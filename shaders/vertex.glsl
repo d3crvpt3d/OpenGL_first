@@ -16,14 +16,6 @@ uniform float near;
 uniform float far;
 
 
-//Lights
-uniform vec3 LightPosition[LIGHTS];
-uniform vec3 LightColor[LIGHTS];
-uniform float LightIntensity[LIGHTS];
-uniform vec3 LightDirection[LIGHTS];
-uniform uint numLights;
-
-
 out vec3 color;
 
 void main() {

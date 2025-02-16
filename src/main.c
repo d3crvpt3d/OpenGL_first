@@ -311,7 +311,13 @@ int main(){
 			camera.yaw_pitch[1] = -PI/2;
 		}
 
-		//check if f r near far changed
+		
+		/* create chunks async */
+		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
+		generateChunks(currChunk);
+
+
+		//check if (f r near far) changed
 		updateNonFreq(&camera, &f_r_near_far_change, nonFreqLocations);
 
 		// update Uniforms
@@ -327,10 +333,6 @@ int main(){
 		
 		// Update window events.
   	glfwPollEvents();
-
-		/* Generate Chunks */
-		//TODO:
-		//generateChunks((int32_t) camera.xyz[0], (int32_t) camera.xyz[1], (int32_t) camera.xyz[2], chunks);
 
 	}
 
