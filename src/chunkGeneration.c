@@ -70,7 +70,7 @@ Chunk *getSavedChunk(vec3i_t pos){
 /* chunk gen thread(s) start */
 //check for all chunks that are in renderdistance but not generated
 //then generate Chunks if necessary
-checkChunks(void *args){
+void *checkChunks(void *args){
 	
 	//cast args to vec3i_t for access to current Chunk coordinates
 	vec3i_t *currChunk = (vec3i_t *) args;

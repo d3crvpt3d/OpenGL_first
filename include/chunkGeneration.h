@@ -17,6 +17,12 @@
 pthread_t chunkGenThread = 0;
 _Atomic uint8_t threadDone = 1;
 
+typedef struct{
+	int32_t x;
+	int32_t y;
+	int32_t z;
+} vec3i_t;
+
 //raw chunk where each block is uint as blocktype (0 := air, so that "if(block[x][y][z])" works)
 typedef struct{
 	vec3i_t pos;
@@ -29,12 +35,6 @@ typedef struct{
 } RenderRegion;
 
 typedef struct{
-	int32_t x;
-	int32_t y;
-	int32_t z;
-} vec3i_t;
-
-typedef struct{
 	uint32_t length;
 	vec3i_t *coord;
 } ChunkQueue;
@@ -42,4 +42,4 @@ typedef struct{
 //generate [size] Chunks for each Chunk [coord]
 pthread_t generateChunks(vec3i_t currChunkCoord);
 
-void getChunkMemoryPosition(vec3i_t *dest, vec3i_t *coord);
+void getChunkMemoryPosition(vec3i_t *dest, int32_t x, int32_t y, int32_t z);

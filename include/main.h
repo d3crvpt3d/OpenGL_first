@@ -1,4 +1,5 @@
 #pragma once
+
 #include <pthread.h>
 #include <stdint.h>
 #include "glad/gl.h"
@@ -6,8 +7,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
 #include "chunkGeneration.h"
+
 
 #define WIDTH 	1920
 #define HEIGHT 	1080
