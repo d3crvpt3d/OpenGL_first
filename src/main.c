@@ -148,8 +148,8 @@ glEnableVertexAttribArray(1);
 
 /* Load Shaders */
 
-const char *vertex_shader = loadShaders("shaders/vertex.glsl");
-const char *fragment_shader = loadShaders("shaders/fragment.glsl");
+const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
+const char *fragment_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
 
 if(!vertex_shader || !fragment_shader){
 	fprintf(stderr, "vertex shader or fragment shader not locatable\n");
