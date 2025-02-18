@@ -1,7 +1,7 @@
 #include "main.h"
 
 Camera camera = {
-	.xyz={0.0f, 0.25f, -1.0f},
+	.xyz={0.0f, 0.0f, -1.0f},
 	.yaw_pitch={0.0f, 0.0f},
 	.near_far={0.01f, 1000.0f},
 	.aspectRatio=16.0f/9.0f,
@@ -82,7 +82,8 @@ int main(){
 	}
 	
 	glfwMakeContextCurrent(window);
-	
+	glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);//toggle cursor
+
 	//1 = cap vsync to monitor fps
 	glfwSwapInterval(1);
 	
@@ -98,15 +99,17 @@ int main(){
 	
 	/* create VBO */
 	float points[] = {
-		0.0f, 	1.0f,  0.0f,
-		-0.866f,-0.5f,  0.0f,
-		0.866f,-0.5f,  0.0f,
-	};
+		-0.5f, 0.5f, 0.0f,
+		-0.5f,-0.5f, 0.0f,
+		 0.5f, 0.5f, 0.0f,
+		 0.5f,-0.5f, 0.0f,
+	};//square
 	
 	float colors[] = {
-		1.0f,  0.0f,  0.0f,
-		0.0f,  1.0f,  0.0f,
-		0.0f,  0.0f,  1.0f
+		1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
 	};
 	
 	
@@ -122,12 +125,12 @@ int main(){
 GLuint points_vbo = 0;
 glGenBuffers( 1, &points_vbo );
 glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
-glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), points, GL_STATIC_DRAW );
+glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), points, GL_STATIC_DRAW );
 
 GLuint colors_vbo = 0;
 glGenBuffers( 1, &colors_vbo );
 glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
-glBufferData( GL_ARRAY_BUFFER, 9 * sizeof( float ), colors, GL_STATIC_DRAW );
+glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), colors, GL_STATIC_DRAW );
 
 
 /* create VAO */
@@ -262,7 +265,7 @@ while ( !glfwWindowShouldClose( window ) ) {
 	
 	//render scene
 	glBindVertexArray( vao );
-	glDrawArrays( GL_TRIANGLES, 0, 3 );
+	glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 	
 	// Put the stuff we've been drawing onto the visible area.
 	glfwSwapBuffers( window );
