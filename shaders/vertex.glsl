@@ -42,7 +42,7 @@ void main() {
 	);
 
 	mat4 proj = mat4(
-		f, 0.0, 0.0, 0.0,
+		f/ratio, 0.0, 0.0, 0.0,
 		0.0, f, 0.0, 0.0,
 		0.0, 0.0, -far/(far-near), 1.0,
 		0.0, 0.0, near*far/(far-near), 0.0

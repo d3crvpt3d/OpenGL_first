@@ -9,13 +9,13 @@ Camera camera = {
 };
 
 double deltaTime;
-double xpos, ypos;
-double xpos_old = 0, ypos_old = 0;
 double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
+double xpos_old, ypos_old;
 GLint nonFreqLocations[4];
 
 char *loadShaders(const char* path);
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+void cursor_callback(GLFWwindow *window, double xpos, double ypos);
+void handle_keys(GLFWwindow *window);
 
 
 void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
@@ -216,6 +216,7 @@ glUniform3fv(glGetUniformLocation(shader_program, "LightDirection"), 1, lights[0
 glUniform1ui(glGetUniformLocation(shader_program, "numLights"), LIGHTS);
 
 
+glfwSetCursorPosCallback(window, cursor_callback);
 
 //mouse position
 glfwGetCursorPos(window, &xpos_old, &ypos_old);
@@ -241,19 +242,7 @@ while ( !glfwWindowShouldClose( window ) ) {
 	// Wipe the drawing surface clear.
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	
-	/* USER INPUT */
-	
-	glfwSetKeyCallback(window, key_callback);
-	
-	/* clamp pitch to 180° */
-	if(camera.yaw_pitch[1] > PI/2){
-		camera.yaw_pitch[1] = PI/2;
-	}
-	if(camera.yaw_pitch[1] < -PI/2){
-		camera.yaw_pitch[1] = -PI/2;
-	}
-	
-
+	handle_keys(window);
 	
 	// update Uniforms
 	glUniform3fv(campos_loc, 1, camera.xyz);
@@ -313,11 +302,11 @@ char *loadShaders(const char* path){
 }
 
 //TODO: change to callback system
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods){
-
+void handle_keys(GLFWwindow *window){
+	
 	static uint8_t esc_down = 0;
 	static uint8_t f_r_near_far_change = 0xFF; //if focal length, aspect-ratio, near or far changed
-
+	
 	//movement
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
 		camera.xyz[0] += deltaTime * FLYSPEED * -sin(-camera.yaw_pitch[0]);
@@ -349,16 +338,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 		if(camera.f != 2.0f){
 			camera.f = 2.0f;
 			f_r_near_far_change |= 0x80;
-			fprintf(stderr, "2.0\n");
 		}
 	}else{
 		if(camera.f != 1.0f){
 			camera.f = 1.0f;
 			f_r_near_far_change |= 0x80;
-			fprintf(stderr, "1.0\n");
 		}
 	}
-
+	
 	//check if (f r near far) changed
 	updateNonFreq(&camera, &f_r_near_far_change, nonFreqLocations);
 	
@@ -371,12 +358,22 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE){
 		esc_down = 0;
 	}
+}
+
+//mouse callback
+void cursor_callback(GLFWwindow *window, double xpos, double ypos){
 	
-	
-	//camera direction 
 	glfwGetCursorPos(window, &xpos, &ypos);
 	camera.yaw_pitch[0] += (xpos - xpos_old) * RADPERPIXEL;
 	camera.yaw_pitch[1] += (ypos - ypos_old) * RADPERPIXEL;
 	xpos_old = xpos;
 	ypos_old = ypos;
+	
+	/* clamp pitch to 180° */
+	if(camera.yaw_pitch[1] > PI/2){
+		camera.yaw_pitch[1] = PI/2;
+	}
+	if(camera.yaw_pitch[1] < -PI/2){
+		camera.yaw_pitch[1] = -PI/2;
+	}
 }
