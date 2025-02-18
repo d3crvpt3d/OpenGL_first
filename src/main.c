@@ -1,4 +1,5 @@
 #include "main.h"
+#include "chunkOffset.c"
 
 Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},
@@ -83,7 +84,7 @@ int main(){
 	
 	glfwMakeContextCurrent(window);
 	glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);//toggle cursor
-
+	
 	//1 = cap vsync to monitor fps
 	glfwSwapInterval(1);
 	
@@ -97,190 +98,233 @@ int main(){
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
 	
-	/* create VBO */
-	float points[] = {
-		-0.5f, 0.5f, 0.0f,
-		-0.5f,-0.5f, 0.0f,
-		 0.5f, 0.5f, 0.0f,
-		 0.5f,-0.5f, 0.0f,
-	};//square
+	//create offsets
+	const chunkBlockOffset[512];
 	
-	float colors[] = {
+	/* create VBO Faces for each side that gets instanced */
+	float faces[6][12];
+	
+	float faces[0] = {//x+
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f
+	};
+	
+	float faces[1] = {//y+
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f
+	};
+	
+	float faces[2] = {//z+
+		0.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f
+	};
+	
+	//negative sides
+	float faces[3] = {//x+
+		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f
+	};
+	
+	float faces[4] = {//y+
+		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f
+	};
+	
+	float faces[5] = {//z+
+		0.0f, 0.0f, 0.0f,
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 0.0f
 	};
 	
 	
-	//TODO: change to dynamic lights
-	Light lights[LIGHTS] = {
-		{{0.0f, 10.0f, 2.0f},/*xyz*/
-		{0.0f, -10.0f/sqrt(104.0f), -2.0f/sqrt(104.0f)},/*direction (normal)*/
-		{1.0f, 1.0f, 1.0f},/*color*/
-		0.8f					/*intensity*/
+	GLuint points_vbo = 0;
+	glGenBuffers( 1, &points_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
+	glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), points, GL_STATIC_DRAW );
+	
+	GLuint colors_vbo = 0;
+	glGenBuffers( 1, &colors_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
+	glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), colors, GL_STATIC_DRAW );
+	
+	
+	/* create VAO */
+	GLuint vao = 0;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(1);
+	
+	/* Load Shaders */
+	
+	const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
+	const char *fragment_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
+	
+	if(!vertex_shader || !fragment_shader){
+		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
+		return -1;
 	}
-};
-
-GLuint points_vbo = 0;
-glGenBuffers( 1, &points_vbo );
-glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
-glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), points, GL_STATIC_DRAW );
-
-GLuint colors_vbo = 0;
-glGenBuffers( 1, &colors_vbo );
-glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
-glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), colors, GL_STATIC_DRAW );
-
-
-/* create VAO */
-GLuint vao = 0;
-glGenVertexArrays(1, &vao);
-glBindVertexArray(vao);
-
-glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-glEnableVertexAttribArray(0);
-
-glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-glEnableVertexAttribArray(1);
-
-/* Load Shaders */
-
-const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
-const char *fragment_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
-
-if(!vertex_shader || !fragment_shader){
-	fprintf(stderr, "vertex shader or fragment shader not locatable\n");
-	return -1;
-}
-
-/* OpenGL Options */
-//glEnable(GL_CULL_FACE);
-
-/* Link Shaders */
-GLuint vs = glCreateShader( GL_VERTEX_SHADER );
-glShaderSource( vs, 1, &vertex_shader, NULL );
-glCompileShader( vs );
-
-GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
-glShaderSource( fs, 1, &fragment_shader, NULL );
-glCompileShader( fs );
-
-GLuint shader_program = glCreateProgram();
-glAttachShader( shader_program, vs );
-glAttachShader( shader_program, fs );
-
-glLinkProgram( shader_program );
-
-/* Check Compilation Errors */
-GLint success;
-glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-if (!success) {
-	char infoLog[512];
-	glGetShaderInfoLog(fs, 512, NULL, infoLog);
-	fprintf(stderr, "Fragment shader compilation failed: %s\n", infoLog);
-	free((void*)fragment_shader);
-	return -1;
-}
-
-glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-if (!success) {
-	char infoLog[512];
-	glGetShaderInfoLog(vs, 512, NULL, infoLog);
-	fprintf(stderr, "Vertex shader compilation failed: %s\n", infoLog);
+	
+	/* OpenGL Options */
+	//glEnable(GL_CULL_FACE);
+	
+	/* Link Shaders */
+	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
+	glShaderSource( vs, 1, &vertex_shader, NULL );
+	glCompileShader( vs );
+	
+	GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
+	glShaderSource( fs, 1, &fragment_shader, NULL );
+	glCompileShader( fs );
+	
+	GLuint shader_program = glCreateProgram();
+	glAttachShader( shader_program, vs );
+	glAttachShader( shader_program, fs );
+	
+	glLinkProgram( shader_program );
+	
+	/* Check Compilation Errors */
+	GLint success;
+	glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		char infoLog[512];
+		glGetShaderInfoLog(fs, 512, NULL, infoLog);
+		fprintf(stderr, "Fragment shader compilation failed: %s\n", infoLog);
+		free((void*)fragment_shader);
+		return -1;
+	}
+	
+	glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		char infoLog[512];
+		glGetShaderInfoLog(vs, 512, NULL, infoLog);
+		fprintf(stderr, "Vertex shader compilation failed: %s\n", infoLog);
+		free((void*)vertex_shader);
+		return -1;
+	}
+	
+	double currTime = glfwGetTime();
+	double lastTime;
+	
+	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
+	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
+	
+	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
+	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
+	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
+	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
+	
+	glUseProgram(shader_program);
+	
+	//opengl state changes
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	
+	//pass block offsets in chunk to gpu
+	glUniform3fv(glGetUniformLocation(shader_program, "chunkOffset"), 512, chunkOffsetArray);//TODO: check if functs
+	
+	
+	glfwSetCursorPosCallback(window, cursor_callback);
+	
+	//mouse position
+	glfwGetCursorPos(window, &xpos_old, &ypos_old);
+	
+	/* MAIN LOOP */
+	while ( !glfwWindowShouldClose( window ) ) {
+		
+		/* Calculate delta Time of last frame */
+		lastTime = currTime;
+		currTime = glfwGetTime();
+		deltaTime = currTime - lastTime;
+		
+		// set fps as title
+		title_cd -= deltaTime;
+		if(title_cd <= 0.0 && deltaTime > 0.0 ){
+			double fps = 1.0 / deltaTime;
+			char tmp[16];
+			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
+			glfwSetWindowTitle(window, tmp);
+			title_cd = 0.1; //reset value of title cd
+		}
+		
+		// Wipe the drawing surface clear.
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		
+		handle_keys(window);
+		
+		// update Uniforms
+		glUniform3fv(campos_loc, 1, camera.xyz);
+		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
+		
+		
+		/* create chunks async */
+		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
+		
+		//if chunk is not ready try to join
+		if(threadDone){
+			pthread_join(chunkGenThread, NULL);
+		}else{
+			threadDone = 0;
+			generateChunks(currChunk);
+		}
+		
+		/* render scene */
+		glBindVertexArray( vao );
+		glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+		
+		//for each chunk draw each visible face
+		for(uint8_t z = 0; z < RENDERSPAN; z++){
+			for(uint8_t y = 0; y < RENDERSPAN; y++){
+				for(uint8_t x = 0; x < RENDERSPAN; x++){
+					
+					//render each face in current chunk
+					for(int face = 0; face < 6; face++){
+						
+						//skip if face is not visible
+						if(!renderRegion.chunk[z][y][x].visible[face]){
+							continue;
+						}
+						
+						//draw all faces in same direction
+						glBindVertexArray(faces[face]);
+						glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, renderRegion.chunk[z][y][x].numBlocks);
+					}
+					
+				}
+			}
+		}
+		
+		// Put the stuff we've been drawing onto the visible area.
+		glfwSwapBuffers( window );
+		
+		// Update window events.
+		glfwPollEvents();
+		
+	}
+	
+	glfwTerminate();
+	
 	free((void*)vertex_shader);
-	return -1;
-}
-
-double currTime = glfwGetTime();
-double lastTime;
-
-GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
-GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
-
-nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
-nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
-nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
-nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
-
-glUseProgram(shader_program);
-
-//opengl state changes
-glEnable(GL_DEPTH_TEST);
-glDepthFunc(GL_LESS);
-
-//for once use static light
-glUniform3fv(glGetUniformLocation(shader_program, "LightPosition"), 1, lights[0].xyz);
-glUniform3fv(glGetUniformLocation(shader_program, "LightColor"), 1, lights[0].rgb);
-glUniform1f(glGetUniformLocation(shader_program, "LightIntensity"), lights[0].intensity);
-glUniform3fv(glGetUniformLocation(shader_program, "LightDirection"), 1, lights[0].direction);
-glUniform1ui(glGetUniformLocation(shader_program, "numLights"), LIGHTS);
-
-
-glfwSetCursorPosCallback(window, cursor_callback);
-
-//mouse position
-glfwGetCursorPos(window, &xpos_old, &ypos_old);
-
-/* MAIN LOOP */
-while ( !glfwWindowShouldClose( window ) ) {
+	free((void*)fragment_shader);
 	
-	/* Calculate delta Time of last frame */
-	lastTime = currTime;
-	currTime = glfwGetTime();
-	deltaTime = currTime - lastTime;
-	
-	// set fps as title
-	title_cd -= deltaTime;
-	if(title_cd <= 0.0 && deltaTime > 0.0 ){
-		double fps = 1.0 / deltaTime;
-		char tmp[16];
-		snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
-		glfwSetWindowTitle(window, tmp);
-		title_cd = 0.1; //reset value of title cd
-	}
-	
-	// Wipe the drawing surface clear.
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	
-	handle_keys(window);
-	
-	// update Uniforms
-	glUniform3fv(campos_loc, 1, camera.xyz);
-	glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
-	
-	
-	/* create chunks async */
-	vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
-	
-	//if chunk is not ready try to join
-	if(threadDone){
-		pthread_join(chunkGenThread, NULL);
-	}else{
-		threadDone = 0;
-		generateChunks(currChunk);
-	}
-	
-	//render scene
-	glBindVertexArray( vao );
-	glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-	
-	// Put the stuff we've been drawing onto the visible area.
-	glfwSwapBuffers( window );
-	
-	// Update window events.
-	glfwPollEvents();
-	
-}
-
-glfwTerminate();
-
-free((void*)vertex_shader);
-free((void*)fragment_shader);
-
-return 0;
+	return 0;
 }
 
 char *loadShaders(const char* path){
@@ -304,7 +348,7 @@ char *loadShaders(const char* path){
 	return buffer;
 }
 
-//TODO: change to callback system
+
 void handle_keys(GLFWwindow *window){
 	
 	static uint8_t esc_down = 0;

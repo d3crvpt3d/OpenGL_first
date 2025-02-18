@@ -15,15 +15,17 @@ uniform float ratio;
 uniform float near;
 uniform float far;
 
+//chunk generation
+uniform vec3 vertex_normal; //normal vector for each side
+uniform vec3 chunkOffset;	//offset of chunks (0, 0, 0)
+uniform vec3 offsets[512];//postitional chunk offsets
+uniform bool visible[512];//discord if false for given index
 
 out vec3 color;
 
 void main() {
 
-	color = vertex_color;
-	/*-------- Phong Lighting --------*/
-
-	/*-------- Camera projection --------*/
+	color = dot(vertex_normal, vec3(-1.0, -2.0, -1.0));
 
 	vec3 trans = vertex_position - cam_pos;
 

@@ -16,6 +16,7 @@
 
 extern pthread_t chunkGenThread;
 extern _Atomic uint8_t threadDone;
+extern RenderRegion renderRegion;
 
 typedef struct{
 	int32_t x;
@@ -26,6 +27,8 @@ typedef struct{
 //raw chunk where each block is uint as blocktype (0 := air, so that "if(block[x][y][z])" works)
 typedef struct{
 	vec3i_t pos;
+	uint8_t visible[6];//visible faces
+	uint32_t numBlocks;
 	uint8_t block[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
 } Chunk;
 
