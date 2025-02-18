@@ -1,5 +1,5 @@
 #include "main.h"
-#include "chunkOffset.c"
+#include "chunkOffset.h"
 
 Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},
@@ -99,81 +99,52 @@ int main(){
 	
 	
 	//create offsets
-	const chunkBlockOffset[512];
+	float faces_normal[6][3] = {
+		{ 1.0f, 0.0f, 0.0f},
+		{ 0.0f, 1.0f, 0.0f},
+		{ 0.0f, 0.0f, 1.0f},
+		{-1.0f, 0.0f, 0.0f},
+		{ 0.0f,-1.0f, 0.0f},
+		{ 0.0f, 0.0f,-1.0f},
+	};
 	
 	/* create VBO Faces for each side that gets instanced */
-	float faces[6][12];
-	
-	float faces[0] = {//x+
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 1.0f,
-		1.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 1.0f
+	float faces[6][12] = {
+		{//x+
+			1.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 1.0f,
+			1.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 1.0f
+		},{//y+
+			0.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 1.0f
+		},{//z+
+			0.0f, 0.0f, 1.0f,
+			1.0f, 0.0f, 1.0f,
+			0.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, 1.0f
+		},{//x-
+			0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f,
+			0.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 1.0f
+		},{//y-
+			0.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 1.0f
+		},{//z-
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 0.0f
+		}
 	};
-	
-	float faces[1] = {//y+
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 1.0f
-	};
-	
-	float faces[2] = {//z+
-		0.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 1.0f,
-		0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f
-	};
-	
-	//negative sides
-	float faces[3] = {//x+
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 1.0f
-	};
-	
-	float faces[4] = {//y+
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 1.0f
-	};
-	
-	float faces[5] = {//z+
-		0.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f
-	};
-	
-	
-	GLuint points_vbo = 0;
-	glGenBuffers( 1, &points_vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
-	glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), points, GL_STATIC_DRAW );
-	
-	GLuint colors_vbo = 0;
-	glGenBuffers( 1, &colors_vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, colors_vbo );
-	glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( float ), colors, GL_STATIC_DRAW );
-	
-	
-	/* create VAO */
-	GLuint vao = 0;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	
-	glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(1);
+
 	
 	/* Load Shaders */
-	
 	const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
 	const char *fragment_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
 	
@@ -226,6 +197,8 @@ int main(){
 	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
 	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
 	
+	GLint faces_normal_loc = glGetUniformLocation(shader_program, "face_normal");
+	
 	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
 	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
 	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
@@ -238,13 +211,21 @@ int main(){
 	glDepthFunc(GL_LESS);
 	
 	//pass block offsets in chunk to gpu
-	glUniform3fv(glGetUniformLocation(shader_program, "chunkOffset"), 512, chunkOffsetArray);//TODO: check if functs
+	glUniform3fv(glGetUniformLocation(shader_program, "chunkOffset"), 512, (float *)chunkOffsetArray);//TODO: check if functs //TODO:
 	
 	
 	glfwSetCursorPosCallback(window, cursor_callback);
 	
 	//mouse position
 	glfwGetCursorPos(window, &xpos_old, &ypos_old);
+	
+	vec3i_t lastChunk = {0.0, 0.0, 0.0};
+	
+	GLint faces_vbo;
+	glGenBuffers(1, &faces_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, faces_vbo);  
+	glBufferData(GL_ARRAY_BUFFER, , face, GL_STATIC_DRAW);
+	//TODO:
 	
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
@@ -277,17 +258,24 @@ int main(){
 		/* create chunks async */
 		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
 		
-		//if chunk is not ready try to join
-		if(threadDone){
-			pthread_join(chunkGenThread, NULL);
-		}else{
-			threadDone = 0;
-			generateChunks(currChunk);
+		//check if new chunk
+		if(
+			currChunk.x != lastChunk.x ||
+			currChunk.y != lastChunk.y ||
+			currChunk.z != lastChunk.z
+		){
+			lastChunk.x = currChunk.x;
+			lastChunk.y = currChunk.y;
+			lastChunk.z = currChunk.z;
+
+			if(threadDone){
+				pthread_join(chunkGenThread, NULL);
+			}else{
+				threadDone = 0;
+				generateChunks(currChunk);
+			}
 		}
 		
-		/* render scene */
-		glBindVertexArray( vao );
-		glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 		
 		//for each chunk draw each visible face
 		for(uint8_t z = 0; z < RENDERSPAN; z++){
@@ -297,13 +285,14 @@ int main(){
 					//render each face in current chunk
 					for(int face = 0; face < 6; face++){
 						
+						glUniform3fv(faces_normal_loc, 1, faces_normal[face]);
 						//skip if face is not visible
 						if(!renderRegion.chunk[z][y][x].visible[face]){
 							continue;
 						}
 						
 						//draw all faces in same direction
-						glBindVertexArray(faces[face]);
+						glBindVertexArray(faces_vbo);
 						glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, renderRegion.chunk[z][y][x].numBlocks);
 					}
 					

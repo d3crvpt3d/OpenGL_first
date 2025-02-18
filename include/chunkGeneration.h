@@ -7,7 +7,7 @@
 
 
 #define CHUNK_WDH 8
-#define RENDERDISTANCE 10
+#define RENDERDISTANCE 2
 #define CHUNK_THREADS 4
 #define BLOCKS_PER_CHUNK CHUNK_WDH * CHUNK_WDH * CHUNK_WDH
 
@@ -16,7 +16,6 @@
 
 extern pthread_t chunkGenThread;
 extern _Atomic uint8_t threadDone;
-extern RenderRegion renderRegion;
 
 typedef struct{
 	int32_t x;
@@ -36,6 +35,8 @@ typedef struct{
 typedef struct{
 	Chunk chunk[RENDERSPAN][RENDERSPAN][RENDERSPAN];
 } RenderRegion;
+
+extern RenderRegion renderRegion;
 
 typedef struct{
 	uint32_t length;
