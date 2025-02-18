@@ -14,8 +14,8 @@
 #define RENDERSPAN (2*RENDERDISTANCE+1) //from x-renderdistance to x+renderdistance
 #define CHUNKS RENDERSPAN * RENDERSPAN * RENDERSPAN
 
-pthread_t chunkGenThread = 0;
-_Atomic uint8_t threadDone = 1;
+extern pthread_t chunkGenThread;
+extern _Atomic uint8_t threadDone;
 
 typedef struct{
 	int32_t x;
