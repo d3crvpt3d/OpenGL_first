@@ -1,5 +1,4 @@
 #include "main.h"
-#include "chunkOffset.h"
 
 Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},
@@ -13,6 +12,7 @@ double deltaTime;
 double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
 double xpos_old, ypos_old;
 GLint nonFreqLocations[4];
+
 
 char *loadShaders(const char* path);
 void cursor_callback(GLFWwindow *window, double xpos, double ypos);
@@ -50,16 +50,6 @@ void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
 }
 
 int main(){
-	
-	//create threads for chunk generation (10 in each direction by default)
-	Chunk *chunks = malloc(sizeof(Chunk) * 441);
-	
-	if(!chunks){
-		fprintf(stderr,"Cannot malloc %u KB for Chunks", sizeof(Chunk) * 441 / 1000);
-		return -1;
-	}
-	uint64_t numChunks = 441;
-	
 	GLenum err;
 	
 	GLFWwindow *window;
@@ -97,7 +87,34 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
-	
+	//set up instance vbo of cubes //TODO: make 6 face vbo to optimize
+	glGenBuffers(1, &instance_vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance_vbo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint8_t) * CHUNKS * BLOCKS_PER_CHUNK, renderRegion, GL_STATIC_DRAW);//allocate buffer for index data
+
+	glGenVertexArrays(1, &cube_vbo);
+	glBindBuffer(GL_VERTEX_ARRAY, cube_vbo);
+
+	static const GLfloat cube_strip[] = {
+    -1.f, 1.f, 1.f,     // Front-top-left
+    1.f, 1.f, 1.f,      // Front-top-right
+    -1.f, -1.f, 1.f,    // Front-bottom-left
+    1.f, -1.f, 1.f,     // Front-bottom-right
+    1.f, -1.f, -1.f,    // Back-bottom-right
+    1.f, 1.f, 1.f,      // Front-top-right
+    1.f, 1.f, -1.f,     // Back-top-right
+    -1.f, 1.f, 1.f,     // Front-top-left
+    -1.f, 1.f, -1.f,    // Back-top-left
+    -1.f, -1.f, 1.f,    // Front-bottom-left
+    -1.f, -1.f, -1.f,   // Back-bottom-left
+    1.f, -1.f, -1.f,    // Back-bottom-right
+    -1.f, 1.f, -1.f,    // Back-top-left
+    1.f, 1.f, -1.f      // Back-top-right
+	};
+
+	//put cube data in cube vbo
+	glBufferData(GL_VERTEX_ARRAY, sizeof(cube_strip) * sizeof(GLfloat), cube_strip, GL_STATIC_DRAW);
+
 	//create offsets
 	float faces_normal[6][3] = {
 		{ 1.0f, 0.0f, 0.0f},
@@ -105,7 +122,7 @@ int main(){
 		{ 0.0f, 0.0f, 1.0f},
 		{-1.0f, 0.0f, 0.0f},
 		{ 0.0f,-1.0f, 0.0f},
-		{ 0.0f, 0.0f,-1.0f},
+		{ 0.0f, 0.0f,-1.0f}
 	};
 	
 	/* create VBO Faces for each side that gets instanced */
@@ -210,10 +227,6 @@ int main(){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	
-	//pass block offsets in chunk to gpu
-	glUniform3fv(glGetUniformLocation(shader_program, "chunkOffset"), 512, (float *)chunkOffsetArray);//TODO: check if functs //TODO:
-	
-	
 	glfwSetCursorPosCallback(window, cursor_callback);
 	
 	//mouse position
@@ -221,12 +234,8 @@ int main(){
 	
 	vec3i_t lastChunk = {0.0, 0.0, 0.0};
 	
-	GLint faces_vbo;
-	glGenBuffers(1, &faces_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, faces_vbo);  
-	glBufferData(GL_ARRAY_BUFFER, , face, GL_STATIC_DRAW);
-	//TODO:
-	
+
+
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
@@ -256,7 +265,7 @@ int main(){
 		
 		
 		/* create chunks async */
-		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
+		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WD, camera.xyz[1] / CHUNK_H, camera.xyz[2] / CHUNK_WD};
 		
 		//check if new chunk
 		if(
@@ -276,26 +285,16 @@ int main(){
 			}
 		}
 		
-		
-		//for each chunk draw each visible face
+		glUseProgram(shader_program);
+		glBindVertexArray(instance_vao);
+		//for each chunk draw each cube instanced //TODO: optimize with faces instead
 		for(uint8_t z = 0; z < RENDERSPAN; z++){
 			for(uint8_t y = 0; y < RENDERSPAN; y++){
 				for(uint8_t x = 0; x < RENDERSPAN; x++){
 					
-					//render each face in current chunk
-					for(int face = 0; face < 6; face++){
-						
-						glUniform3fv(faces_normal_loc, 1, faces_normal[face]);
-						//skip if face is not visible
-						if(!renderRegion.chunk[z][y][x].visible[face]){
-							continue;
-						}
-						
-						//draw all faces in same direction
-						glBindVertexArray(faces_vbo);
-						glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, renderRegion.chunk[z][y][x].numBlocks);
-					}
-					
+					//TODO: draw cubes instanced
+					glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 42, BLOCKS_PER_CHUNK);
+
 				}
 			}
 		}
