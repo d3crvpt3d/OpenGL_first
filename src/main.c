@@ -90,10 +90,14 @@ int main(){
 	//set up instance vbo of cubes //TODO: make 6 face vbo to optimize
 	glGenBuffers(1, &instance_vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance_vbo);
+	
+	glGenVertexArrays(1, &cube_vbo);
+
+	glGenVertexArrays(1, &instance_vao);
+	glBindVertexArray(instance_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint8_t) * CHUNKS * BLOCKS_PER_CHUNK, renderRegion, GL_STATIC_DRAW);//allocate buffer for index data
 
-	glGenVertexArrays(1, &cube_vbo);
-	glBindBuffer(GL_VERTEX_ARRAY, cube_vbo);
 
 	static const GLfloat cube_strip[] = {
     -1.f, 1.f, 1.f,     // Front-top-left
@@ -285,14 +289,14 @@ int main(){
 			}
 		}
 		
-		glUseProgram(shader_program);
-		glBindVertexArray(instance_vao);
+		
 		//for each chunk draw each cube instanced //TODO: optimize with faces instead
 		for(uint8_t z = 0; z < RENDERSPAN; z++){
 			for(uint8_t y = 0; y < RENDERSPAN; y++){
 				for(uint8_t x = 0; x < RENDERSPAN; x++){
 					
 					//TODO: draw cubes instanced
+					glBindVertexArray(instance_vao);
 					glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 42, BLOCKS_PER_CHUNK);
 
 				}

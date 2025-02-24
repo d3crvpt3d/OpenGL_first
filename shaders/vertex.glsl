@@ -1,9 +1,7 @@
 #version 410 core
 
-#define LIGHTS 1
-
 layout(location = 0) in vec3 vertex_position;
-layout(location = 1) in vec3 vertex_color;
+layout(location = 1) in uint chunkarray[64*16*64*5*5*5];//TODO: change
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;
@@ -17,15 +15,25 @@ uniform float far;
 
 //chunk generation
 uniform vec3 face_normal; //normal vector for each side
-uniform vec3 chunkOffset;	//offset of chunks (0, 0, 0)
-uniform vec3 offsets[512];//postitional chunk offsets
-uniform bool visible[512];//discord if false for given index
+uniform vec3 chunk_pos;
 
 out vec3 color;
 
 void main() {
 
-	color = dot(face_normal, vec3(-1.0, -2.0, -1.0));
+	color = vec3(0.5, 0.5, 0.5);
+
+	vec3 block_pos = vec3(
+		(gl_InstanceID >> 0 ) & 0x3F,
+		(gl_InstanceID >> 6 ) & 0xF,
+		(gl_InstanceID >> 10) & 0x3F
+		);
+
+	vec3 newPos = vertex_position + chunk_pos + block_pos;
+
+	if(!(chunkarray[gl_InstanceID] == 0)){
+		newPos = vec3(0.0, 0.0, 0.0);
+	}
 
 	vec3 trans = vertex_position - cam_pos;
 

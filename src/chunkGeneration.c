@@ -3,6 +3,8 @@
 pthread_t chunkGenThread = 0;
 _Atomic uint8_t threadDone = 1;
 
+vec3i_t chunk_map[CHUNKS] = {0};
+
 //get num of processors
 #ifdef _WIN32
 	//Windows
