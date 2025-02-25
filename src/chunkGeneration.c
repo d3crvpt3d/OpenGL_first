@@ -30,7 +30,6 @@ Chunk_t grenderRegion[CHUNKS] = {0};
 uint32_t gseed = 0; //currently 0
 
 GLint ginstance_vbo;
-GLint ginstance_vao;
 GLint gcube_vbo;
 
 //TODO: fix
@@ -134,6 +133,6 @@ void *checkChunks(void *args){
 
 //spawn thread for generation chunks
 pthread_t generateChunks(vec3i_t currChunkCoord){
-
+	gthreadDone = 0;
 	return pthread_create(&gchunkGenThread, NULL, checkChunks, &currChunkCoord);
 }

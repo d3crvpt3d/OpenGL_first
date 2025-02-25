@@ -89,6 +89,7 @@ int main(){
 	
 	//set up instance vbo of cubes //TODO: make 6 face vbo to optimize
 	GLint instanceVBO;
+	GLint instanceVAO;
 	glGenBuffers(1, &instanceVBO);
 	ginstance_vbo = instanceVBO; //copy id to global
 	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
@@ -237,11 +238,14 @@ int main(){
 	glfwGetCursorPos(window, &xpos_old, &ypos_old);
 	
 	vec3i_t lastChunk = {0.0, 0.0, 0.0};
-	
-	GLint instanceVAO = ginstance_vao;
+
+	gchunkGenThread = generateChunks(lastChunk);
 
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
+
+		// Wipe the drawing surface clear.
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		
 		/* Calculate delta Time of last frame */
 		lastTime = currTime;
@@ -257,9 +261,6 @@ int main(){
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
 		}
-		
-		// Wipe the drawing surface clear.
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		
 		handle_keys(window);
 		
