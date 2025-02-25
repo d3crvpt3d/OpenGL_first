@@ -1,9 +1,7 @@
 #include "chunkGeneration.h"
 
-pthread_t chunkGenThread = 0;
-_Atomic uint8_t threadDone = 1;
-
-vec3i_t chunk_map[CHUNKS] = {0};
+pthread_t gchunkGenThread = 0;
+_Atomic uint8_t gthreadDone = 1;
 
 //get num of processors
 #ifdef _WIN32
@@ -27,29 +25,23 @@ vec3i_t chunk_map[CHUNKS] = {0};
 	#error "unsupported platform"
 #endif
 
-uint8_t renderRegion[CHUNKS * BLOCKS_PER_CHUNK] = {0};
-uint32_t seed = 0; //currently 0
+Chunk_t grenderRegion[CHUNKS] = {0};
+uint32_t gseed = 0; //currently 0
 
-GLint instance_vbo;
-GLint instance_vao;
-GLint cube_vbo;
+GLint ginstance_vbo;
+GLint ginstance_vao;
+GLint gcube_vbo;
 
-//TODO: check if really works
+//TODO: fix
 //map chunk coord to actual memory via modulus RENDERSPAN
-uint8_t *getChunkMemoryPosition(int32_t x, int32_t y, int32_t z){
-	return 
-	renderRegion +
-	BLOCKS_PER_CHUNK * (
-		(z + RENDERDISTANCE) % RENDERSPAN * CHUNK_WD * CHUNK_H +
-		(y + RENDERDISTANCE) % RENDERSPAN * CHUNK_WD +
-		(x + RENDERDISTANCE) % RENDERSPAN
-	);
+uint32_t *getChunkMemoryPosition(int32_t x, int32_t y, int32_t z){
+	return NULL;
 }
 
 
 //generate chunk on chunk coord [pos]
-void generateChunk(uint8_t *chunk_mem, vec3i_t chunk_coord){
-	srand(seed); //regenerate random values
+void generateChunk(uint32_t *chunk_mem, vec3i_t chunk_coord){
+	srand(gseed); //regenerate random values
 
 	vec3i_t global = {chunk_coord.x * CHUNK_WD, chunk_coord.y * CHUNK_H, chunk_coord.z * CHUNK_WD};
 
@@ -98,11 +90,13 @@ void *checkChunks(void *args){
 	vec3i_t mem_pos = {0};
 
 	//iterate over all chunks in memory
+	GLint instanceVBO = ginstance_vbo;//load from global
+
 	for(uint32_t z = 0; z < RENDERSPAN; z++){
 		for(uint32_t y = 0; y < RENDERSPAN; y++){
 			for(uint32_t x = 0; x < RENDERSPAN; x++){
 
-				uint8_t *memory = getChunkMemoryPosition(x, y, z); //update memory position
+				uint32_t *memory = getChunkMemoryPosition(x, y, z); //update memory position
 				
 				vec3i_t chunkPos = {
 					currChunk->x - RENDERDISTANCE + x,
@@ -116,6 +110,8 @@ void *checkChunks(void *args){
 					//check if chunk is saved then load, else generate chunk
 					uint8_t *c_loaded = getSavedChunk(chunkPos);
 				
+					uint32_t offset = 0; //TODO: implement
+
 					if(c_loaded){
 						memcpy(memory, c_loaded, sizeof(uint8_t) * BLOCKS_PER_CHUNK);
 					}else{
@@ -124,7 +120,8 @@ void *checkChunks(void *args){
 
 					
 					//update shadow chunk on gpu TODO: swap with shadow buffer
-					glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, memory-renderRegion, BLOCKS_PER_CHUNK * sizeof(uint8_t), memory);
+					glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+					glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, BLOCKS_PER_CHUNK * sizeof(uint32_t), memory);
 				}
 			}
 		}

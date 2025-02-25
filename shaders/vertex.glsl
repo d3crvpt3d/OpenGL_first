@@ -1,7 +1,7 @@
 #version 410 core
 
 layout(location = 0) in vec3 vertex_position;
-layout(location = 1) in uint chunkarray[64*16*64*5*5*5];//TODO: change
+layout(location = 3) in uint aBlockType;//TODO: change
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;
@@ -21,6 +21,11 @@ out vec3 color;
 
 void main() {
 
+	if(aBlockType == 0){
+		gl_Position = vec4(0.0, 0.0, -10.0, 1.0);
+		return;
+	}
+
 	color = vec3(0.5, 0.5, 0.5);
 
 	vec3 block_pos = vec3(
@@ -31,9 +36,7 @@ void main() {
 
 	vec3 newPos = vertex_position + chunk_pos + block_pos;
 
-	if(!(chunkarray[gl_InstanceID] == 0)){
-		newPos = vec3(0.0, 0.0, 0.0);
-	}
+
 
 	vec3 trans = vertex_position - cam_pos;
 

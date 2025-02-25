@@ -88,15 +88,15 @@ int main(){
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
 	//set up instance vbo of cubes //TODO: make 6 face vbo to optimize
-	glGenBuffers(1, &instance_vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance_vbo);
+	GLint instanceVBO;
+	glGenBuffers(1, &instanceVBO);
+	ginstance_vbo = instanceVBO; //copy id to global
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * BLOCKS_PER_CHUNK * CHUNKS, NULL, GL_DYNAMIC_DRAW);//allocate buffer for index data
 	
-	glGenVertexArrays(1, &cube_vbo);
-
-	glGenVertexArrays(1, &instance_vao);
-	glBindVertexArray(instance_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint8_t) * CHUNKS * BLOCKS_PER_CHUNK, renderRegion, GL_STATIC_DRAW);//allocate buffer for index data
+	glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 0, 0);
+	glEnableVertexAttribArray(3);
+	glVertexAttribDivisor(3, 1);
 
 
 	static const GLfloat cube_strip[] = {
@@ -296,7 +296,7 @@ int main(){
 				for(uint8_t x = 0; x < RENDERSPAN; x++){
 					
 					//TODO: draw cubes instanced
-					glBindVertexArray(instance_vao);
+					glBindVertexArray(ginstance_vao);
 					glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 42, BLOCKS_PER_CHUNK);
 
 				}
