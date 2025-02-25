@@ -36,12 +36,12 @@ typedef struct Chunk{
 extern Chunk_t grenderRegion[CHUNKS];
 
 
-extern pthread_t chunkGenThread;
-extern _Atomic uint8_t threadDone;
+extern pthread_t gchunkGenThread;
+extern _Atomic uint8_t gthreadDone;
 
 
 
 //generate [size] Chunks for each Chunk [coord]
 pthread_t generateChunks(vec3i_t currChunkCoord);
 
-uint8_t *getChunkMemoryPosition(int32_t x, int32_t y, int32_t z);
+uint32_t *getChunkMemoryPosition(int32_t x, int32_t y, int32_t z);

@@ -238,7 +238,7 @@ int main(){
 	
 	vec3i_t lastChunk = {0.0, 0.0, 0.0};
 	
-
+	GLint instanceVAO = ginstance_vao;
 
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
@@ -281,22 +281,22 @@ int main(){
 			lastChunk.y = currChunk.y;
 			lastChunk.z = currChunk.z;
 
-			if(threadDone){
-				pthread_join(chunkGenThread, NULL);
+			if(gthreadDone){
+				pthread_join(gchunkGenThread, NULL);
 			}else{
-				threadDone = 0;
+				gthreadDone = 0;
 				generateChunks(currChunk);
 			}
 		}
 		
-		
+		glUseProgram(shader_program);
+		glBindVertexArray(instanceVAO);
 		//for each chunk draw each cube instanced //TODO: optimize with faces instead
 		for(uint8_t z = 0; z < RENDERSPAN; z++){
 			for(uint8_t y = 0; y < RENDERSPAN; y++){
 				for(uint8_t x = 0; x < RENDERSPAN; x++){
 					
 					//TODO: draw cubes instanced
-					glBindVertexArray(ginstance_vao);
 					glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 42, BLOCKS_PER_CHUNK);
 
 				}

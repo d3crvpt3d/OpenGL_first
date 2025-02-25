@@ -3,6 +3,7 @@
 pthread_t gchunkGenThread = 0;
 _Atomic uint8_t gthreadDone = 1;
 
+
 //get num of processors
 #ifdef _WIN32
 	//Windows
@@ -128,11 +129,11 @@ void *checkChunks(void *args){
 	}
 
 	//say that you finished and are ready to be joined
-	threadDone = 1;
+	gthreadDone = 1;
 }
 
 //spawn thread for generation chunks
 pthread_t generateChunks(vec3i_t currChunkCoord){
 
-	return pthread_create(&chunkGenThread, NULL, checkChunks, &currChunkCoord);
+	return pthread_create(&gchunkGenThread, NULL, checkChunks, &currChunkCoord);
 }
