@@ -18,7 +18,6 @@
 #define CHUNKS RENDERSPAN * RENDERSPAN * RENDERSPAN
 
 extern GLint ginstance_vbo;
-extern GLint gcube_vbo;
 
 typedef struct vec3i_t{
 	int32_t x;

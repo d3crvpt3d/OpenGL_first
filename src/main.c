@@ -87,18 +87,6 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
-	//set up instance vbo of cubes //TODO: make 6 face vbo to optimize
-	GLint instanceVBO;
-	GLint instanceVAO;
-	glGenBuffers(1, &instanceVBO);
-	ginstance_vbo = instanceVBO; //copy id to global
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * BLOCKS_PER_CHUNK * CHUNKS, NULL, GL_DYNAMIC_DRAW);//allocate buffer for index data
-	
-	glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 0, 0);
-	glEnableVertexAttribArray(3);
-	glVertexAttribDivisor(3, 1);
-
 
 	static const GLfloat cube_strip[] = {
     -1.f, 1.f, 1.f,     // Front-top-left
@@ -117,55 +105,36 @@ int main(){
     1.f, 1.f, -1.f      // Back-top-right
 	};
 
-	//put cube data in cube vbo
-	glBufferData(GL_VERTEX_ARRAY, sizeof(cube_strip) * sizeof(GLfloat), cube_strip, GL_STATIC_DRAW);
+	//set up instance vbo of cubes
+	GLint instanceVAO;
+	glGenVertexArrays(1, &instanceVAO);
+	glBindVertexArray(instanceVAO);
 
-	//create offsets
-	float faces_normal[6][3] = {
-		{ 1.0f, 0.0f, 0.0f},
-		{ 0.0f, 1.0f, 0.0f},
-		{ 0.0f, 0.0f, 1.0f},
-		{-1.0f, 0.0f, 0.0f},
-		{ 0.0f,-1.0f, 0.0f},
-		{ 0.0f, 0.0f,-1.0f}
-	};
-	
-	/* create VBO Faces for each side that gets instanced */
-	float faces[6][12] = {
-		{//x+
-			1.0f, 0.0f, 0.0f,
-			1.0f, 0.0f, 1.0f,
-			1.0f, 1.0f, 0.0f,
-			1.0f, 1.0f, 1.0f
-		},{//y+
-			0.0f, 1.0f, 0.0f,
-			0.0f, 1.0f, 1.0f,
-			1.0f, 1.0f, 0.0f,
-			1.0f, 1.0f, 1.0f
-		},{//z+
-			0.0f, 0.0f, 1.0f,
-			1.0f, 0.0f, 1.0f,
-			0.0f, 1.0f, 1.0f,
-			1.0f, 1.0f, 1.0f
-		},{//x-
-			0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f,
-			0.0f, 1.0f, 0.0f,
-			0.0f, 1.0f, 1.0f
-		},{//y-
-			0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f,
-			1.0f, 0.0f, 0.0f,
-			1.0f, 0.0f, 1.0f
-		},{//z-
-			0.0f, 0.0f, 0.0f,
-			1.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
-			1.0f, 1.0f, 0.0f
-		}
-	};
 
+	//create cubeVBO
+	GLint cubeVBO;
+	glGenBuffers(1, &cubeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_strip), cube_strip, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, NULL);
+	glEnableVertexAttribArray(0);
+
+
+	//instanceVBO
+	GLint instanceVBO;
+	glGenBuffers(1, &instanceVBO);
+	ginstance_vbo = instanceVBO; //copy id to global
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * BLOCKS_PER_CHUNK * CHUNKS, NULL, GL_DYNAMIC_DRAW); //allocate buffer for index data
 	
+	glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 0, 0);
+	glEnableVertexAttribArray(3);
+	glVertexAttribDivisor(3, 1);
+
+	glBindVertexArray(0);
+
+
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
 	const char *fragment_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
