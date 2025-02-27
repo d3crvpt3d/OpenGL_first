@@ -29,15 +29,6 @@ _Atomic uint8_t gthreadDone = 1;
 Chunk_t grenderRegion[CHUNKS] = {0};
 uint32_t gseed = 0; //currently 0
 
-GLint ginstance_vbo;
-GLint gcube_vbo;
-
-//TODO: fix
-//map chunk coord to actual memory via modulus RENDERSPAN
-uint32_t *getChunkMemoryPosition(int32_t x, int32_t y, int32_t z){
-	return NULL;
-}
-
 
 //generate chunk on chunk coord [pos]
 void generateChunk(uint32_t *chunk_mem, vec3i_t chunk_coord){
@@ -61,73 +52,9 @@ void generateChunk(uint32_t *chunk_mem, vec3i_t chunk_coord){
 	}
 }
 
-int inRenderRegion(vec3i_t pos, vec3i_t *currChunk){
+void *checkChunks(){
 
-	return
-	abs(currChunk->x - pos.x) <= RENDERDISTANCE &&
-	abs(currChunk->y - pos.y) <= RENDERDISTANCE &&
-	abs(currChunk->z - pos.z) <= RENDERDISTANCE;
-}
 
-//TODO:
-//check if chunk is stored somewhere else return NULL
-uint8_t *getSavedChunk(vec3i_t pos){
-
-	if(0){
-		;
-	}
-
-	return NULL;
-}
-
-/* chunk gen thread(s) start */
-//check for all chunks that are in renderdistance but not generated
-//then generate Chunks if necessary
-void *checkChunks(void *args){
-	
-	//cast args to vec3i_t for access to current Chunk coordinates
-	vec3i_t *currChunk = (vec3i_t *) args;
-	vec3i_t mem_pos = {0};
-
-	//iterate over all chunks in memory
-	GLint instanceVBO = ginstance_vbo;//load from global
-
-	for(uint32_t z = 0; z < RENDERSPAN; z++){
-		for(uint32_t y = 0; y < RENDERSPAN; y++){
-			for(uint32_t x = 0; x < RENDERSPAN; x++){
-
-				uint32_t *memory = getChunkMemoryPosition(x, y, z); //update memory position
-				
-				vec3i_t chunkPos = {
-					currChunk->x - RENDERDISTANCE + x,
-					currChunk->y - RENDERDISTANCE + y,
-					currChunk->z - RENDERDISTANCE + z
-				};
-
-				//if chunk at xyz is not in renderdistance replace it with correct one
-				if(!inRenderRegion(chunkPos, currChunk)){
-					
-					//check if chunk is saved then load, else generate chunk
-					uint8_t *c_loaded = getSavedChunk(chunkPos);
-				
-					uint32_t offset = 0; //TODO: implement
-
-					if(c_loaded){
-						memcpy(memory, c_loaded, sizeof(uint8_t) * BLOCKS_PER_CHUNK);
-					}else{
-						generateChunk(memory, chunkPos);
-					}
-
-					
-					//update shadow chunk on gpu TODO: swap with shadow buffer
-					glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-					glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, BLOCKS_PER_CHUNK * sizeof(uint32_t), memory);
-				}
-			}
-		}
-	}
-
-	//say that you finished and are ready to be joined
 	gthreadDone = 1;
 }
 

@@ -106,9 +106,9 @@ int main(){
 	};
 
 	//set up instance vbo of cubes
-	GLint instanceVAO;
-	glGenVertexArrays(1, &instanceVAO);
-	glBindVertexArray(instanceVAO);
+	GLint cubeVAO;
+	glGenVertexArrays(1, &cubeVAO);
+	glBindVertexArray(cubeVAO);
 
 
 	//create cubeVBO
@@ -117,22 +117,8 @@ int main(){
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_strip), cube_strip, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, NULL);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
 	glEnableVertexAttribArray(0);
-
-
-	//instanceVBO
-	GLint instanceVBO;
-	glGenBuffers(1, &instanceVBO);
-	ginstance_vbo = instanceVBO; //copy id to global
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * BLOCKS_PER_CHUNK * CHUNKS, NULL, GL_DYNAMIC_DRAW); //allocate buffer for index data
-	
-	glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 0, 0);
-	glEnableVertexAttribArray(3);
-	glVertexAttribDivisor(3, 1);
-
-	glBindVertexArray(0);
 
 
 	/* Load Shaders */
@@ -145,7 +131,7 @@ int main(){
 	}
 	
 	/* OpenGL Options */
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -255,23 +241,15 @@ int main(){
 				pthread_join(gchunkGenThread, NULL);
 			}else{
 				gthreadDone = 0;
-				generateChunks(currChunk);
+				gchunkGenThread = generateChunks(currChunk);
 			}
 		}
 		
 		glUseProgram(shader_program);
-		glBindVertexArray(instanceVAO);
-		//for each chunk draw each cube instanced //TODO: optimize with faces instead
-		for(uint8_t z = 0; z < RENDERSPAN; z++){
-			for(uint8_t y = 0; y < RENDERSPAN; y++){
-				for(uint8_t x = 0; x < RENDERSPAN; x++){
-					
-					//TODO: draw cubes instanced
-					glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 42, BLOCKS_PER_CHUNK);
+		glBindVertexArray(cubeVAO);
 
-				}
-			}
-		}
+		//TODO: draw cubes instanced
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 42);
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
