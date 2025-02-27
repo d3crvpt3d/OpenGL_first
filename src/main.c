@@ -89,20 +89,63 @@ int main(){
 	
 
 	static const GLfloat cube_strip[] = {
-    -1.f, 1.f, 1.f,     // Front-top-left
-    1.f, 1.f, 1.f,      // Front-top-right
-    -1.f, -1.f, 1.f,    // Front-bottom-left
-    1.f, -1.f, 1.f,     // Front-bottom-right
-    1.f, -1.f, -1.f,    // Back-bottom-right
-    1.f, 1.f, 1.f,      // Front-top-right
-    1.f, 1.f, -1.f,     // Back-top-right
-    -1.f, 1.f, 1.f,     // Front-top-left
-    -1.f, 1.f, -1.f,    // Back-top-left
-    -1.f, -1.f, 1.f,    // Front-bottom-left
-    -1.f, -1.f, -1.f,   // Back-bottom-left
-    1.f, -1.f, -1.f,    // Back-bottom-right
-    -1.f, 1.f, -1.f,    // Back-top-left
-    1.f, 1.f, -1.f      // Back-top-right
+    //-z
+		0.f, 0.f, 0.f,
+    1.f, 0.f, 0.f,
+    1.f, 1.f, 0.f,
+
+		0.f, 0.f, 0.f,
+		1.f, 1.f, 0.f,
+		0.f, 1.f, 0.f,
+
+		//+z
+		0.f, 0.f, 1.f,
+		0.f, 1.f, 1.f,
+		1.f, 1.f, 1.f,
+
+		0.f, 0.f, 1.f,
+		1.f, 1.f, 1.f,
+		1.f, 0.f, 1.f,
+
+
+		//-y
+		0.f, 1.f, 0.f,
+		1.f, 1.f, 0.f,
+		1.f, 1.f, 1.f,
+
+		0.f, 1.f, 0.f,
+		1.f, 1.f, 1.f,
+		0.f, 1.f, 1.f,
+
+
+		//+y
+		0.f, 0.f, 0.f,
+		1.f, 0.f, 1.f,
+		1.f, 0.f, 0.f,
+
+		0.f, 0.f, 0.f,
+		0.f, 0.f, 1.f,
+		1.f, 0.f, 1.f,
+
+
+		//-x
+		0.f, 0.f, 0.f,
+		0.f, 1.f, 0.f,
+		0.f, 1.f, 1.f,
+
+		0.f, 0.f, 0.f,
+		0.f, 1.f, 1.f,
+		0.f, 0.f, 1.f,
+
+
+		//+x
+		1.f, 0.f, 0.f,
+		1.f, 0.f, 1.f,
+		1.f, 1.f, 1.f,
+
+		1.f, 0.f, 0.f,
+		1.f, 1.f, 1.f,
+		1.f, 1.f, 0.f
 	};
 
 	//set up instance vbo of cubes
@@ -249,7 +292,7 @@ int main(){
 		glBindVertexArray(cubeVAO);
 
 		//TODO: draw cubes instanced
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 42);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6*18, 1);
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );

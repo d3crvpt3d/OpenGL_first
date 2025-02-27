@@ -12,27 +12,22 @@ uniform float ratio;
 uniform float near;
 uniform float far;
 
-//chunk generation
-uniform vec3 face_normal; //normal vector for each side
-uniform vec3 chunk_pos;
-
 out vec3 color;
 
 void main() {
 
-	color = vec3(0.5, 0.5, 0.5);
+	color = vec3(0.8, 0.8, 0.8);
 
 	vec3 block_pos = vec3(
 		(gl_InstanceID >> 0 ) & 0x3F,
 		(gl_InstanceID >> 6 ) & 0xF,
 		(gl_InstanceID >> 10) & 0x3F
-		);
+	);
 
-	vec3 newPos = vertex_position + chunk_pos + block_pos;
+	vec3 newPos = vertex_position + block_pos;
 
 
-
-	vec3 trans = vertex_position - cam_pos;
+	vec3 trans = newPos - cam_pos;
 
 	mat4 view1 = mat4(
 		cos(cam_dir.x), 0.0, sin(cam_dir.x), 0.0,
