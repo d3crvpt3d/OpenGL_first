@@ -1,5 +1,9 @@
 #include "main.h"
 
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},
 	.yaw_pitch={0.0f, 0.0f},
@@ -87,6 +91,7 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
+
 	static const GLfloat cube_normal[] = {
 		//-z
 		0.f, 0.f,-1.f,
@@ -290,7 +295,9 @@ int main(){
 	
 	vec3i_t lastChunk = {0.0, 0.0, 0.0};
 
-	gchunkGenThread = generateChunks(lastChunk);
+	setUpThreads();
+
+	generateSpawnLocation();
 
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
@@ -320,10 +327,8 @@ int main(){
 		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
 		
 		
-		/* create chunks async */
-		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WD, camera.xyz[1] / CHUNK_H, camera.xyz[2] / CHUNK_WD};
-		
 		//check if new chunk
+		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
 		if(
 			currChunk.x != lastChunk.x ||
 			currChunk.y != lastChunk.y ||
@@ -333,12 +338,8 @@ int main(){
 			lastChunk.y = currChunk.y;
 			lastChunk.z = currChunk.z;
 
-			if(gthreadDone){
-				pthread_join(gchunkGenThread, NULL);
-			}else{
-				gthreadDone = 0;
-				gchunkGenThread = generateChunks(currChunk);
-			}
+			lastJob;
+			
 		}
 		
 		glUseProgram(shader_program);
@@ -458,5 +459,15 @@ void cursor_callback(GLFWwindow *window, double xpos, double ypos){
 	}
 	if(camera.yaw_pitch[1] < -PI/2){
 		camera.yaw_pitch[1] = -PI/2;
+	}
+}
+
+void generateSpawnLocation(){
+	for(uint32_t z = -RENDERDISTANCE; z <= RENDERDISTANCE; z++){
+		for(uint32_t y = -RENDERDISTANCE; y <= RENDERDISTANCE; y++){
+			for(uint32_t x = -RENDERDISTANCE; x <= RENDERDISTANCE; x++){
+				addJob(x, y, z);
+			}
+		}
 	}
 }

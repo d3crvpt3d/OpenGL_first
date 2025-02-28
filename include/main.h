@@ -39,3 +39,5 @@ typedef struct Light{
 
 	GLfloat intensity;
 } Light;
+
+void generateSpawnLocation();

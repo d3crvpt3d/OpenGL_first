@@ -1,7 +1,6 @@
 #include "chunkGeneration.h"
 
-pthread_t gchunkGenThread = 0;
-_Atomic uint8_t gthreadDone = 1;
+uint8_t programRunning = 1;
 
 
 //get num of processors
@@ -26,40 +25,91 @@ _Atomic uint8_t gthreadDone = 1;
 	#error "unsupported platform"
 #endif
 
-Chunk_t grenderRegion[CHUNKS] = {0};
 uint32_t gseed = 0; //currently 0
 
+pthread_t chunkQueue[CHUNK_THREADS];
 
-//generate chunk on chunk coord [pos]
-void generateChunk(uint32_t *chunk_mem, vec3i_t chunk_coord){
-	srand(gseed); //regenerate random values
 
-	vec3i_t global = {chunk_coord.x * CHUNK_WD, chunk_coord.y * CHUNK_H, chunk_coord.z * CHUNK_WD};
 
-	for(uint8_t z = 0; z < CHUNK_WD; z++){
-		for(uint8_t y = 0; y < CHUNK_H; y++){
-			for(uint8_t x = 0; x < CHUNK_WD; x++){
-				
-				//sin wave generator with amplitude: 5, freq: 1/5
-				if(y == (int32_t) (5.0f * sin( (float) (global.x+x) / 5.0f ))){
-					chunk_mem[CHUNK_WD * CHUNK_H * z + CHUNK_WD * y + x] = 1;
-				}else{
-					chunk_mem[CHUNK_WD * CHUNK_H * z + CHUNK_WD * y + x] = 0;
-				}
+//linked list
+Job_t *jobQueue = NULL;
+Job_t *lastJob = NULL;
 
-			}
+pthread_mutex_t jobMutex;
+
+void addJob(int32_t x, int32_t y, int32_t z){
+	pthread_mutex_lock(jobMutex);
+	Job_t *lastlastJob = lastJob;
+	lastJob = (Job_t *) malloc(sizeof(Job_t));
+	if(lastlastJob){
+		lastlastJob->nextJob = lastJob;
+	}
+	if(!jobQueue){
+		jobQueue = lastJob;
+	}
+	lastJob->x = x;
+	lastJob->y = y;
+	lastJob->z = z;
+	lastJob->nextJob = NULL;
+	pthread_mutex_unlock(jobMutex);
+}
+
+void *waitingRoom(void *args){
+	
+	uint8_t id = (uint8_t) args;
+
+	while(programRunning){
+	
+		pthread_mutex_lock(&jobMutex);
+		if(jobQueue){
+			//get first job and update next job
+			Job_t *myJob = jobQueue;
+			vec3i_t myChunkPos = {myJob->x, myJob->y, myJob->z};
+			jobQueue = jobQueue->nextJob;
+			free(myJob);
+			myJob = NULL;
+			pthread_mutex_unlock(&jobMutex);
+
+			//generate raw chunk data
+			uint16_t chunkMem[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH] = {0};
+			generateChunk(&myChunkPos, &chunkMem);
+
+			//binary meshing
+
+			//greedy meshing
+
+			//notify main thread to upload memory region
+
+		}else{
+			pthread_mutex_unlock(&jobMutex);
 		}
 	}
 }
 
-void *checkChunks(){
 
+void setUpThreads(){
+	
+	programRunning = 1;
 
-	gthreadDone = 1;
+	pthread_mutex_init(&jobMutex, NULL);
+
+	for(uint8_t id = 0; id < CHUNK_THREADS; id++){
+		pthread_create(&chunkQueue[id], NULL, &waitingRoom, (void *) id);
+	}
 }
 
-//spawn thread for generation chunks
-pthread_t generateChunks(vec3i_t currChunkCoord){
-	gthreadDone = 0;
-	return pthread_create(&gchunkGenThread, NULL, checkChunks, &currChunkCoord);
+//clear threads
+void clearThreads(){
+	programRunning = 0;//make threads end waiting
+	for(uint8_t id = 0; id < CHUNK_THREADS; id++){
+		pthread_join(chunkQueue[id], NULL);
+	}
+}
+
+//generate chunk on chunk coord [pos]
+void generateChunk(vec3i_t *chunk_coord, uint16_t *chunkMem){
+	srand(gseed); //regenerate random values
+
+	memset(chunkMem, 1, 14); //DEBUG //TODO:
+	
 }
