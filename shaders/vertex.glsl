@@ -1,6 +1,7 @@
 #version 410 core
 
-layout(location = 0) in vec3 vertex_position;
+layout(location = 0) in vec3 aVertexPosition;
+layout(location = 1) in vec3 aVertexNormal;
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;
@@ -16,7 +17,7 @@ out vec3 color;
 
 void main() {
 
-	color = vec3(0.8, 0.8, 0.8);
+	color = vec3(.4375, 0.5, 0.5625) * max(0.1, dot(aVertexNormal, vec3(-0.408248, -0.816497, -0.408248)));
 
 	vec3 block_pos = vec3(
 		(gl_InstanceID >> 0 ) & 0x3F,
@@ -24,7 +25,7 @@ void main() {
 		(gl_InstanceID >> 10) & 0x3F
 	);
 
-	vec3 newPos = vertex_position + block_pos;
+	vec3 newPos = aVertexPosition + block_pos;
 
 
 	vec3 trans = newPos - cam_pos;

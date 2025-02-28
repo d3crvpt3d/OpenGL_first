@@ -87,8 +87,57 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
+	static const GLfloat cube_normal[] = {
+		//-z
+		0.f, 0.f,-1.f,
+		0.f, 0.f,-1.f,
+		0.f, 0.f,-1.f,
+		0.f, 0.f,-1.f,
+		0.f, 0.f,-1.f,
+		0.f, 0.f,-1.f,
 
-	static const GLfloat cube_strip[] = {
+		//+z
+		0.f, 0.f, 1.f,
+		0.f, 0.f, 1.f,
+		0.f, 0.f, 1.f,
+		0.f, 0.f, 1.f,
+		0.f, 0.f, 1.f,
+		0.f, 0.f, 1.f,
+
+		//-y
+		0.f,-1.f, 0.f,
+		0.f,-1.f, 0.f,
+		0.f,-1.f, 0.f,
+		0.f,-1.f, 0.f,
+		0.f,-1.f, 0.f,
+		0.f,-1.f, 0.f,
+
+		//+y
+		0.f, 1.f, 0.f,
+		0.f, 1.f, 0.f,
+		0.f, 1.f, 0.f,
+		0.f, 1.f, 0.f,
+		0.f, 1.f, 0.f,
+		0.f, 1.f, 0.f,
+
+		//-x
+	 -1.f, 0.f, 0.f,
+	 -1.f, 0.f, 0.f,
+	 -1.f, 0.f, 0.f,
+	 -1.f, 0.f, 0.f,
+	 -1.f, 0.f, 0.f,
+	 -1.f, 0.f, 0.f,
+
+		//+x
+		1.f, 0.f, 0.f,
+		1.f, 0.f, 0.f,
+		1.f, 0.f, 0.f,
+		1.f, 0.f, 0.f,
+		1.f, 0.f, 0.f,
+		1.f, 0.f, 0.f
+	};
+
+	static const GLfloat cube_pos[] = {
     //-z
 		0.f, 0.f, 0.f,
     1.f, 0.f, 0.f,
@@ -158,10 +207,14 @@ int main(){
 	GLint cubeVBO;
 	glGenBuffers(1, &cubeVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_strip), cube_strip, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos) + sizeof(cube_normal), cube_pos, GL_STATIC_DRAW); //position
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(cube_pos), sizeof(cube_normal), cube_normal); //normal
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) sizeof(cube_pos));
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
 
 
 	/* Load Shaders */
@@ -175,6 +228,7 @@ int main(){
 	
 	/* OpenGL Options */
 	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -228,7 +282,6 @@ int main(){
 	
 	//opengl state changes
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
 	
 	glfwSetCursorPosCallback(window, cursor_callback);
 	
@@ -292,7 +345,7 @@ int main(){
 		glBindVertexArray(cubeVAO);
 
 		//TODO: draw cubes instanced
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6*18, 1);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6*18, 5);
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
