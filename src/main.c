@@ -335,6 +335,7 @@ int main(){
 			currChunk.z != lastChunk.z
 		){
 			addNewChunkJob(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
+			removeJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
 			lastChunk.z = currChunk.z;
@@ -461,20 +462,9 @@ void cursor_callback(GLFWwindow *window, double xpos, double ypos){
 }
 
 void generateSpawnLocation(){
-	for(uint32_t z = -RENDERDISTANCE; z <= RENDERDISTANCE; z++){
-		for(uint32_t y = -RENDERDISTANCE; y <= RENDERDISTANCE; y++){
-			for(uint32_t x = -RENDERDISTANCE; x <= RENDERDISTANCE; x++){
-				addJob(x, y, z);
-			}
-		}
-	}
-}
-
-void addNewChunkJob(int32_t lastX, int32_t lastY, int32_t lastZ, int32_t currX, int32_t currY, int32_t currZ){
-	//TODO: make more efficient
-	for(uint32_t z = currZ-RENDERDISTANCE; z <= currZ+RENDERDISTANCE; z++){
-		for(uint32_t y = currY-RENDERDISTANCE; y <= currY+RENDERDISTANCE; y++){
-			for(uint32_t x = currX-RENDERDISTANCE; x <= currX+RENDERDISTANCE; x++){
+	for(int16_t z = -RENDERDISTANCE; z <= RENDERDISTANCE; z++){
+		for(int16_t y = -RENDERDISTANCE; y <= RENDERDISTANCE; y++){
+			for(int16_t x = -RENDERDISTANCE; x <= RENDERDISTANCE; x++){
 				addJob(x, y, z);
 			}
 		}

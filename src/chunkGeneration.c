@@ -1,7 +1,8 @@
 #include "chunkGeneration.h"
 
 uint8_t programRunning = 1;
-uint8_t activeChunks[RENDERSPAN][RENDERSPAN][RENDERSPAN] = {0};
+
+Node_t *root = NULL;
 
 //get num of processors
 #ifdef _WIN32
@@ -30,14 +31,13 @@ uint32_t gseed = 0; //currently 0
 pthread_t chunkQueue[CHUNK_THREADS];
 
 
-
 //linked list
 Job_t *jobQueue = NULL;
 Job_t *lastJob = NULL;
 
 pthread_mutex_t jobMutex;
 
-void addJob(int32_t x, int32_t y, int32_t z){
+void addJob(int16_t x, int16_t y, int16_t z){
 	pthread_mutex_lock(jobMutex);
 	Job_t *lastlastJob = lastJob;
 	lastJob = (Job_t *) malloc(sizeof(Job_t));
@@ -52,6 +52,29 @@ void addJob(int32_t x, int32_t y, int32_t z){
 	lastJob->z = z;
 	lastJob->nextJob = NULL;
 	pthread_mutex_unlock(jobMutex);
+}
+
+//generate chunk on chunk coord [pos]
+void generateChunk(vec3i_t *chunk_coord){
+	//skip if already generated
+	if(chunkTree_exists(root, chunk_coord->x, chunk_coord->y, chunk_coord->z)){
+		return;
+	}
+
+	//create new chunk memory in tree
+	Chunk_t *newChunk = (Chunk_t *) malloc(sizeof(Chunk_t));
+	newChunk->activeBuffer = 0;
+	memset(newChunk->blocks, 0, sizeof(newChunk->blocks));
+	newChunk->x = chunk_coord->x;
+	newChunk->y = chunk_coord->y;
+	newChunk->z = chunk_coord->z;
+	chunkTree_insert(root, newChunk);
+
+	//fill chunk memory with generated values
+
+	srand(gseed); //regenerate random values
+
+	memset(newChunk, 1, 14); //DEBUG //TODO:
 }
 
 void *waitingRoom(void *args){
@@ -72,7 +95,7 @@ void *waitingRoom(void *args){
 
 			//generate raw chunk data
 			uint16_t chunkMem[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH] = {0};
-			generateChunk(&myChunkPos, &chunkMem);
+			generateChunk(&myChunkPos);
 
 			//binary meshing
 
@@ -106,14 +129,22 @@ void clearThreads(){
 	}
 }
 
-//generate chunk on chunk coord [pos]
-void generateChunk(vec3i_t *chunk_coord, uint16_t *chunkMem){
-	//already generated
-	if(activeChunks[chunk_coord->x][chunk_coord->y][chunk_coord->z]){
-		return;
-	}
-	activeChunks[chunk_coord->x][chunk_coord->y][chunk_coord->z] = 1;
-	srand(gseed); //regenerate random values
+void removeChunk(int16_t x, int16_t y, int16_t z){
 
-	memset(chunkMem, 1, 14); //DEBUG //TODO:
+}
+
+void addNewChunkJobs(int16_t lastX, int16_t lastY, int16_t lastZ, int16_t currX, int16_t currY, int16_t currZ){
+	//TODO: make more efficient
+	for(uint16_t z = currZ-RENDERDISTANCE; z <= currZ+RENDERDISTANCE; z++){
+		for(uint16_t y = currY-RENDERDISTANCE; y <= currY+RENDERDISTANCE; y++){
+			for(uint16_t x = currX-RENDERDISTANCE; x <= currX+RENDERDISTANCE; x++){
+				addJob(x, y, z);
+			}
+		}
+	}
+}
+
+
+void removeChunks(int16_t lastX, int16_t lastY, int16_t lastZ, int16_t currX, int16_t currY, int16_t currZ){
+	//TODO: treewalk and pop every that is not in render range
 }
