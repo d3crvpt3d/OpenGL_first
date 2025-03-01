@@ -19,11 +19,6 @@
 #define CHUNKS RENDERSPAN * RENDERSPAN * RENDERSPAN
 
 
-/* GLOBALS */
-extern uint8_t programRunning;
-extern Job_t *lastJob;
-extern Job_t *jobQueue;
-
 /* STRUCTS */
 typedef struct vec3i_t{
 	int32_t x;
@@ -48,6 +43,10 @@ typedef struct Chunk{
 	int32_t z;
 } Chunk_t;
 
+/* GLOBALS */
+extern uint8_t programRunning;
+extern Job_t *lastJob;
+extern Job_t *jobQueue;
 
 /* FUNCTIONS */
 

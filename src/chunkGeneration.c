@@ -42,7 +42,7 @@ Job_t *lastJob = NULL;
 pthread_mutex_t jobMutex;
 
 void addJob(int32_t x, int32_t y, int32_t z){
-	pthread_mutex_lock(jobMutex);
+	pthread_mutex_lock(&jobMutex);
 	Job_t *lastlastJob = lastJob;
 	lastJob = (Job_t *) malloc(sizeof(Job_t));
 	if(lastlastJob){
@@ -55,7 +55,7 @@ void addJob(int32_t x, int32_t y, int32_t z){
 	lastJob->y = y;
 	lastJob->z = z;
 	lastJob->nextJob = NULL;
-	pthread_mutex_unlock(jobMutex);
+	pthread_mutex_unlock(&jobMutex);
 }
 
 //generate chunk on chunk coord [pos]
