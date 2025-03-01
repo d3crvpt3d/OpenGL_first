@@ -41,3 +41,4 @@ typedef struct Light{
 } Light;
 
 void generateSpawnLocation();
+void addNewChunkJob(int32_t lastX, int32_t lastY, int32_t lastZ, int32_t currX, int32_t currY, int32_t currZ);

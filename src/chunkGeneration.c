@@ -1,7 +1,7 @@
 #include "chunkGeneration.h"
 
 uint8_t programRunning = 1;
-
+uint8_t activeChunks[RENDERSPAN][RENDERSPAN][RENDERSPAN] = {0};
 
 //get num of processors
 #ifdef _WIN32
@@ -108,8 +108,12 @@ void clearThreads(){
 
 //generate chunk on chunk coord [pos]
 void generateChunk(vec3i_t *chunk_coord, uint16_t *chunkMem){
+	//already generated
+	if(activeChunks[chunk_coord->x][chunk_coord->y][chunk_coord->z]){
+		return;
+	}
+	activeChunks[chunk_coord->x][chunk_coord->y][chunk_coord->z] = 1;
 	srand(gseed); //regenerate random values
 
 	memset(chunkMem, 1, 14); //DEBUG //TODO:
-	
 }
