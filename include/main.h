@@ -16,6 +16,7 @@
 #define RADPERPIXEL 0.00418879f //mouse sensitivity
 #define PI 3.1415927f
 #define LIGHTS 1 //num lights
+#define CHUNKDATA E:\Code\Projects\OpenGL\opengl_glfw_1\include\main.h
 
 typedef struct Camera{
 	GLfloat xyz[3];
