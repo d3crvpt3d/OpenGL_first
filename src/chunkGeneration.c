@@ -84,7 +84,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 			memcpy(&template[16]+sizeof("chunkData/")-1, nameZ, 8);
 			FILE *fptr;
 			fptr = fopen(template, "w");
-			fwrite(handle->blocks[handle->activeBuffer], sizeof(handle->blocks[0]), 1, fptr); //write contents of active buffer
+			fwrite(handle->blocks, sizeof(handle->blocks), 1, fptr); //write contents of buffer
 			fclose(fptr);
 		}
 	}
@@ -108,12 +108,11 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 		fptr = fopen(template, "rb");
 
 		if(fptr){
-			fread(handle->blocks[!handle->activeBuffer], sizeof(handle->blocks[0]), 1, fptr);//read contentes into non active buffer
+			fread(handle->blocks, sizeof(handle->blocks), 1, fptr);//read contentes into buffer
 			fclose(fptr);
 			handle->x = x;
 			handle->y = y;
 			handle->z = z;
-			handle->activeBuffer != handle->activeBuffer;//lol
 			return;
 		}
 	}

@@ -220,6 +220,9 @@ int main(){
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
+	glBindVertexArray(0);//unbind to not change it accidently
+
+
 
 
 	/* Load Shaders */
@@ -344,6 +347,7 @@ int main(){
 		glBindVertexArray(cubeVAO);
 
 		//TODO: draw cubes instanced
+		glBindVertexArray(cubeVAO);
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 6*18, 5);
 		
 		// Put the stuff we've been drawing onto the visible area.

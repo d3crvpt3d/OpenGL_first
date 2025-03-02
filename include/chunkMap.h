@@ -17,8 +17,7 @@
 
 //a Chunk in CPU memory is a 3D uint32_t array where each int is the block type
 typedef struct Chunk{
-	int16_t blocks[2][CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
-	uint8_t activeBuffer: 1; //for shadow buffer
+	int16_t blocks[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
 	uint8_t modified: 1;
 	int32_t x;
 	int32_t y;

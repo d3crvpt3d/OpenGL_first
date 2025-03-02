@@ -25,6 +25,7 @@ typedef struct Job {
 extern uint8_t programRunning;
 extern Job_t *lastJob;
 extern Job_t *jobQueue;
+extern ChunkMap_t *chunkMap;
 
 /* FUNCTIONS */
 
