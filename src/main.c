@@ -168,8 +168,9 @@ int main(){
 	}
 	
 	/* OpenGL Options */
-	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
 	
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -281,7 +282,7 @@ int main(){
 
 		//TODO: draw cubes instanced
 		glBindVertexArray(cubeVAO);
-		glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0, 1);
+		glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0, BLOCKS_PER_CHUNK);
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );

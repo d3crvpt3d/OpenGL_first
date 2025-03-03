@@ -21,8 +21,8 @@ void main() {
 
 	vec3 block_pos = vec3(
 		(gl_InstanceID >> 0 ) & 0x3F,
-		(gl_InstanceID >> 6 ) & 0xF,
-		(gl_InstanceID >> 10) & 0x3F
+		(gl_InstanceID >> 6 ) & 0x3F,
+		(gl_InstanceID >> 12) & 0x3F
 	);
 
 	vec3 newPos = aVertexPosition + block_pos;
@@ -48,7 +48,7 @@ void main() {
 		f/ratio, 0.0, 0.0, 0.0,
 		0.0, f, 0.0, 0.0,
 		0.0, 0.0, -far/(far-near), 1.0,
-		0.0, 0.0, near*far/(far-near), 0.0
+		0.0, 0.0, far*near/(far-near), 0.0
 	);
 
 	gl_Position = proj * view2 * view1 * vec4(trans, 1.0);
