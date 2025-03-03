@@ -91,45 +91,50 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
-	const GLfloat cube_pos[] = {
-		0.f, 0.f, 0.f, //left-bot-front	: 0
-		0.f, 0.f, 1.f, //left-bot-back	: 1
-		0.f, 1.f, 0.f, //left-top-front	: 2
-		0.f, 1.f, 1.f, //left-top-back	: 3
-		1.f, 0.f, 0.f, //right-bot-front: 4
-		1.f, 0.f, 1.f, //right-bot-back	: 5
-		1.f, 1.f, 0.f, //right-top-front: 6
-		1.f, 1.f, 1.f  //right-top-back	: 7
+	const GLfloat cube_vertecies[] = {
+
+		//positions			//normals
+		0.f, 0.f, 0.f, -1.f, 0.f, 0.f,
+		0.f, 0.f, 1.f, -1.f, 0.f, 0.f,
+		0.f, 1.f, 0.f, -1.f, 0.f, 0.f,
+		0.f, 1.f, 1.f, -1.f, 0.f, 0.f,
+
+		1.f, 0.f, 0.f,	1.f, 0.f, 0.f,
+		1.f, 0.f, 1.f,	1.f, 0.f, 0.f,
+		1.f, 1.f, 0.f,	1.f, 0.f, 0.f,
+		1.f, 1.f, 1.f,	1.f, 0.f, 0.f,
+
+		0.f, 0.f, 0.f,	0.f,-1.f, 0.f,
+		0.f, 0.f, 1.f,	0.f,-1.f, 0.f,
+		1.f, 0.f, 0.f,	0.f,-1.f, 0.f,
+		1.f, 0.f, 1.f,	0.f,-1.f, 0.f,
+
+		0.f, 1.f, 0.f,	0.f, 1.f, 0.f,
+		0.f, 1.f, 1.f,	0.f, 1.f, 0.f,
+		1.f, 1.f, 0.f,	0.f, 1.f, 0.f,
+		1.f, 1.f, 1.f,	0.f, 1.f, 0.f,
+
+		0.f, 0.f, 0.f,	0.f, 0.f,-1.f,
+		0.f, 1.f, 0.f,	0.f, 0.f,-1.f,
+		1.f, 0.f, 0.f,	0.f, 0.f,-1.f,
+		1.f, 1.f, 0.f,	0.f, 0.f,-1.f,
+
+		0.f, 0.f, 1.f,	0.f, 0.f, 1.f,
+		0.f, 1.f, 1.f,	0.f, 0.f, 1.f,
+		1.f, 0.f, 1.f,	0.f, 0.f, 1.f,
+		1.f, 1.f, 1.f,	0.f, 0.f, 1.f
 	};
 
-	const GLfloat cube_normal[] = {
-	-1.f, 0.f, 0.f,
-		1.f, 0.f, 0.f,
-		0.f,-1.f, 0.f,
-		0.f, 1.f, 0.f,
-		0.f, 0.f,-1.f,
-		0.f, 0.f, 1.f
-	};
-	
-	const GLuint cube_pos_index[] = {
-		0, 3, 1, 0, 2, 3, //-x
-		4, 5, 7, 4, 7, 6, //+x
-		0, 1, 4, 4, 1, 5, //-y
-		2, 6, 7, 2, 7, 3, //+y
-		0, 4, 6, 0, 6, 2, //-z
-		1, 7, 5, 1, 3, 7, //+z
+	const GLuint cube_index[] = {
+		0,	3,	1,	0,	2,	3,
+		4,	5,	7,	4,	7,	6,
+		8,	9,	10, 9,	11,	10,
+		12,	14,	13,	14,	15,	13,
+		16,	18,	19,	16,	19,	17,
+		20,	23,	22,	20,	21,	23
 	};
 
-	const GLuint cube_normal_index[] = {
-		0, 0, 0, 0, 0, 0,
-		1, 1, 1, 1, 1, 1,
-		2, 2, 2, 2, 2, 2,
-		3, 3, 3, 3, 3, 3,
-		4, 4, 4, 4, 4, 4,
-		5, 5, 5, 5, 5, 5
-	};
-
-	GLint cubeVAO, cubeVBO, cubeVBOnormal, cube_posEAO, cube_normalEAO;
+	GLint cubeVAO, cubeVBO, cubeEAO;
 	//create cubeVAO
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
@@ -137,29 +142,18 @@ int main(){
 	//create cubeVBO
 	glGenBuffers(1, &cubeVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos), cube_pos, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertecies), cube_vertecies, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *) 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *) (sizeof(float) * 3));
+
 	glEnableVertexAttribArray(0);
-
-	//cube normals
-	glGenBuffers(1, &cubeVBOnormal);
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVBOnormal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_normal), cube_normal, GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) 0);
-
 	glEnableVertexAttribArray(1);
 
 	//create cubeEAO
-	glGenBuffers(1, &cube_posEAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_posEAO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_pos_index), cube_pos_index, GL_STATIC_DRAW);
-	glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, sizeof(GLint), 0);
-
-	glGenBuffers(1, &cube_normalEAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_normalEAO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_normal_index), cube_normal_index, GL_STATIC_DRAW);
-	glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, sizeof(GLint), 0);
+	glGenBuffers(1, &cubeEAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_index), cube_index, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);//unbind to not change it accidently
 
@@ -287,7 +281,7 @@ int main(){
 
 		//TODO: draw cubes instanced
 		glBindVertexArray(cubeVAO);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+		glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0, 1);
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );

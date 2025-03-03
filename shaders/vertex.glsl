@@ -17,7 +17,7 @@ out vec3 color;
 
 void main() {
 
-	color = vec3(.4375, 0.5, 0.5625) * max(0.1, dot(aVertexNormal, vec3(-0.408248, -0.816497, -0.408248)));
+	color = vec3(.4, 1, .3) * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
 
 	vec3 block_pos = vec3(
 		(gl_InstanceID >> 0 ) & 0x3F,
