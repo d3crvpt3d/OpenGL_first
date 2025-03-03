@@ -224,6 +224,7 @@ int main(){
 	
 	//opengl state changes
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 	
 	glfwSetCursorPosCallback(window, cursor_callback);
 	
@@ -294,8 +295,8 @@ int main(){
 	
 	glfwTerminate();
 	
-	free((void*)vertex_shader);
-	free((void*)fragment_shader);
+	free((void*) vertex_shader);
+	free((void*) fragment_shader);
 	
 	return 0;
 }
@@ -326,31 +327,38 @@ void handle_keys(GLFWwindow *window){
 	
 	static uint8_t esc_down = 0;
 	static uint8_t f_r_near_far_change = 0xFF; //if focal length, aspect-ratio, near or far changed
+	static uint32_t flyspeed = FLYSPEED;
 	
 	//movement
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-		camera.xyz[0] += deltaTime * FLYSPEED * -sin(-camera.yaw_pitch[0]);
-		camera.xyz[2] += deltaTime * FLYSPEED * cos(-camera.yaw_pitch[0]);
+		camera.xyz[0] += deltaTime * flyspeed * -sin(-camera.yaw_pitch[0]);
+		camera.xyz[2] += deltaTime * flyspeed * cos(-camera.yaw_pitch[0]);
 	}
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-		camera.xyz[0] += deltaTime * FLYSPEED * sin(-camera.yaw_pitch[0]);
-		camera.xyz[2] += deltaTime * FLYSPEED * -cos(-camera.yaw_pitch[0]);
+		camera.xyz[0] += deltaTime * flyspeed * sin(-camera.yaw_pitch[0]);
+		camera.xyz[2] += deltaTime * flyspeed * -cos(-camera.yaw_pitch[0]);
 	}
 	
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-		camera.xyz[0] += deltaTime * FLYSPEED * -cos(-camera.yaw_pitch[0]);
-		camera.xyz[2] += deltaTime * FLYSPEED * -sin(-camera.yaw_pitch[0]);
+		camera.xyz[0] += deltaTime * flyspeed * -cos(-camera.yaw_pitch[0]);
+		camera.xyz[2] += deltaTime * flyspeed * -sin(-camera.yaw_pitch[0]);
 	}
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-		camera.xyz[0] += deltaTime * FLYSPEED * cos(-camera.yaw_pitch[0]);
-		camera.xyz[2] += deltaTime * FLYSPEED * sin(-camera.yaw_pitch[0]);
+		camera.xyz[0] += deltaTime * flyspeed * cos(-camera.yaw_pitch[0]);
+		camera.xyz[2] += deltaTime * flyspeed * sin(-camera.yaw_pitch[0]);
 	}
 	
 	if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
-		camera.xyz[1] += deltaTime * FLYSPEED;
+		camera.xyz[1] += deltaTime * flyspeed;
 	}
 	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-		camera.xyz[1] -= deltaTime * FLYSPEED;
+		camera.xyz[1] -= deltaTime * flyspeed;
+	}
+	
+	if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS){
+		flyspeed = FLYSPEED_MAX;
+	}else{
+		flyspeed = FLYSPEED;
 	}
 	
 	//zoom
