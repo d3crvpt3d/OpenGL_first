@@ -45,10 +45,10 @@ void main() {
 	);
 
 	mat4 proj = mat4(
-		f/ratio, 0.0, 0.0, 0.0,
-		0.0, f, 0.0, 0.0,
-		0.0, 0.0, -far/(far-near), 1.0,
-		0.0, 0.0, far*near/(far-near), 0.0
+		f, 0.0, 0.0, 0.0,
+		0.0, f*ratio, 0.0, 0.0,
+		0.0, 0.0, (far+near)/(far-near), 1.0,
+		0.0, 0.0, -2.0*far*near/(far-near), 0.0
 	);
 
 	gl_Position = proj * view2 * view1 * vec4(trans, 1.0);

@@ -224,7 +224,7 @@ int main(){
 	
 	//opengl state changes
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+	glDepthFunc(GL_LEQUAL);
 	
 	glfwSetCursorPosCallback(window, cursor_callback);
 	
