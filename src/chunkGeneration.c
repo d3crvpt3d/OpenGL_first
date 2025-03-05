@@ -63,7 +63,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	
 	Chunk_t *handle = chunkMap_get(chunkMap, x, y, z);
 	
-	if(handle){
+	if(handle->initialized){
 		
 		//skip if already generated
 		if(inRenderRegion(handle)){
@@ -94,16 +94,16 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	
 	//fill chunk memory with new generated values or load from file
 	{
-		char *template = "chunkData/________________________.chunk";
+		char template[41] = "chunkData/________________________.chunk\0";
 		char nameX[8] = {'_'};
 		char nameY[8] = {'_'};
 		char nameZ[8] = {'_'};
 		itoa(x, nameX, 16);
 		itoa(y, nameY, 16);
 		itoa(z, nameZ, 16);
-		memcpy(&template[0]+sizeof("chunkData/")-1,  nameX, 8);
-		memcpy(&template[8]+sizeof("chunkData/")-1,  nameY, 8);
-		memcpy(&template[16]+sizeof("chunkData/")-1, nameZ, 8);
+		memcpy((&template[0])+sizeof("chunkData/")-1, &nameX[0], 8);
+		memcpy((&template[8])+sizeof("chunkData/")-1, &nameY[0], 8);
+		memcpy((&template[16])+sizeof("chunkData/")-1, &nameZ[0], 8);
 		FILE *fptr;
 		fptr = fopen(template, "rb");
 
@@ -163,6 +163,8 @@ void setUpThreads(){
 	
 	programRunning = 1;
 	
+	chunkMap = chunkMap_init(RENDERSPAN);
+
 	pthread_mutex_init(&jobMutex, NULL);
 	
 	for(uint8_t id = 0; id < CHUNK_THREADS; id++){

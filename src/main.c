@@ -235,7 +235,7 @@ int main(){
 	
 	setUpThreads();
 	
-	//generateSpawnLocation(); //TODO: check
+	generateSpawnLocation(); //TODO: check
 	
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
@@ -266,7 +266,10 @@ int main(){
 		
 		
 		//check if new chunk
-		vec3i_t currChunk = {camera.xyz[0] / CHUNK_WDH, camera.xyz[1] / CHUNK_WDH, camera.xyz[2] / CHUNK_WDH};
+		currChunk.x = camera.xyz[0] / CHUNK_WDH;
+		currChunk.y = camera.xyz[1] / CHUNK_WDH;
+		currChunk.z = camera.xyz[2] / CHUNK_WDH;
+		
 		if(
 			currChunk.x != lastChunk.x ||
 			currChunk.y != lastChunk.y ||

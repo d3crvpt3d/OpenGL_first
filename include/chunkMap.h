@@ -19,6 +19,7 @@
 typedef struct Chunk{
 	int16_t blocks[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
 	uint8_t modified: 1;
+	uint8_t initialized: 1;
 	int32_t x;
 	int32_t y;
 	int32_t z;
