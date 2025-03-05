@@ -89,9 +89,6 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 		}
 	}
 	
-	
-	
-	
 	//fill chunk memory with new generated values or load from file
 	{
 		char template[41] = "chunkData/________________________.chunk\0";
@@ -147,6 +144,7 @@ void *waitingRoom(void *args){
 			generateChunk(tmpX, tmpY, tmpZ);
 			
 			//binary meshing
+			uint64_t *binaryData = createBinaryMesh(tmpX, tmpY, tmpZ);
 			
 			//greedy meshing
 			
