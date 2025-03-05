@@ -269,14 +269,14 @@ int main(){
 		currChunk.x = camera.xyz[0] / CHUNK_WDH;
 		currChunk.y = camera.xyz[1] / CHUNK_WDH;
 		currChunk.z = camera.xyz[2] / CHUNK_WDH;
-		
+
 		if(
 			currChunk.x != lastChunk.x ||
 			currChunk.y != lastChunk.y ||
 			currChunk.z != lastChunk.z
 		){
 			//TODO: check
-			//addNewChunkJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
+			addNewChunkJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
 			lastChunk.z = currChunk.z;
