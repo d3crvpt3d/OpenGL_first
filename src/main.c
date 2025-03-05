@@ -296,6 +296,8 @@ int main(){
 		
 	}
 	
+	chunkMap_destroy(chunkMap);
+
 	glfwTerminate();
 	
 	free((void*) vertex_shader);
