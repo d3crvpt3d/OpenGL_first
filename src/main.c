@@ -238,6 +238,8 @@ int main(){
 	generateSpawnLocation(); //TODO: check
 	
 	/* MAIN LOOP */
+	/* MAIN LOOP */
+	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
 		
 		// Wipe the drawing surface clear.
@@ -256,6 +258,14 @@ int main(){
 			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
+		}
+
+		//update chunk VBOs
+		if(update_shadowVBO){
+
+			//TODO:
+			
+			update_shadowVBO = 0;
 		}
 		
 		handle_keys(window);

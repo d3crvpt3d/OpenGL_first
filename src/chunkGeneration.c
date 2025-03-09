@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 #define CHUNKDATA E:\Code\Projects\OpenGL\opengl_glfw_1\include\main.h
+#define PI 3.14159265358979323846f
+
 
 uint8_t programRunning = 1;
 vec3i_t currChunk = {0, 0, 0};
@@ -31,6 +33,7 @@ uint32_t get_max_threads() {
 #endif
 
 uint32_t gseed = 0; //currently 0
+_Atomic uint8_t update_shadowVBO = 0; //set up main thread to update shadow vbo and swap buffers
 
 pthread_t chunkQueue[CHUNK_THREADS];
 
@@ -56,6 +59,24 @@ void addJob(int32_t x, int32_t y, int32_t z){
 	lastJob->z = z;
 	lastJob->nextJob = NULL;
 	pthread_mutex_unlock(&jobMutex);
+}
+
+void chunkFunction(Chunk_t *chunk){
+	
+	float x0 = chunk->x * CHUNK_WDH;
+	float y0 = chunk->y * CHUNK_WDH;
+	float z0 = chunk->z * CHUNK_WDH;
+
+	for(uint8_t z = z0; z < z0+CHUNK_WDH; z++){
+		for(uint8_t y = y0; y < y0+CHUNK_WDH; y++){
+			
+			#pragma GCC unroll 64
+			#pragma GCC ivdep
+			for(uint8_t x = x0; x < x0+CHUNK_WDH; x++){
+				chunk->blocks[z][y][x] = (uint16_t) 3.f / (1.f + expf((float) y - 5.f * sinf(PI * (float) x / 10.f)));
+			}
+		}
+	}
 }
 
 //generate chunk on chunk coord [pos]
@@ -119,7 +140,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	handle->z = z;
 	srand(gseed); //regenerate random values
 	
-	memset(handle->blocks, rand() & 0xFFFF, 14); //DEBUG
+	chunkFunction(handle);
 }
 
 void *waitingRoom(void *args){
@@ -142,14 +163,11 @@ void *waitingRoom(void *args){
 			
 			//generate raw chunk data
 			generateChunk(tmpX, tmpY, tmpZ);
+
+			//TODO: binary meshing instead of instancing blocks
 			
-			//binary meshing
-			uint64_t *binaryData = createBinaryMesh(tmpX, tmpY, tmpZ);
-			
-			//greedy meshing
-			
-			//swap active buffer
-			
+			//update_shadowVBO and draw other one when done
+			update_shadowVBO = 1;
 		}else{
 			pthread_mutex_unlock(&jobMutex);
 		}

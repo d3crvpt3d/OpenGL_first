@@ -86,9 +86,9 @@ uint8_t *createBinaryMesh(int32_t tmpX, int32_t tmpY, int32_t tmpZ, ChunkMap_t *
 
 	uint8_t *out = (uint8_t *) calloc(BLOCKS_PER_CHUNK, sizeof(uint8_t));
 
-	fillMemoryX(memX, &chunkMap_get(chunkMap, tmpX, tmpY, tmpZ)->blocks);
-	fillMemoryY(memY, &chunkMap_get(chunkMap, tmpX, tmpY, tmpZ)->blocks);
-	fillMemoryZ(memZ, &chunkMap_get(chunkMap, tmpX, tmpY, tmpZ)->blocks);
+	fillMemoryX(memX, chunkMap_get(chunkMap, tmpX, tmpY, tmpZ)->blocks);
+	fillMemoryY(memY, chunkMap_get(chunkMap, tmpX, tmpY, tmpZ)->blocks);
+	fillMemoryZ(memZ, chunkMap_get(chunkMap, tmpX, tmpY, tmpZ)->blocks);
 
 	mesh(out, memX, 0);
 	mesh(out, memY, 2);

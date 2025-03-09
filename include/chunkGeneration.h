@@ -27,6 +27,7 @@ extern Job_t *lastJob;
 extern Job_t *jobQueue;
 extern ChunkMap_t *chunkMap;
 extern vec3i_t currChunk;
+extern _Atomic uint8_t update_shadowVBO;
 
 /* FUNCTIONS */
 
