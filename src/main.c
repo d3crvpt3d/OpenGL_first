@@ -219,7 +219,25 @@ int main(){
 	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
 	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
 	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
+
+	//TEST
+	//TEST
 	
+	GLint blockData[2];
+	glGenBuffers(2, blockData);
+	glBindVertexArray(cubeVAO);
+	for(uint8_t i = 0; i < 2; i++){
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, blockData[i]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, CHUNKS * BLOCKS_PER_CHUNK * sizeof(GLushort), NULL, GL_STATIC_DRAW);
+		glVertexAttribPointer(2, 1, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(GLushort), NULL);
+		glVertexAttribDivisor(blockData[i], 1); //increase by one for each instance
+		glEnableVertexArrayAttrib(cubeVAO, blockData[i]);
+	}
+	glBindVertexArray(0);
+
+	//TEST
+	//TEST
+
 	glUseProgram(shader_program);
 	
 	//opengl state changes
@@ -263,7 +281,7 @@ int main(){
 		//update chunk VBOs
 		if(update_shadowVBO){
 
-			//TODO:
+			
 			
 			update_shadowVBO = 0;
 		}
