@@ -118,9 +118,9 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	//fill chunk memory with new generated values or load from file
 	{
 		char template[41] = "chunkData/________________________.chunk\0";
-		char nameX[8] = {'_'};
-		char nameY[8] = {'_'};
-		char nameZ[8] = {'_'};
+		char nameX[9] = {'_'};
+		char nameY[9] = {'_'};
+		char nameZ[9] = {'_'};
 		itoa(x, nameX, 16);
 		itoa(y, nameY, 16);
 		itoa(z, nameZ, 16);
