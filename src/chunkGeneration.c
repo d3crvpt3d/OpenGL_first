@@ -62,6 +62,11 @@ void addJob(int32_t x, int32_t y, int32_t z){
 }
 
 void chunkFunction(Chunk_t *chunk){
+
+	//debug
+	//memset(chunk->blocks[0][0], (short) 123, sizeof(short) * 63);
+	//return;
+	
 	
 	float x0 = chunk->x * CHUNK_WDH;
 	float y0 = chunk->y * CHUNK_WDH;
@@ -91,7 +96,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 			return;
 		}
 		
-		//save/overwrite file if chunk exists and was modified
+		//save/overwrite file if chunk exists and was modified //TODO: fix null bytes
 		if(handle->modified){
 			char *template = "chunkData/________________________.chunk";
 			char nameX[8] = {'_'};
@@ -143,9 +148,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	chunkFunction(handle);
 }
 
-void *waitingRoom(void *args){
-	
-	uint8_t id = (uint8_t) args;
+void *waitingRoom(){
 	
 	while(programRunning){
 		
@@ -184,7 +187,7 @@ void setUpThreads(){
 	pthread_mutex_init(&jobMutex, NULL);
 	
 	for(uint8_t id = 0; id < CHUNK_THREADS; id++){
-		pthread_create(&chunkQueue[id], NULL, &waitingRoom, (void *) id);
+		pthread_create(&chunkQueue[id], NULL, &waitingRoom, NULL);
 	}
 }
 

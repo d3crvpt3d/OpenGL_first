@@ -1,7 +1,8 @@
 #include "chunkMap.h"
 
-uint32_t modulo(int32_t a, int32_t b){
-	return ((a % b) + b) % b;
+//b has to be in 2^n
+uint32_t modulo_n2(int32_t a, int32_t b){
+	return a & (b-1);
 }
 
 ChunkMap_t *chunkMap_init(uint8_t wdh){
@@ -13,9 +14,9 @@ ChunkMap_t *chunkMap_init(uint8_t wdh){
 
 Chunk_t *chunkMap_get(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z){
 	return &chunkMap->chunks[
-		modulo(z, RENDERSPAN) * RENDERSPAN * RENDERSPAN +
-		modulo(y, RENDERSPAN) * RENDERSPAN +
-		modulo(x, RENDERSPAN)
+		modulo_n2(z, RENDERSPAN) * RENDERSPAN * RENDERSPAN +
+		modulo_n2(y, RENDERSPAN) * RENDERSPAN +
+		modulo_n2(x, RENDERSPAN)
 	];
 }
 

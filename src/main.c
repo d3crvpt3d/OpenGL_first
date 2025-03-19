@@ -92,39 +92,39 @@ int main(){
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
 	const GLfloat cube_vertecies[] = {
-
+		
 		//positions			//normals
 		0.f, 0.f, 0.f, -1.f, 0.f, 0.f,
 		0.f, 0.f, 1.f, -1.f, 0.f, 0.f,
 		0.f, 1.f, 0.f, -1.f, 0.f, 0.f,
 		0.f, 1.f, 1.f, -1.f, 0.f, 0.f,
-
+		
 		1.f, 0.f, 0.f,	1.f, 0.f, 0.f,
 		1.f, 0.f, 1.f,	1.f, 0.f, 0.f,
 		1.f, 1.f, 0.f,	1.f, 0.f, 0.f,
 		1.f, 1.f, 1.f,	1.f, 0.f, 0.f,
-
+		
 		0.f, 0.f, 0.f,	0.f,-1.f, 0.f,
 		0.f, 0.f, 1.f,	0.f,-1.f, 0.f,
 		1.f, 0.f, 0.f,	0.f,-1.f, 0.f,
 		1.f, 0.f, 1.f,	0.f,-1.f, 0.f,
-
+		
 		0.f, 1.f, 0.f,	0.f, 1.f, 0.f,
 		0.f, 1.f, 1.f,	0.f, 1.f, 0.f,
 		1.f, 1.f, 0.f,	0.f, 1.f, 0.f,
 		1.f, 1.f, 1.f,	0.f, 1.f, 0.f,
-
+		
 		0.f, 0.f, 0.f,	0.f, 0.f,-1.f,
 		0.f, 1.f, 0.f,	0.f, 0.f,-1.f,
 		1.f, 0.f, 0.f,	0.f, 0.f,-1.f,
 		1.f, 1.f, 0.f,	0.f, 0.f,-1.f,
-
+		
 		0.f, 0.f, 1.f,	0.f, 0.f, 1.f,
 		0.f, 1.f, 1.f,	0.f, 0.f, 1.f,
 		1.f, 0.f, 1.f,	0.f, 0.f, 1.f,
 		1.f, 1.f, 1.f,	0.f, 0.f, 1.f
 	};
-
+	
 	const GLuint cube_index[] = {
 		0,	3,	1,	0,	2,	3,
 		4,	5,	7,	4,	7,	6,
@@ -133,30 +133,30 @@ int main(){
 		16,	18,	19,	16,	19,	17,
 		20,	23,	22,	20,	21,	23
 	};
-
+	
 	GLint cubeVAO, cubeVBO, cubeEAO;
 	//create cubeVAO
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
-
+	
 	//create cubeVBO
 	glGenBuffers(1, &cubeVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertecies), cube_vertecies, GL_STATIC_DRAW);
-
+	
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *) 0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *) (sizeof(float) * 3));
-
+	
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
-
+	
 	//create cubeEAO
 	glGenBuffers(1, &cubeEAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_index), cube_index, GL_STATIC_DRAW);
-
+	
 	glBindVertexArray(0);//unbind to not change it accidently
-
+	
 	
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
@@ -219,25 +219,25 @@ int main(){
 	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
 	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
 	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
+	
+	//TEST
+	//TEST
+	glBindVertexArray(cubeVAO);
 
+	GLint blockData;
+	glGenBuffers(1, &blockData);
+
+	glBindBuffer(GL_ARRAY_BUFFER, blockData);
+	glBufferData(GL_ARRAY_BUFFER, BLOCKS_PER_CHUNK * sizeof(GLushort), NULL, GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 1, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(GLushort), NULL);
+	glEnableVertexAttribArray(2);
+	glVertexAttribDivisor(2, 1); //increase by one for each instance
+
+	glBindVertexArray(0);
+	
 	//TEST
 	//TEST
 	
-	GLint blockData[2];
-	glGenBuffers(2, blockData);
-	glBindVertexArray(cubeVAO);
-	for(uint8_t i = 0; i < 2; i++){
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, blockData[i]);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, CHUNKS * BLOCKS_PER_CHUNK * sizeof(GLushort), NULL, GL_STATIC_DRAW);
-		glVertexAttribPointer(2, 1, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(GLushort), NULL);
-		glVertexAttribDivisor(blockData[i], 1); //increase by one for each instance
-		glEnableVertexArrayAttrib(cubeVAO, blockData[i]);
-	}
-	glBindVertexArray(0);
-
-	//TEST
-	//TEST
-
 	glUseProgram(shader_program);
 	
 	//opengl state changes
@@ -254,6 +254,8 @@ int main(){
 	setUpThreads();
 	
 	generateSpawnLocation(); //TODO: check
+	
+	update_shadowVBO = 0;
 	
 	/* MAIN LOOP */
 	/* MAIN LOOP */
@@ -277,11 +279,15 @@ int main(){
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
 		}
-
+		
 		//update chunk VBOs
 		if(update_shadowVBO){
-
 			
+			glBindVertexArray(cubeVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, blockData);
+			Chunk_t *chunk = chunkMap_get(chunkMap, 0, 0, 0);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLushort) * BLOCKS_PER_CHUNK, chunk->blocks);
+			glBindVertexArray(0);
 			
 			update_shadowVBO = 0;
 		}
@@ -297,7 +303,7 @@ int main(){
 		currChunk.x = camera.xyz[0] / CHUNK_WDH;
 		currChunk.y = camera.xyz[1] / CHUNK_WDH;
 		currChunk.z = camera.xyz[2] / CHUNK_WDH;
-
+		
 		if(
 			currChunk.x != lastChunk.x ||
 			currChunk.y != lastChunk.y ||
@@ -311,7 +317,7 @@ int main(){
 		}
 		
 		glUseProgram(shader_program);
-
+		
 		//TODO: draw cubes instanced
 		glBindVertexArray(cubeVAO);
 		glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0, BLOCKS_PER_CHUNK);
@@ -325,7 +331,7 @@ int main(){
 	}
 	
 	chunkMap_destroy(chunkMap);
-
+	
 	glfwTerminate();
 	
 	free((void*) vertex_shader);

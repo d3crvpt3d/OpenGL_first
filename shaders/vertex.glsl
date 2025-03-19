@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 aVertexPosition;
 layout(location = 1) in vec3 aVertexNormal;
-layout(location = 2) in uint aBlockType;
+layout(location = 2) in int aBlockType;
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;
@@ -54,8 +54,8 @@ void main() {
 
 	gl_Position = proj * view2 * view1 * vec4(trans, 1.0);
 
-	//dont render block if block type is air
-	if(!aBlockType){
-		gl_Position = vec3(-1.0, -1.0, -1.0, 1.0);
+
+	if( aBlockType == 0 ){
+		gl_Position = vec4(0.0, 0.0, -10.0, 1.0);
 	}
 }
