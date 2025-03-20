@@ -99,9 +99,9 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 		//save/overwrite file if chunk exists and was modified //TODO: fix null bytes
 		if(handle->modified){
 			char *template = "chunkData/________________________.chunk";
-			char nameX[8] = {'_'};
-			char nameY[8] = {'_'};
-			char nameZ[8] = {'_'};
+			char nameX[9] = {'_'};
+			char nameY[9] = {'_'};
+			char nameZ[9] = {'_'};
 			itoa(handle->x, nameX, 16);
 			itoa(handle->y, nameY, 16);
 			itoa(handle->z, nameZ, 16);
