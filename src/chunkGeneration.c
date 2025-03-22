@@ -72,13 +72,11 @@ void chunkFunction(Chunk_t *chunk){
 	float y0 = chunk->y * CHUNK_WDH;
 	float z0 = chunk->z * CHUNK_WDH;
 
-	for(uint8_t z = z0; z < z0+CHUNK_WDH; z++){
-		for(uint8_t y = y0; y < y0+CHUNK_WDH; y++){
-			
-			#pragma GCC unroll 64
-			#pragma GCC ivdep
-			for(uint8_t x = x0; x < x0+CHUNK_WDH; x++){
-				chunk->blocks[z][y][x] = (uint16_t) 3.f / (1.f + expf((float) y - 5.f * sinf(PI * (float) x / 10.f)));
+	for(int32_t z = z0; z < z0+CHUNK_WDH; z++){
+		for(int32_t y = y0; y < y0+CHUNK_WDH; y++){
+			for(int32_t x = x0; x < x0+CHUNK_WDH; x++){
+				chunk->blocks[z][y][x] = (uint16_t) (2.9999f / (1.f + expf( (float) (y - 30) - 5.f * sinf( ((float) x) / 10.f) * cosf( ((float) z) / 10.f) ) ) );
+				//fprintf(stderr, "%d,%d,%d: %f\n", x, y, z, chunk->blocks[z][y][x]);
 			}
 		}
 	}
@@ -97,8 +95,8 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 		}
 		
 		//save/overwrite file if chunk exists and was modified //TODO: fix null bytes
-		if(handle->modified){
-			char *template = "chunkData/________________________.chunk";
+		if(handle->modified && 0){
+			char template[41] = "chunkData/________________________.chunk\0";
 			char nameX[9] = {'_'};
 			char nameY[9] = {'_'};
 			char nameZ[9] = {'_'};
