@@ -15,7 +15,7 @@ uniform float near;
 uniform float far;
 
 //block color LUT
-uniform vec3 aBlockColor[3] = {{0.0, 0.0, 0.0}, {0, .75, 0}, {.502, .502, .502}};
+uniform vec3 aBlockColor[4] = {{0.0, 0.0, 0.0}, {0, .75, 0}, {.588, .294, 0}, {.502, .502, .502}};
 
 out vec3 color;
 

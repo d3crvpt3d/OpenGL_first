@@ -75,7 +75,7 @@ void chunkFunction(Chunk_t *chunk){
 	for(int32_t z = z0; z < z0+CHUNK_WDH; z++){
 		for(int32_t y = y0; y < y0+CHUNK_WDH; y++){
 			for(int32_t x = x0; x < x0+CHUNK_WDH; x++){
-				chunk->blocks[z][y][x] = (uint16_t) (2.9999f / (1.f + expf( (float) (y - 30) - 5.f * sinf( ((float) x) / 10.f) * cosf( ((float) z) / 10.f) ) ) );
+				chunk->blocks[z][y][x] = (uint16_t) (3.9999f / (1.f + expf(.5f * (float) (y - 30) - 2.f * sinf( ((float) x) / 10.f) * cosf( ((float) z) / 10.f) ) ) );
 				//fprintf(stderr, "%d,%d,%d: %f\n", x, y, z, chunk->blocks[z][y][x]);
 			}
 		}
