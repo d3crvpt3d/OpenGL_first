@@ -229,10 +229,10 @@ int main(){
 
 	glBindBuffer(GL_ARRAY_BUFFER, blockData);
 	glBufferData(GL_ARRAY_BUFFER, BLOCKS_PER_CHUNK * sizeof(GLushort), NULL, GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 1, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(GLushort), NULL);
-	glEnableVertexAttribArray(2);
+	glVertexAttribIPointer(2, 1, GL_UNSIGNED_SHORT, sizeof(uint16_t), NULL);
 	glVertexAttribDivisor(2, 1); //increase by one for each instance
 
+	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 	
 	//TEST

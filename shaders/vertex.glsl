@@ -15,14 +15,14 @@ uniform float near;
 uniform float far;
 
 //block color LUT
-uniform vec3 aBlockColor[3] = {{0.5, 0.5, 0.5}, {0, .75, 0}, {.502, .502, .502}};
+uniform vec3 aBlockColor[3] = {{0.0, 0.0, 0.0}, {0, .75, 0}, {.502, .502, .502}};
 
 out vec3 color;
 
 void main() {
 
-	//color = aBlockColor[aBlockType] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
-	color = aBlockColor[1] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
+	color = aBlockColor[aBlockType] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
+	//color = aBlockColor[1] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
 
 	vec3 block_pos = vec3(
 		(gl_InstanceID >> 0 ) & 0x3F,
