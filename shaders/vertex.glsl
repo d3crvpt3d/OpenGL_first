@@ -3,6 +3,7 @@
 layout(location = 0) in vec3 aVertexPosition;
 layout(location = 1) in vec3 aVertexNormal;
 layout(location = 2) in int aBlockType;
+layout(location = 3) in vec2 inTexCoord;
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;
@@ -14,15 +15,17 @@ uniform float ratio;
 uniform float near;
 uniform float far;
 
-//block color LUT
-uniform vec3 aBlockColor[4] = {{0.0, 0.0, 0.0}, {0, .75, 0}, {.588, .294, 0}, {.502, .502, .502}};
-
-out vec3 color;
+out float aLight;
+out vec2 aTexCoord;
 
 void main() {
 
-	color = aBlockColor[aBlockType] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
+	//TEST with textures
+	
 	//color = aBlockColor[1] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
+	aLight = max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
+	aTexCoord = vec2(inTexCoord.x + float(aBlockType) * 0.0625, inTexCoord.y); //offset texCoord.u by block type
+	//TEST with textures
 
 	vec3 block_pos = vec3(
 		(gl_InstanceID >> 0 ) & 0x3F,

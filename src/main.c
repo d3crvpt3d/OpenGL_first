@@ -1,7 +1,7 @@
 #include "main.h"
 
-
 #define STB_IMAGE_IMPLEMENTATION
+
 #include "stb_image.h"
 
 Camera camera = {
@@ -93,36 +93,36 @@ int main(){
 	
 	const GLfloat cube_vertecies[] = {
 		
-		//positions			//normals
-		0.f, 0.f, 0.f, -1.f, 0.f, 0.f,
-		0.f, 0.f, 1.f, -1.f, 0.f, 0.f,
-		0.f, 1.f, 0.f, -1.f, 0.f, 0.f,
-		0.f, 1.f, 1.f, -1.f, 0.f, 0.f,
+		//positions			//normals			 //texCoord
+		0.f, 0.f, 0.f, -1.f, 0.f, 0.f, 0.f,			0.f, //left bot
+		0.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.0625f,	0.f, //right bot
+		0.f, 1.f, 0.f, -1.f, 0.f, 0.f, 0.f,			1.f, //left top
+		0.f, 1.f, 1.f, -1.f, 0.f, 0.f, 0.0625f,	1.f, //right top
 		
-		1.f, 0.f, 0.f,	1.f, 0.f, 0.f,
-		1.f, 0.f, 1.f,	1.f, 0.f, 0.f,
-		1.f, 1.f, 0.f,	1.f, 0.f, 0.f,
-		1.f, 1.f, 1.f,	1.f, 0.f, 0.f,
+		1.f, 0.f, 0.f,	1.f, 0.f, 0.f, 0.0625f,	0.f, //right bot
+		1.f, 0.f, 1.f,	1.f, 0.f, 0.f, 0.f,			0.f, //left bot
+		1.f, 1.f, 0.f,	1.f, 0.f, 0.f, 0.0625f,	1.f, //right top
+		1.f, 1.f, 1.f,	1.f, 0.f, 0.f, 0.f,			1.f, //left top
+		//TODO after this
+		0.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.f,			0.f, //left bot
+		0.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.0625f,	0.f, //right bot
+		1.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.f,			1.f, //left top
+		1.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.0625f,	1.f, //right top
 		
-		0.f, 0.f, 0.f,	0.f,-1.f, 0.f,
-		0.f, 0.f, 1.f,	0.f,-1.f, 0.f,
-		1.f, 0.f, 0.f,	0.f,-1.f, 0.f,
-		1.f, 0.f, 1.f,	0.f,-1.f, 0.f,
+		0.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.f,			0.f, //left bot
+		0.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.0625f,	0.f, //right bot
+		1.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.f,			1.f, //left top
+		1.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.0625f,	1.f, //right top
 		
-		0.f, 1.f, 0.f,	0.f, 1.f, 0.f,
-		0.f, 1.f, 1.f,	0.f, 1.f, 0.f,
-		1.f, 1.f, 0.f,	0.f, 1.f, 0.f,
-		1.f, 1.f, 1.f,	0.f, 1.f, 0.f,
+		0.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.f,			0.f, //left bot
+		0.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	0.f, //right bot
+		1.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.f,			1.f, //left top
+		1.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	1.f, //right top
 		
-		0.f, 0.f, 0.f,	0.f, 0.f,-1.f,
-		0.f, 1.f, 0.f,	0.f, 0.f,-1.f,
-		1.f, 0.f, 0.f,	0.f, 0.f,-1.f,
-		1.f, 1.f, 0.f,	0.f, 0.f,-1.f,
-		
-		0.f, 0.f, 1.f,	0.f, 0.f, 1.f,
-		0.f, 1.f, 1.f,	0.f, 0.f, 1.f,
-		1.f, 0.f, 1.f,	0.f, 0.f, 1.f,
-		1.f, 1.f, 1.f,	0.f, 0.f, 1.f
+		0.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.f,			0.f, //left bot
+		0.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	0.f, //right bot
+		1.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.f,			1.f, //left top
+		1.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	1.f  //right top
 	};
 	
 	const GLuint cube_index[] = {
@@ -144,11 +144,13 @@ int main(){
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertecies), cube_vertecies, GL_STATIC_DRAW);
 	
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *) 0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *) (sizeof(float) * 3));
-	
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) 0); //pos
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 3)); //normal
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 6)); //texcoord
+
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(3);
 	
 	//create cubeEAO
 	glGenBuffers(1, &cubeEAO);
@@ -237,8 +239,32 @@ int main(){
 	
 	//TEST
 	//TEST
-	
+
 	glUseProgram(shader_program);
+
+	//load textures
+	int texWidth, texHeight, texNrChannels;
+	uint32_t textureAtlas;
+	glGenTextures(1, &textureAtlas);
+	glActiveTexture(GL_TEXTURE0); //active texture slot to bind texture to
+	glBindTexture(GL_TEXTURE_2D, textureAtlas);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	stbi_set_flip_vertically_on_load(1);
+	uint8_t *texData = stbi_load("E:/Code/Projects/OpenGL/opengl_glfw_1/texData/firstGLAtlats.png", &texWidth, &texHeight, &texNrChannels, 0);
+	if(!texData){
+		fprintf(stderr, "Could not load image \"%s\"\n", "E:/Code/Projects/OpenGL/opengl_glfw_1/texData/firstGLAtlats.png");
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, texData);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(texData);
+	
+	glUniform1i(glGetUniformLocation(shader_program, "aTexture"), 0);
+
+	//end load textures
+
 	
 	//opengl state changes
 	glEnable(GL_DEPTH_TEST);
