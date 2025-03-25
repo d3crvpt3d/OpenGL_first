@@ -94,35 +94,35 @@ int main(){
 	const GLfloat cube_vertecies[] = {
 		
 		//positions			//normals			 //texCoord
-		0.f, 0.f, 0.f, -1.f, 0.f, 0.f, 0.f,			0.f, //left bot
-		0.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.0625f,	0.f, //right bot
-		0.f, 1.f, 0.f, -1.f, 0.f, 0.f, 0.f,			1.f, //left top
-		0.f, 1.f, 1.f, -1.f, 0.f, 0.f, 0.0625f,	1.f, //right top
+		0.f, 0.f, 0.f, -1.f, 0.f, 0.f, 0.0625f,	0.5f,		//right bot	//side
+		0.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f,			0.5f,		//left bot
+		0.f, 1.f, 0.f, -1.f, 0.f, 0.f, 0.0625f,	0.25f,	//right top
+		0.f, 1.f, 1.f, -1.f, 0.f, 0.f, 0.f,			0.25f,	//left top
 		
-		1.f, 0.f, 0.f,	1.f, 0.f, 0.f, 0.0625f,	0.f, //right bot
-		1.f, 0.f, 1.f,	1.f, 0.f, 0.f, 0.f,			0.f, //left bot
-		1.f, 1.f, 0.f,	1.f, 0.f, 0.f, 0.0625f,	1.f, //right top
-		1.f, 1.f, 1.f,	1.f, 0.f, 0.f, 0.f,			1.f, //left top
-		//TODO after this
-		0.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.f,			0.f, //left bot
-		0.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.0625f,	0.f, //right bot
-		1.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.f,			1.f, //left top
-		1.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.0625f,	1.f, //right top
+		1.f, 0.f, 0.f,	1.f, 0.f, 0.f, 0.f,			0.5f,		//left bot	//side
+		1.f, 0.f, 1.f,	1.f, 0.f, 0.f, 0.0625f,	0.5f,		//right bot
+		1.f, 1.f, 0.f,	1.f, 0.f, 0.f, 0.f,			0.25f,	//left top
+		1.f, 1.f, 1.f,	1.f, 0.f, 0.f, 0.0625f,	0.25f,	//right top
+
+		0.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.f,			0.5f,		//left top	//bot
+		0.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.f,			0.75f,	//left bot
+		1.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.0625f,	0.5f,		//right top
+		1.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.0625f,	0.75f,	//right bot
 		
-		0.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.f,			0.f, //left bot
-		0.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.0625f,	0.f, //right bot
-		1.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.f,			1.f, //left top
-		1.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.0625f,	1.f, //right top
+		0.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.f,			0.25f,	//left bot	//top
+		0.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.f,			0.f,		//left top
+		1.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.0625f,	0.25f,	//right bot
+		1.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.0625f,	0.f,		//right top
 		
-		0.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.f,			0.f, //left bot
-		0.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	0.f, //right bot
-		1.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.f,			1.f, //left top
-		1.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	1.f, //right top
+		0.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.f,			0.5f,		//left bot	//side
+		0.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.f,			0.25f,	//left top
+		1.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	0.5f,		//right bot
+		1.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	0.25f,	//right top
 		
-		0.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.f,			0.f, //left bot
-		0.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	0.f, //right bot
-		1.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.f,			1.f, //left top
-		1.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	1.f  //right top
+		0.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	0.5f,		//right bot	//side
+		0.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	0.25f,	//right top
+		1.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.f,			0.5f,		//left bot
+		1.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.f,			0.25f,	//left top
 	};
 	
 	const GLuint cube_index[] = {
@@ -252,7 +252,6 @@ int main(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	stbi_set_flip_vertically_on_load(1);
 	uint8_t *texData = stbi_load("E:/Code/Projects/OpenGL/opengl_glfw_1/texData/firstGLAtlats.png", &texWidth, &texHeight, &texNrChannels, 0);
 	if(!texData){
 		fprintf(stderr, "Could not load image \"%s\"\n", "E:/Code/Projects/OpenGL/opengl_glfw_1/texData/firstGLAtlats.png");
