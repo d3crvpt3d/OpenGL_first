@@ -63,7 +63,7 @@ int main(){
 	}
 	
 	/* GLFW Window Hints */
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
 	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
@@ -250,11 +250,11 @@ int main(){
 	glBindTexture(GL_TEXTURE_2D, textureAtlas);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	uint8_t *texData = stbi_load("E:/Code/Projects/OpenGL/opengl_glfw_1/texData/firstGLAtlats.png", &texWidth, &texHeight, &texNrChannels, 0);
+	uint8_t *texData = stbi_load("E:/Code/Projects/OpenGL/opengl_glfw_1/texData/faithful_32.png", &texWidth, &texHeight, &texNrChannels, 0);
 	if(!texData){
-		fprintf(stderr, "Could not load image \"%s\"\n", "E:/Code/Projects/OpenGL/opengl_glfw_1/texData/firstGLAtlats.png");
+		fprintf(stderr, "Could not load image\n");
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, texData);
 	glGenerateMipmap(GL_TEXTURE_2D);
