@@ -325,9 +325,9 @@ int main(){
 		
 		
 		//check if new chunk
-		currChunk.x = camera.xyz[0] / CHUNK_WDH;
-		currChunk.y = camera.xyz[1] / CHUNK_WDH;
-		currChunk.z = camera.xyz[2] / CHUNK_WDH;
+		currChunk.x = ((int32_t) camera.xyz[0]) >> 6;
+		currChunk.y = ((int32_t) camera.xyz[1]) >> 6;
+		currChunk.z = ((int32_t) camera.xyz[2]) >> 6;
 		
 		if(
 			currChunk.x != lastChunk.x ||
@@ -335,6 +335,7 @@ int main(){
 			currChunk.z != lastChunk.z
 		){
 			//TODO: check
+			fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
 			addNewChunkJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
