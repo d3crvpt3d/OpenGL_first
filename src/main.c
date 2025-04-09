@@ -161,8 +161,8 @@ int main(){
 	
 	
 	/* Load Shaders */
-	const char *vertex_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
-	const char *fragment_shader = loadShaders("E:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
+	const char *vertex_shader = loadShaders("G:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
+	const char *fragment_shader = loadShaders("G:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
 	
 	if(!vertex_shader || !fragment_shader){
 		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
@@ -252,7 +252,7 @@ int main(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	uint8_t *texData = stbi_load("E:/Code/Projects/OpenGL/opengl_glfw_1/texData/faithful_32.png", &texWidth, &texHeight, &texNrChannels, 0);
+	uint8_t *texData = stbi_load("G:/Code/Projects/OpenGL/opengl_glfw_1/texData/faithful_32.png", &texWidth, &texHeight, &texNrChannels, 0);
 	if(!texData){
 		fprintf(stderr, "Could not load image\n");
 	}
