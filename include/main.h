@@ -7,9 +7,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "chunkGeneration.h"
+#include "voxelTrace.h"
 
-
+#define BLOCK_RANGE 4.5f
 #define WIDTH 	1920
 #define HEIGHT 	1080
 #define FLYSPEED 3.0

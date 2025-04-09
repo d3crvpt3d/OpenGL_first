@@ -281,6 +281,9 @@ int main(){
 	generateSpawnLocation(); //TODO: check
 	
 	update_shadowVBO = 0;
+
+	vec3i_t break_block = {0, 0, 0};
+	vec3i_t place_block = {0, 0, 0};
 	
 	/* MAIN LOOP */
 	/* MAIN LOOP */
@@ -319,6 +322,9 @@ int main(){
 		
 		handle_keys(window);
 		
+		//update place/break block coordinates
+		update_lookingAt(camera.xyz, camera.yaw_pitch, &break_block, &place_block, BLOCK_RANGE);
+
 		// update Uniforms
 		glUniform3fv(campos_loc, 1, camera.xyz);
 		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
@@ -335,7 +341,8 @@ int main(){
 			currChunk.z != lastChunk.z
 		){
 			//TODO: check
-			fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
+			//fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
+			fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
 			addNewChunkJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
