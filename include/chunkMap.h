@@ -17,7 +17,7 @@
 
 //a Chunk in CPU memory is a 3D uint32_t array where each int is the block type
 typedef struct Chunk{
-	int16_t blocks[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
+	uint16_t blocks[CHUNK_WDH][CHUNK_WDH][CHUNK_WDH];
 	uint8_t modified: 1;
 	uint8_t initialized: 1;
 	int32_t x;
@@ -36,7 +36,8 @@ typedef struct ChunkMap{
 ChunkMap_t *chunkMap_init(uint8_t wdh);
 
 //get pointer to memory of chunk at (x,y,z)
-Chunk_t *chunkMap_get(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z);
+Chunk_t *chunkMap_getChunk(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z);
+uint16_t chunkMap_getBlock(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z);
 
 //free chunkMap
 void chunkMap_destroy(ChunkMap_t *chunkMap);

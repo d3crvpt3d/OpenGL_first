@@ -85,7 +85,7 @@ void chunkFunction(Chunk_t *chunk){
 //generate chunk on chunk coord [pos]
 void generateChunk(int32_t x, int32_t y, int32_t z){
 	
-	Chunk_t *handle = chunkMap_get(chunkMap, x, y, z);
+	Chunk_t *handle = chunkMap_getChunk(chunkMap, x, y, z);
 	
 	if(handle->initialized){
 		

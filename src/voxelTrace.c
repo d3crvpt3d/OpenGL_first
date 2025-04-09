@@ -1,4 +1,6 @@
 #include "voxelTrace.h"
+#include "chunkMap.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
@@ -14,14 +16,19 @@ float dist_sq(vec3 a, vec3 b){
     return powf(a.x - b.x, 2.f) + powf(a.y - b.y, 2.f) + powf(a.z - b.z, 2.f);
 }
 
-//TODO:
-uint16_t getBlock(vec3 *pos){
-    return 0;
+
+uint16_t getBlock(vec3 *pos, ChunkMap_t *chunkMap){
+    
+    int32_t x = (int32_t) pos->x;
+    int32_t y = (int32_t) pos->y;
+    int32_t z = (int32_t) pos->z;
+
+    return chunkMap_getBlock(chunkMap, x, y, z);
 }
 
 //based heavily on "A Fast Voxel Traversal Algorithm for Ray Tracing" by Amanatides and Woo
-
-void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, vec3i_t *place_block, float maxDistance){
+//TODO: fix
+void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, vec3i_t *place_block, float maxDistance, ChunkMap_t *chunkMap){
     
     //init defaults
     vec3 pos = {xyz[0], xyz[1], xyz[2]};
@@ -87,7 +94,7 @@ void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, ve
     //update loop
     while(dist_sq(pos, newPos) < powf(maxDistance, 2.f)){
         
-        if(getBlock(&newPos)){
+        if(getBlock(&newPos, chunkMap)){
             place_block->x = floorf(ndlast.x);
             place_block->y = floorf(ndlast.y);
             place_block->z = floorf(ndlast.z);
@@ -95,8 +102,8 @@ void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, ve
             break_block->x = floorf(last.x);
             break_block->y = floorf(last.y);
             break_block->z = floorf(last.z);
-            fprintf(stderr,"PlaceBlock: %d, %d, %d\n", place_block->x, place_block->y, place_block->z);
-            //fprintf(stderr,"BreakBlock: %d, %d, %d\n", break_block->x, break_block->y, break_block->z);
+
+            //fprintf(stderr,"looking at:%d,%d,%d\n", break_block->x, break_block->y, break_block->z);
             return;
         }
         

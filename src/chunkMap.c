@@ -16,7 +16,12 @@ ChunkMap_t *chunkMap_init(uint8_t wdh){
 	return tmp;
 }
 
-Chunk_t *chunkMap_get(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z){
+uint16_t chunkMap_getBlock(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z){
+	Chunk_t *chunk = chunkMap_getChunk(chunkMap, x >> 6, y >> 6, z >> 6);
+	return chunk->blocks[z & 63][y & 63][x & 63];
+}
+
+Chunk_t *chunkMap_getChunk(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z){
 	return &chunkMap->chunks[
 		mod(z, RENDERSPAN) * RENDERSPAN * RENDERSPAN +
 		mod(y, RENDERSPAN) * RENDERSPAN +

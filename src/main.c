@@ -313,7 +313,7 @@ int main(){
 			
 			glBindVertexArray(cubeVAO);
 			glBindBuffer(GL_ARRAY_BUFFER, blockData);
-			Chunk_t *chunk = chunkMap_get(chunkMap, 0, 0, 0);
+			Chunk_t *chunk = chunkMap_getChunk(chunkMap, 0, 0, 0);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLushort) * BLOCKS_PER_CHUNK, chunk->blocks);
 			glBindVertexArray(0);
 			
@@ -323,8 +323,8 @@ int main(){
 		handle_keys(window);
 		
 		//update place/break block coordinates
-		update_lookingAt(camera.xyz, camera.yaw_pitch, &break_block, &place_block, BLOCK_RANGE);
-
+		update_lookingAt(camera.xyz, camera.yaw_pitch, &break_block, &place_block, BLOCK_RANGE, chunkMap);
+		
 		// update Uniforms
 		glUniform3fv(campos_loc, 1, camera.xyz);
 		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
