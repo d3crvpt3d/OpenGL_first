@@ -331,9 +331,9 @@ int main(){
 		
 		
 		//check if new chunk
-		currChunk.x = ((int32_t) camera.xyz[0]) >> 6;
-		currChunk.y = ((int32_t) camera.xyz[1]) >> 6;
-		currChunk.z = ((int32_t) camera.xyz[2]) >> 6;
+		currChunk.x = ((int32_t) floorf(camera.xyz[0])) >> 6;
+		currChunk.y = ((int32_t) floorf(camera.xyz[1])) >> 6;
+		currChunk.z = ((int32_t) floorf(camera.xyz[2])) >> 6;
 		
 		if(
 			currChunk.x != lastChunk.x ||
@@ -342,7 +342,7 @@ int main(){
 		){
 			//TODO: check
 			//fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
-			fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
+			//fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
 			addNewChunkJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
