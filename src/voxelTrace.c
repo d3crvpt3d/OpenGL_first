@@ -27,7 +27,6 @@ uint16_t getBlock(vec3 *pos, ChunkMap_t *chunkMap){
 }
 
 //based heavily on "A Fast Voxel Traversal Algorithm for Ray Tracing" by Amanatides and Woo
-//TODO: fix
 void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, vec3i_t *place_block, float maxDistance, ChunkMap_t *chunkMap){
     
     //init defaults
@@ -35,11 +34,22 @@ void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, ve
     
     //convert yaw/pitch to xyz
     vec3 dir = {cosf(yaw_pitch[1]) * sinf(yaw_pitch[0]) + FLT_EPSILON, -sinf(yaw_pitch[1]) + FLT_EPSILON, cosf(yaw_pitch[0]) * cosf(yaw_pitch[1]) + FLT_EPSILON};
+
+    if(dir.x == 0.f){
+        dir.x = FLT_EPSILON;
+    }
+    if(dir.y == 0.f){
+        dir.y = FLT_EPSILON;
+    }
+    if(dir.z == 0.f){
+        dir.z = FLT_EPSILON;
+    }
+
     //fprintf(stderr,"dir: %f, %f, %f\n", dir.x, dir.y, dir.z);
     
-    float nX = floorf(pos.x) + 0.5f * dir.x/fabsf(dir.x) + 0.5f;
-    float nY = floorf(pos.y) + 0.5f * dir.y/fabsf(dir.y) + 0.5f;
-    float nZ = floorf(pos.z) + 0.5f * dir.z/fabsf(dir.z) + 0.5f;
+    float nX = floorf(pos.x) + 0.500001f * dir.x/fabsf(dir.x) + 0.5f;
+    float nY = floorf(pos.y) + 0.500001f * dir.y/fabsf(dir.y) + 0.5f;
+    float nZ = floorf(pos.z) + 0.500001f * dir.z/fabsf(dir.z) + 0.5f;
     
     //gradient with bases on other
     float mx_y = dir.x/dir.y;
@@ -93,6 +103,13 @@ void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, ve
     
     //update loop
     while(dist_sq(pos, newPos) < powf(maxDistance, 2.f)){
+
+        ndlast.x = last.x;
+        ndlast.y = last.y;
+        ndlast.z = last.z;
+        last.x = newPos.x;
+        last.y = newPos.y;
+        last.z = newPos.z;
         
         if(getBlock(&newPos, chunkMap)){
             place_block->x = floorf(ndlast.x);
@@ -103,16 +120,10 @@ void update_lookingAt(float xyz[3], float yaw_pitch[2], vec3i_t *break_block, ve
             break_block->y = floorf(last.y);
             break_block->z = floorf(last.z);
 
-            //fprintf(stderr,"looking at:%d,%d,%d\n", break_block->x, break_block->y, break_block->z);
+            fprintf(stderr,"looking at:%d,%d,%d\n", break_block->x, break_block->y, break_block->z);
             return;
         }
-        
-        ndlast.x = last.x;
-        ndlast.y = last.y;
-        ndlast.z = last.z;
-        last.x = newPos.x;
-        last.y = newPos.y;
-        last.z = newPos.z;
+
         
         if(dist_sq(newPos, nextX) < dist_sq(newPos, nextY)){
             if(dist_sq(newPos, nextX) < dist_sq(newPos, nextZ)){
