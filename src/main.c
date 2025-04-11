@@ -66,7 +66,7 @@ int main(){
 	//glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
-	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
+	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
 	
 	/* Create GLFW window */
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Test Title!", NULL, NULL);
@@ -479,9 +479,9 @@ void cursor_callback(GLFWwindow *window, double xpos, double ypos){
 }
 
 void generateSpawnLocation(){
-	for(int16_t z = -RENDERDISTANCE; z <= RENDERDISTANCE; z++){
-		for(int16_t y = -RENDERDISTANCE; y <= RENDERDISTANCE; y++){
-			for(int16_t x = -RENDERDISTANCE; x <= RENDERDISTANCE; x++){
+	for(int16_t z = -RENDERDISTANCE; z < RENDERDISTANCE; z++){
+		for(int16_t y = -RENDERDISTANCE; y < RENDERDISTANCE; y++){
+			for(int16_t x = -RENDERDISTANCE; x < RENDERDISTANCE; x++){
 				addJob(x, y, z);
 			}
 		}

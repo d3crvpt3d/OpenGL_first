@@ -12,8 +12,8 @@
 #include "voxelTrace.h"
 
 #define BLOCK_RANGE 4.5f
-#define WIDTH 	1920
-#define HEIGHT 	1080
+#define WIDTH 	2560
+#define HEIGHT 	1440
 #define FLYSPEED 3.0
 #define FLYSPEED_MAX 12.0
 #define RADPERPIXEL 0.00418879f //mouse sensitivity
