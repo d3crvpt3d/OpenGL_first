@@ -260,7 +260,32 @@ int main(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	uint8_t *texData = stbi_load("G:/Code/Projects/OpenGL/opengl_glfw_1/texData/faithful_32.png", &texWidth, &texHeight, &texNrChannels, 0);
+
+	//load relative image (currently no bounds checking, //TODO later)
+	char img_path[128];
+	ssize_t img_path_len = readlink("/proc/self/exe", img_path, sizeof(img_path) - 1);
+	img_path[img_path_len] = '\0';
+	char *tmp_slash = strchr(img_path, '/');
+	char *img_slash_loc = 0;
+	//DEBUG
+	fprintf(stderr, "img_path: %s\n", img_path);
+	while(tmp_slash != 0){
+		//DEBUG
+		fprintf(stderr, "slash at %u\n", (uint32_t) (tmp_slash - img_path));
+		img_slash_loc = tmp_slash;
+		tmp_slash = strchr(tmp_slash+1, '/');
+	}
+	img_path[img_path_len] = '0'; //remove null terminator to write
+	//img_slash_loc is in img_path where last lash was
+	// "/dir+/../$relative_path"
+	snprintf(img_slash_loc,
+			31,
+			"/../texData/firstGLAtlats.png");
+
+	//DEBUG
+	fprintf(stderr,"texData path: %s\n", img_path);
+
+	uint8_t *texData = stbi_load(img_path, &texWidth, &texHeight, &texNrChannels, 0);
 	if(!texData){
 		fprintf(stderr, "Could not load image\n");
 	}
@@ -415,11 +440,10 @@ char *loadShaders(const char* relative_path){
 
 	ssize_t new_path_len = snprintf(new_path, 
 			sizeof(new_path) - 1,
-			"%s/../shaders/%s",
+			"%s/../%s",
 			exe_location,
 			relative_path);
-	new_path[new_path_len] = '\0'; //new_path is now "$exe(_parent)_location+/../shaders/+$path\0"
-
+	new_path[new_path_len] = '\0'; //new_path should now be "$exe(_parent)_location+/../shaders/+$path\0"
 
 	//open shader files
 	FILE *fptr = fopen(new_path, "rb");
