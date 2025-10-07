@@ -1,6 +1,8 @@
-#pragma once
+#ifndef CHUNK_GENERATION
+#define CHUNK_GENERATION
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <math.h>
@@ -38,3 +40,5 @@ void clearThreads();
 void addJob(int32_t x, int32_t y, int32_t z);
 void addNewChunkJobs(int32_t lastX, int32_t lastY, int32_t lastZ, int32_t currX, int32_t currY, int32_t currZ);
 uint8_t inRenderRegion(Chunk_t *chunk);
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MAIN_HEADER
+#define MAIN_HEADER
 
 #include <pthread.h>
 #include <stdint.h>
@@ -44,3 +45,5 @@ typedef struct Light{
 } Light;
 
 void generateSpawnLocation();
+
+#endif

@@ -1,8 +1,8 @@
-#include "main.h"
+#include "include/main.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 
-#include "stb_image.h"
+#include "include/stb_image.h"
 
 Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},

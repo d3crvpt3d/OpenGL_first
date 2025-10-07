@@ -1,4 +1,4 @@
-#include "chunkMap.h"
+#include "include/chunkMap.h"
 
 //b has to be in 2^n
 uint32_t modulo_n2(int32_t a, int32_t b){

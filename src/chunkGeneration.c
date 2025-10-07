@@ -1,4 +1,4 @@
-#include "chunkGeneration.h"
+#include "include/chunkGeneration.h"
 
 #include <stdio.h>
 
@@ -100,9 +100,9 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 			char nameX[9] = {'_'};
 			char nameY[9] = {'_'};
 			char nameZ[9] = {'_'};
-			itoa(handle->x, nameX, 16);
-			itoa(handle->y, nameY, 16);
-			itoa(handle->z, nameZ, 16);
+			snprintf(nameX, 16, "%x", handle->x);
+			snprintf(nameY, 16, "%x", handle->y);
+			snprintf(nameZ, 16, "%x", handle->z);
 			memcpy(&template[0]+sizeof("chunkData/")-1,  nameX, 8);
 			memcpy(&template[8]+sizeof("chunkData/")-1,  nameY, 8);
 			memcpy(&template[16]+sizeof("chunkData/")-1, nameZ, 8);
@@ -119,9 +119,9 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 		char nameX[9] = {'_'};
 		char nameY[9] = {'_'};
 		char nameZ[9] = {'_'};
-		itoa(x, nameX, 16);
-		itoa(y, nameY, 16);
-		itoa(z, nameZ, 16);
+		snprintf(nameX, 8, "%x", x);
+		snprintf(nameY, 8, "%x", y);
+		snprintf(nameZ, 8, "%x", z);
 		memcpy((&template[0])+sizeof("chunkData/")-1, &nameX[0], 8);
 		memcpy((&template[8])+sizeof("chunkData/")-1, &nameY[0], 8);
 		memcpy((&template[16])+sizeof("chunkData/")-1, &nameZ[0], 8);
@@ -173,6 +173,8 @@ void *waitingRoom(){
 			pthread_mutex_unlock(&jobMutex);
 		}
 	}
+
+	return 0;
 }
 
 
