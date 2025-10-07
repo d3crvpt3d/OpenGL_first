@@ -5,12 +5,6 @@
 #include <stdint.h>
 #include "glad/gl.h"
 #include <GLFW/glfw3.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
-#include "chunkGeneration.h"
-#include "voxelTrace.h"
 
 #define BLOCK_RANGE 4.5f
 #define WIDTH 	1920

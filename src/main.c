@@ -1,7 +1,15 @@
 #include "include/main.h"
+#include <string.h>
+#include <unistd.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+#include "include/chunkGeneration.h"
+#include "include/voxelTrace.h"
 #include "include/stb_image.h"
 
 Camera camera = {
@@ -18,7 +26,7 @@ double xpos_old, ypos_old;
 GLint nonFreqLocations[4];
 
 
-char *loadShaders(const char* path);
+char *loadShaders(const char* relative_path);
 void cursor_callback(GLFWwindow *window, double xpos, double ypos);
 void handle_keys(GLFWwindow *window);
 
@@ -161,8 +169,8 @@ int main(){
 	
 	
 	/* Load Shaders */
-	const char *vertex_shader = loadShaders("G:/Code/Projects/OpenGL/opengl_glfw_1/shaders/vertex.glsl");
-	const char *fragment_shader = loadShaders("G:/Code/Projects/OpenGL/opengl_glfw_1/shaders/fragment.glsl");
+	const char *vertex_shader = loadShaders("shaders/vertex.glsl");
+	const char *fragment_shader = loadShaders("shaders/fragment.glsl");
 	
 	if(!vertex_shader || !fragment_shader){
 		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
@@ -373,8 +381,48 @@ int main(){
 	return 0;
 }
 
-char *loadShaders(const char* path){
-	FILE *fptr = fopen(path, "rb");
+//load with relative path
+char *loadShaders(const char* relative_path){
+
+	//load relative shader directory
+	char exe_location[128];
+	char new_path[128];
+	ssize_t exe_path_length = readlink("/proc/self/exe", exe_location, sizeof(exe_location) - 1);
+
+	if(exe_path_length == -1){
+
+		exe_location[sizeof(exe_location) - 1] = '\0';
+		fprintf(stderr,"loadShaders: readlink path too long (>255 chars):\n%s\n", exe_location);
+		exit(-3);
+	}else if(exe_path_length + sizeof(relative_path) + 2 >= sizeof(new_path)){
+	
+		fprintf(stderr,"loadShaders: full path length (%lu) > size of path buffer (%lu bytes)\n", 
+				exe_path_length + sizeof(relative_path),
+				sizeof(new_path));
+		exit(-4);
+	}
+	exe_location[exe_path_length] = '\0';
+
+	//modify exe_location to parent location
+	char *lastslash = strchr(exe_location, '/');
+	char *lastslash2 = 0;
+	while(lastslash != 0){
+
+		lastslash2 = lastslash; //save loc
+		lastslash = strchr(lastslash+1, '/');
+	}
+	*lastslash2 = '\0';//replace last slash with null pointer
+
+	ssize_t new_path_len = snprintf(new_path, 
+			sizeof(new_path) - 1,
+			"%s/../shaders/%s",
+			exe_location,
+			relative_path);
+	new_path[new_path_len] = '\0'; //new_path is now "$exe(_parent)_location+/../shaders/+$path\0"
+
+
+	//open shader files
+	FILE *fptr = fopen(new_path, "rb");
 	
 	if(!fptr){
 		return NULL;

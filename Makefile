@@ -2,10 +2,9 @@ PROGRAM_NAME := program
 DEBUG_NAME := dbg_program
 BUILD_DIR := build
 SRC_DIR := src
-INCLUDE_FLAGS := -I"$(GLFW_PATH)/include"
-LINKER_FLAGS := -L"$(GLFW_PATH)/lib-mingw-w64" -lglfw3 -lgdi32 -lopengl32
+LINKER_FLAGS := -lglfw -lX11 -lGL -lm
 
-ONELINER := $(SRC_DIR)/*.c $(INCLUDE_FLAGS) $(LINKER_FLAGS) -march=native
+ONELINER := $(SRC_DIR)/*.c $(LINKER_FLAGS) -march=native
 
 default:
 	gcc -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER) -O3
