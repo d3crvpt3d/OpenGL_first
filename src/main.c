@@ -267,11 +267,7 @@ int main(){
 	img_path[img_path_len] = '\0';
 	char *tmp_slash = strchr(img_path, '/');
 	char *img_slash_loc = 0;
-	//DEBUG
-	fprintf(stderr, "img_path: %s\n", img_path);
 	while(tmp_slash != 0){
-		//DEBUG
-		fprintf(stderr, "slash at %u\n", (uint32_t) (tmp_slash - img_path));
 		img_slash_loc = tmp_slash;
 		tmp_slash = strchr(tmp_slash+1, '/');
 	}
@@ -281,9 +277,6 @@ int main(){
 	snprintf(img_slash_loc,
 			31,
 			"/../texData/firstGLAtlats.png");
-
-	//DEBUG
-	fprintf(stderr,"texData path: %s\n", img_path);
 
 	uint8_t *texData = stbi_load(img_path, &texWidth, &texHeight, &texNrChannels, 0);
 	if(!texData){
