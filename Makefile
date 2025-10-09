@@ -10,4 +10,9 @@ default:
 	gcc -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER) -Ofast
 
 dbg:
-	gcc -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER) -g
+	gcc -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER) -pg
+
+clean:
+	rm build/*
+
+.PHONY: dbg default clean

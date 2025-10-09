@@ -265,12 +265,7 @@ int main(){
 	char img_path[128];
 	ssize_t img_path_len = readlink("/proc/self/exe", img_path, sizeof(img_path) - 1);
 	img_path[img_path_len] = '\0';
-	char *tmp_slash = strchr(img_path, '/');
-	char *img_slash_loc = 0;
-	while(tmp_slash != 0){
-		img_slash_loc = tmp_slash;
-		tmp_slash = strchr(tmp_slash+1, '/');
-	}
+	char *img_slash_loc = strrchr(img_path, '/');
 	img_path[img_path_len] = '0'; //remove null terminator to write
 	//img_slash_loc is in img_path where last lash was
 	// "/dir+/../$relative_path"
@@ -422,14 +417,8 @@ char *loadShaders(const char* relative_path){
 	exe_location[exe_path_length] = '\0';
 
 	//modify exe_location to parent location
-	char *lastslash = strchr(exe_location, '/');
-	char *lastslash2 = 0;
-	while(lastslash != 0){
-
-		lastslash2 = lastslash; //save loc
-		lastslash = strchr(lastslash+1, '/');
-	}
-	*lastslash2 = '\0';//replace last slash with null pointer
+	char *lastslash = strrchr(exe_location, '/');
+	*lastslash = '\0';//replace last slash with null pointer
 
 	ssize_t new_path_len = snprintf(new_path, 
 			sizeof(new_path) - 1,
