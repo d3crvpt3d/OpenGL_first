@@ -1,4 +1,4 @@
 perf.*
-.vscode
+.vscode/
 *.etl
-.cache
+.cache/
