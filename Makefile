@@ -11,10 +11,14 @@ ONELINER := $(SRC_DIR)/*.cpp $(LINKER_FLAGS) -march=native $(FLAGS)
 default:
 	g++ -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER) -Ofast
 
+windows:
+	g++ src/*.cpp -o build/win_programm.exe -L "/g/Code/glfw-3.4.bin.WIN64/lib-mingw-w64/" -I "/g/Code/glfw-3.4.bin.WIN64/include/" -lglfw3 -lopengl32 -lgdi32
+
 dbg:
 	g++ -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER) -pg
 
 clean:
 	rm build/*
 
-.PHONY: dbg default clean
+
+.PHONY: dbg default clean windows
