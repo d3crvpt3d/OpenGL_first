@@ -1,8 +1,8 @@
 #ifndef CHUNK_GENERATION
 #define CHUNK_GENERATION
+#include <atomic>
 #include <pthread.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <math.h>
@@ -29,7 +29,7 @@ extern Job_t *lastJob;
 extern Job_t *jobQueue;
 extern ChunkMap_t *chunkMap;
 extern vec3i_t currChunk;
-extern _Atomic uint8_t update_shadowVBO;
+extern std::atomic_uint8_t update_shadowVBO;
 
 /* FUNCTIONS */
 

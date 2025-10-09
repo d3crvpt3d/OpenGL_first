@@ -1,5 +1,7 @@
 #include "include/main.h"
+#include <filesystem>
 #include <string.h>
+#include <string>
 #include <unistd.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -12,12 +14,37 @@
 #include "include/voxelTrace.h"
 #include "include/stb_image.h"
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
+std::string getRelativeRootDir(){
+
+	char path[256];
+#if defined(_WIN32)
+	HMODULE hModule = GetModuleHandleA(NULL);
+	GetModuleFileNameA(hModule, path, sizeof(path));
+	char *lastBs = strrchr(path, '\\');
+	if(lastBs != NULL){
+		*lastBs = '\0';
+	}
+#else
+	ssize_t count = readlink("/proc/self/exe", path, sizeof(path));
+	path[count] = '\0';
+	char *lastBs = strrchr(path, '/');
+	if(lastBs != NULL){
+		*lastBs = '\0';
+	}
+#endif
+	return std::string(path);
+}
+
 Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},
+	.f = 1.0f,
 	.yaw_pitch={0.0f, 0.0f},
 	.near_far={0.01f, 1000.0f},
 	.aspectRatio=16.0f/9.0f,
-	.f = 1.0f
 };
 
 double deltaTime;
@@ -142,7 +169,7 @@ int main(){
 		20,	23,	22,	20,	21,	23
 	};
 	
-	GLint cubeVAO, cubeVBO, cubeEAO;
+	GLuint cubeVAO, cubeVBO, cubeEAO;
 	//create cubeVAO
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
@@ -169,8 +196,8 @@ int main(){
 	
 	
 	/* Load Shaders */
-	const char *vertex_shader = loadShaders("shaders/vertex.glsl");
-	const char *fragment_shader = loadShaders("shaders/fragment.glsl");
+	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");
+	const char *fragment_shader = loadShaders("../shaders/fragment.glsl");
 	
 	if(!vertex_shader || !fragment_shader){
 		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
@@ -234,7 +261,7 @@ int main(){
 	//TEST
 	glBindVertexArray(cubeVAO);
 
-	GLint blockData;
+	GLuint blockData;
 	glGenBuffers(1, &blockData);
 
 	glBindBuffer(GL_ARRAY_BUFFER, blockData);
@@ -261,19 +288,10 @@ int main(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	//load relative image (currently no bounds checking, //TODO later)
-	char img_path[128];
-	ssize_t img_path_len = readlink("/proc/self/exe", img_path, sizeof(img_path) - 1);
-	img_path[img_path_len] = '\0';
-	char *img_slash_loc = strrchr(img_path, '/');
-	img_path[img_path_len] = '0'; //remove null terminator to write
-	//img_slash_loc is in img_path where last lash was
-	// "/dir+/../$relative_path"
-	snprintf(img_slash_loc,
-			31,
-			"/../texData/firstGLAtlats.png");
-
-	uint8_t *texData = stbi_load(img_path, &texWidth, &texHeight, &texNrChannels, 0);
+	//relative texData path
+	std::filesystem::path exeRoot = getRelativeRootDir();
+	std::filesystem::path img_path = exeRoot / "../texData" / "firstGLAtlats.png";
+	uint8_t *texData = stbi_load(img_path.u8string().c_str(), &texWidth, &texHeight, &texNrChannels, 0);
 	if(!texData){
 		fprintf(stderr, "Could not load image\n");
 	}
@@ -295,7 +313,7 @@ int main(){
 	//mouse position
 	glfwGetCursorPos(window, &xpos_old, &ypos_old);
 	
-	vec3i_t lastChunk = {0.0, 0.0, 0.0};
+	vec3i_t lastChunk = {0, 0, 0};
 	
 	setUpThreads();
 	
@@ -397,40 +415,13 @@ int main(){
 //load with relative path
 char *loadShaders(const char* relative_path){
 
-	//load relative shader directory
-	char exe_location[128];
-	char new_path[128];
-	ssize_t exe_path_length = readlink("/proc/self/exe", exe_location, sizeof(exe_location) - 1);
-
-	if(exe_path_length == -1){
-
-		exe_location[sizeof(exe_location) - 1] = '\0';
-		fprintf(stderr,"loadShaders: readlink path too long (>255 chars):\n%s\n", exe_location);
-		exit(-3);
-	}else if(exe_path_length + sizeof(relative_path) + 2 >= sizeof(new_path)){
-	
-		fprintf(stderr,"loadShaders: full path length (%lu) > size of path buffer (%lu bytes)\n", 
-				exe_path_length + sizeof(relative_path),
-				sizeof(new_path));
-		exit(-4);
-	}
-	exe_location[exe_path_length] = '\0';
-
-	//modify exe_location to parent location
-	char *lastslash = strrchr(exe_location, '/');
-	*lastslash = '\0';//replace last slash with null pointer
-
-	ssize_t new_path_len = snprintf(new_path, 
-			sizeof(new_path) - 1,
-			"%s/../%s",
-			exe_location,
-			relative_path);
-	new_path[new_path_len] = '\0'; //new_path should now be "$exe(_parent)_location+/../shaders/+$path\0"
-
+	std::filesystem::path exeRoot = getRelativeRootDir();
+	std::filesystem::path new_path = exeRoot / relative_path;
 	//open shader files
-	FILE *fptr = fopen(new_path, "rb");
+	FILE *fptr = fopen(new_path.u8string().c_str(), "rb");
 	
 	if(!fptr){
+		fprintf(stderr, "%s does not exist\n", new_path.u8string().c_str());
 		return NULL;
 	}
 	

@@ -1,5 +1,6 @@
 #include "include/chunkGeneration.h"
 
+#include <atomic>
 #include <stdio.h>
 
 #define CHUNKDATA E:\Code\Projects\OpenGL\opengl_glfw_1\include\main.h
@@ -33,7 +34,7 @@ uint32_t get_max_threads() {
 #endif
 
 uint32_t gseed = 0; //currently 0
-_Atomic uint8_t update_shadowVBO = 0; //set up main thread to update shadow vbo and swap buffers
+std::atomic_uint8_t update_shadowVBO = 0; //set up main thread to update shadow vbo and swap buffers
 
 pthread_t chunkQueue[CHUNK_THREADS];
 
@@ -87,57 +88,6 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	
 	Chunk_t *handle = chunkMap_get(chunkMap, x, y, z);
 	
-	if(handle->initialized){
-		
-		//skip if already generated
-		if(inRenderRegion(handle)){
-			return;
-		}
-		
-		//save/overwrite file if chunk exists and was modified //TODO: fix null bytes
-		if(handle->modified && 0){
-			char template[41] = "chunkData/________________________.chunk\0";
-			char nameX[9] = {'_'};
-			char nameY[9] = {'_'};
-			char nameZ[9] = {'_'};
-			snprintf(nameX, 16, "%x", handle->x);
-			snprintf(nameY, 16, "%x", handle->y);
-			snprintf(nameZ, 16, "%x", handle->z);
-			memcpy(&template[0]+sizeof("chunkData/")-1,  nameX, 8);
-			memcpy(&template[8]+sizeof("chunkData/")-1,  nameY, 8);
-			memcpy(&template[16]+sizeof("chunkData/")-1, nameZ, 8);
-			FILE *fptr;
-			fptr = fopen(template, "w");
-			fwrite(handle->blocks, sizeof(handle->blocks), 1, fptr); //write contents of buffer
-			fclose(fptr);
-		}
-	}
-	
-	//fill chunk memory with new generated values or load from file
-	{
-		char template[41] = "chunkData/________________________.chunk\0";
-		char nameX[9] = {'_'};
-		char nameY[9] = {'_'};
-		char nameZ[9] = {'_'};
-		snprintf(nameX, 8, "%x", x);
-		snprintf(nameY, 8, "%x", y);
-		snprintf(nameZ, 8, "%x", z);
-		memcpy((&template[0])+sizeof("chunkData/")-1, &nameX[0], 8);
-		memcpy((&template[8])+sizeof("chunkData/")-1, &nameY[0], 8);
-		memcpy((&template[16])+sizeof("chunkData/")-1, &nameZ[0], 8);
-		FILE *fptr;
-		fptr = fopen(template, "rb");
-
-		if(fptr){
-			fread(handle->blocks, sizeof(handle->blocks), 1, fptr);//read contentes into buffer
-			fclose(fptr);
-			handle->x = x;
-			handle->y = y;
-			handle->z = z;
-			return;
-		}
-	}
-	
 	handle->x = x;
 	handle->y = y;
 	handle->z = z;
@@ -146,7 +96,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	chunkFunction(handle);
 }
 
-void *waitingRoom(){
+void *waitingRoom(void *arg){
 	
 	while(programRunning){
 		

@@ -3,75 +3,70 @@
     "arguments": [
       "/usr/bin/gcc",
       "-c",
-      "-I/include",
       "-march=native",
-      "-O3",
+      "-Ofast",
       "-o",
       "build/program",
-      "src/chunkGeneration.c"
+      "src/chunkGeneration.cpp"
     ],
     "directory": "/home/d3crypt3d/code/C/cloud/OpenGL_first",
-    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/chunkGeneration.c",
+    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/chunkGeneration.cpp",
     "output": "/home/d3crypt3d/code/C/cloud/OpenGL_first/build/program"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
       "-c",
-      "-I/include",
       "-march=native",
-      "-O3",
+      "-Ofast",
       "-o",
       "build/program",
-      "src/chunkMap.c"
+      "src/chunkMap.cpp"
     ],
     "directory": "/home/d3crypt3d/code/C/cloud/OpenGL_first",
-    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/chunkMap.c",
+    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/chunkMap.cpp",
     "output": "/home/d3crypt3d/code/C/cloud/OpenGL_first/build/program"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
       "-c",
-      "-I/include",
       "-march=native",
-      "-O3",
+      "-Ofast",
       "-o",
       "build/program",
-      "src/gl.c"
+      "src/gl.cpp"
     ],
     "directory": "/home/d3crypt3d/code/C/cloud/OpenGL_first",
-    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/gl.c",
+    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/gl.cpp",
     "output": "/home/d3crypt3d/code/C/cloud/OpenGL_first/build/program"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
       "-c",
-      "-I/include",
       "-march=native",
-      "-O3",
+      "-Ofast",
       "-o",
       "build/program",
-      "src/main.c"
+      "src/main.cpp"
     ],
     "directory": "/home/d3crypt3d/code/C/cloud/OpenGL_first",
-    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/main.c",
+    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/main.cpp",
     "output": "/home/d3crypt3d/code/C/cloud/OpenGL_first/build/program"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
       "-c",
-      "-I/include",
       "-march=native",
-      "-O3",
+      "-Ofast",
       "-o",
       "build/program",
-      "src/voxelTrace.c"
+      "src/voxelTrace.cpp"
     ],
     "directory": "/home/d3crypt3d/code/C/cloud/OpenGL_first",
-    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/voxelTrace.c",
+    "file": "/home/d3crypt3d/code/C/cloud/OpenGL_first/src/voxelTrace.cpp",
     "output": "/home/d3crypt3d/code/C/cloud/OpenGL_first/build/program"
   }
 ]
