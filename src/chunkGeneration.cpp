@@ -6,6 +6,7 @@
 #define CHUNKDATA E:\Code\Projects\OpenGL\opengl_glfw_1\include\main.h
 #define PI 3.14159265358979323846f
 
+#define DEBUG_MODE 0
 
 uint8_t programRunning = 1;
 vec3i_t currChunk = {0, 0, 0};
@@ -64,10 +65,21 @@ void addJob(int32_t x, int32_t y, int32_t z){
 
 void chunkFunction(Chunk_t *chunk){
 
-	//debug
-	//memset(chunk->blocks[0][0], (short) 123, sizeof(short) * 63);
-	//return;
-	
+	if(DEBUG_MODE){
+		// Ersetze die komplette Funktion mit diesem einfachen Code für den Test
+		for(int32_t z = 0; z < CHUNK_WDH; z++){
+			for(int32_t y = 0; y < CHUNK_WDH; y++){
+				for(int32_t x = 0; x < CHUNK_WDH; x++){
+					if (y < 32) {
+						chunk->blocks[z][y][x] = 2; // Typ 2 = Stein
+					} else {
+						chunk->blocks[z][y][x] = 0; // Typ 0 = Luft
+					}
+				}
+			}
+		}
+		return ;
+	}
 	
 	float x0 = chunk->x * CHUNK_WDH;
 	float y0 = chunk->y * CHUNK_WDH;
