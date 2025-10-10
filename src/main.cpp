@@ -13,6 +13,7 @@
 #include "include/chunkGeneration.h"
 #include "include/voxelTrace.h"
 #include "include/stb_image.h"
+#include "include/optimize_buffer.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -257,18 +258,18 @@ int main(){
 	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
 	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
 	
+	//TEST with one chunk
 	//TEST
-	//TEST
+
 	glBindVertexArray(cubeVAO);
 
 	GLuint blockData;
 	glGenBuffers(1, &blockData);
 
-	glBindBuffer(GL_ARRAY_BUFFER, blockData);
-	glBufferData(GL_ARRAY_BUFFER, BLOCKS_PER_CHUNK * sizeof(GLushort), NULL, GL_STATIC_DRAW);
-	glVertexAttribIPointer(2, 1, GL_UNSIGNED_SHORT, sizeof(uint16_t), NULL);
+	glBindBuffer(GL_ARRAY_BUFFER,
+			blockData);
+	glVertexAttribIPointer(2, 1, GL_UNSIGNED_SHORT, sizeof(Block_t), NULL);
 	glVertexAttribDivisor(2, 1); //increase by one for each instance
-
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 	
@@ -350,10 +351,21 @@ int main(){
 		//update chunk VBOs
 		if(update_shadowVBO){
 			
+			//get RAM data
+			Chunk_t *chunk = chunkMap_get(chunkMap, 0, 0, 0);
+
+			//optimize Data for VRAM
+			std::vector<Block_t> optimized_buffer_data = gen_optimized_buffer(*chunk);
+
 			glBindVertexArray(cubeVAO);
 			glBindBuffer(GL_ARRAY_BUFFER, blockData);
-			Chunk_t *chunk = chunkMap_get(chunkMap, 0, 0, 0);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLushort) * BLOCKS_PER_CHUNK, chunk->blocks);
+			
+			//fill buffer
+			glBufferData(GL_ARRAY_BUFFER,
+					sizeof(GLuint)*optimized_buffer_data.size(),
+					optimized_buffer_data.data(),
+					GL_STATIC_DRAW);
+
 			glBindVertexArray(0);
 			
 			update_shadowVBO = 0;
