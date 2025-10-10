@@ -358,7 +358,7 @@ int main(){
 	setUpThreads();
 	
 	generateSpawnLocation(); //TODO: check
-	
+
 	update_shadowVBO = 0;
 
 	vec3i_t break_block = {0, 0, 0};
@@ -395,6 +395,27 @@ int main(){
 
 			//optimize Data for VRAM
 			std::vector<Block_t> optimized_buffer_data = gen_optimized_buffer(*chunk);
+
+			// --- DEBUG-CODE ---
+			printf("--------------------------------------------------\n");
+			printf("DEBUG: gen_optimized_buffer hat %zu Blöcke erzeugt.\n", optimized_buffer_data.size());
+
+			// Wir geben die Koordinaten der ersten 20 Blöcke im Buffer aus
+			// Wir tun so, als wären wir der Shader und entpacken die Daten manuell
+			for (size_t i = 0; i < optimized_buffer_data.size() && i < 20; ++i) {
+				// Wir greifen auf die Daten als reinen 32-bit Integer zu, um Bitfield-Probleme zu umgehen
+				uint32_t raw_data = *reinterpret_cast<uint32_t*>(&optimized_buffer_data[i]);
+
+				// Exakt die gleiche Logik wie im Shader!
+				uint32_t x = (raw_data >> 26) & 63;
+				uint32_t y = (raw_data >> 20) & 63;
+				uint32_t z = (raw_data >> 14) & 63;
+				uint32_t type = raw_data & 1023;
+
+				printf("Block %zu: Unpacked Pos=(%u, %u, %u), Type=%u\n", i, x, y, z, type);
+			}
+			printf("--------------------------------------------------\n");
+			// --- ENDE: DEBUG-CODE ---
 
 			glBindVertexArray(cubeVAO);
 			glBindBuffer(GL_ARRAY_BUFFER, blockData);

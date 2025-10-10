@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-#define SKIP_OPTIMIZED 0
+#define SKIP_OPTIMIZED 1
 
 std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk){
 
