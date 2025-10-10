@@ -115,8 +115,6 @@ void *waitingRoom(void *arg){
 			//generate raw chunk data
 			generateChunk(tmpX, tmpY, tmpZ);
 
-			//TODO: binary meshing instead of instancing blocks
-			
 			//update_shadowVBO and draw other one when done
 			update_shadowVBO = 1;
 		}else{

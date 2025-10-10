@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -18,12 +19,13 @@
 
 //a Chunk in CPU memory is a 3D uint32_t array where each int is the block type
 typedef struct Chunk{
-	std::array<std::array<std::array<int16_t, 64>, 64>, 64> blocks;
-	uint8_t modified: 1;
-	uint8_t initialized: 1;
+	std::array<std::array<std::array<uint16_t, 64>, 64>, 64> blocks;
 	int32_t x;
 	int32_t y;
 	int32_t z;
+	uint32_t bufferSize;
+	uint8_t modified: 1;
+	uint8_t initialized: 1;
 } Chunk_t;
 
 typedef struct ChunkMap{

@@ -1,4 +1,5 @@
 #include "include/main.h"
+#include "include/chunkMap.h"
 #include <filesystem>
 #include <string.h>
 #include <string>
@@ -178,11 +179,29 @@ int main(){
 	//create cubeVBO
 	glGenBuffers(1, &cubeVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertecies), cube_vertecies, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(cube_vertecies),
+			cube_vertecies,
+			GL_STATIC_DRAW);
 	
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) 0); //pos
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 3)); //normal
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 6)); //texcoord
+	glVertexAttribPointer(0,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			8 * sizeof(GLfloat),
+			(void *) 0); //pos
+	glVertexAttribPointer(1,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			8 * sizeof(GLfloat),
+			(void *) (sizeof(GLfloat) * 3)); //normal
+	glVertexAttribPointer(3,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			8 * sizeof(GLfloat),
+			(void *) (sizeof(GLfloat) * 6)); //texcoord
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -191,7 +210,10 @@ int main(){
 	//create cubeEAO
 	glGenBuffers(1, &cubeEAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_index), cube_index, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+			sizeof(cube_index),
+			cube_index,
+			GL_STATIC_DRAW);
 	
 	glBindVertexArray(0);//unbind to not change it accidently
 	
@@ -268,7 +290,12 @@ int main(){
 
 	glBindBuffer(GL_ARRAY_BUFFER,
 			blockData);
-	glVertexAttribIPointer(2, 1, GL_UNSIGNED_SHORT, sizeof(Block_t), NULL);
+	//define structure of blockData
+	glVertexAttribIPointer(2,
+			1,
+			GL_UNSIGNED_INT,
+			sizeof(Block_t),
+			NULL);
 	glVertexAttribDivisor(2, 1); //increase by one for each instance
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
@@ -292,11 +319,23 @@ int main(){
 	//relative texData path
 	std::filesystem::path exeRoot = getRelativeRootDir();
 	std::filesystem::path img_path = exeRoot / "../texData" / "firstGLAtlats.png";
-	uint8_t *texData = stbi_load(img_path.u8string().c_str(), &texWidth, &texHeight, &texNrChannels, 0);
+	uint8_t *texData = stbi_load(img_path.u8string().c_str(),
+			&texWidth,
+			&texHeight,
+			&texNrChannels,
+			0);
 	if(!texData){
 		fprintf(stderr, "Could not load image\n");
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, texData);
+	glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGB,
+			texWidth,
+			texHeight,
+			0,
+			GL_RGB,
+			GL_UNSIGNED_BYTE,
+			texData);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(texData);
 	
@@ -362,7 +401,7 @@ int main(){
 			
 			//fill buffer
 			glBufferData(GL_ARRAY_BUFFER,
-					sizeof(GLuint)*optimized_buffer_data.size(),
+					sizeof(Block_t) * optimized_buffer_data.size(),
 					optimized_buffer_data.data(),
 					GL_STATIC_DRAW);
 
@@ -374,7 +413,11 @@ int main(){
 		handle_keys(window);
 		
 		//update place/break block coordinates
-		update_lookingAt(camera.xyz, camera.yaw_pitch, &break_block, &place_block, BLOCK_RANGE);
+		update_lookingAt(camera.xyz,
+				camera.yaw_pitch,
+				&break_block,
+				&place_block,
+				BLOCK_RANGE);
 
 		// update Uniforms
 		glUniform3fv(campos_loc, 1, camera.xyz);
@@ -394,7 +437,12 @@ int main(){
 			//TODO: check
 			//fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
 			//fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
-			addNewChunkJobs(lastChunk.x, lastChunk.y, lastChunk.z, currChunk.x, currChunk.y, currChunk.z);
+			addNewChunkJobs(lastChunk.x,
+					lastChunk.y,
+					lastChunk.z,
+					currChunk.x,
+					currChunk.y,
+					currChunk.z);
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
 			lastChunk.z = currChunk.z;
@@ -404,7 +452,11 @@ int main(){
 		
 		//TODO: draw cubes instanced
 		glBindVertexArray(cubeVAO);
-		glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0, BLOCKS_PER_CHUNK);
+		glDrawElementsInstanced(GL_TRIANGLES,
+				36,
+				GL_UNSIGNED_INT,
+				0,
+				chunkMap_get(chunkMap, 0, 0, 0)->bufferSize);
 		
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );

@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 aVertexPosition;
 layout(location = 1) in vec3 aVertexNormal;
-layout(location = 2) in int aBlockType;
+layout(location = 2) in uint aBlockData; //x:6, y:6, z:6, break_progress:4, blocktype: 10
 layout(location = 3) in vec2 inTexCoord;
 
 //Model View Projection Matrix
@@ -24,17 +24,17 @@ void main() {
 	
 	//color = aBlockColor[1] * max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
 	aLight = max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
-	aTexCoord = vec2(inTexCoord.x + float(aBlockType) * 0.0625, inTexCoord.y); //offset texCoord.u by block type
-	//TEST with textures
+	
+	//offset texCoord.u by block type
+	aTexCoord = vec2(inTexCoord.x + float(aBlockData & 1023) * 0.0625, inTexCoord.y);
 
 	vec3 block_pos = vec3(
-		(gl_InstanceID >> 0 ) & 0x3F,
-		(gl_InstanceID >> 6 ) & 0x3F,
-		(gl_InstanceID >> 12) & 0x3F
+		(aBlockData >> 26 ) & 63,
+		(aBlockData >> 20 ) & 63,
+		(aBlockData >> 14) & 63
 	);
 
 	vec3 newPos = aVertexPosition + block_pos;
-
 
 	vec3 trans = newPos - cam_pos;
 
@@ -61,8 +61,4 @@ void main() {
 
 	gl_Position = proj * view2 * view1 * vec4(trans, 1.0);
 
-
-	if( aBlockType == 0 ){
-		gl_Position = vec4(0.0, 0.0, -10.0, 1.0);
-	}
 }

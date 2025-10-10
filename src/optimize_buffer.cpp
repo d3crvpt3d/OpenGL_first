@@ -3,9 +3,34 @@
 #include <cstdint>
 #include <vector>
 
+#define SKIP_OPTIMIZED 0
+
 std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk){
 
+
 	std::vector<Block_t> out_data;
+
+	//DEBUG
+	if(SKIP_OPTIMIZED){
+		
+		for(uint8_t z = 0; z < 64; z++){
+			for(uint8_t y = 0; y < 64; y++){
+				for(uint8_t x = 0; x < 64; x++){
+					Block_t tmp = {x,
+						y,
+						z,
+						0,
+						(GLuint) chunk.blocks[z][y][x]};
+
+					out_data.push_back(tmp);
+				}
+			}
+		}
+	
+		chunk.bufferSize = out_data.size(); //give information about buffer size
+
+		return out_data;
+	}
 
 	for(uint8_t z = 0; z < 64; z++){
 		for(uint8_t y = 0; y < 64; y++){
@@ -35,6 +60,8 @@ std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk){
 			}
 		}
 	}
+
+	chunk.bufferSize = out_data.size(); //give information about buffer size
 
 	return out_data;
 }
