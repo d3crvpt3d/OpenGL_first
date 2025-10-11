@@ -1,7 +1,7 @@
 #ifndef CHUNK_GENERATION
 #define CHUNK_GENERATION
-#include <atomic>
 #include <pthread.h>
+#include <queue>
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -29,7 +29,10 @@ extern Job_t *lastJob;
 extern Job_t *jobQueue;
 extern ChunkMap_t *chunkMap;
 extern vec3i_t currChunk;
-extern std::atomic_uint8_t update_shadowVBO;
+extern std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VRAM
+
+extern pthread_mutex_t jobMutex;
+extern pthread_mutex_t genChunksQueue_mutex;
 
 /* FUNCTIONS */
 

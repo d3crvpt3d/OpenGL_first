@@ -1,6 +1,6 @@
 #include "include/chunkGeneration.h"
 
-#include <atomic>
+#include <pthread.h>
 #include <stdio.h>
 
 #define CHUNKDATA E:\Code\Projects\OpenGL\opengl_glfw_1\include\main.h
@@ -35,7 +35,7 @@ uint32_t get_max_threads() {
 #endif
 
 uint32_t gseed = 0; //currently 0
-std::atomic_uint8_t update_shadowVBO = 0; //set up main thread to update shadow vbo and swap buffers
+std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VRAM
 
 pthread_t chunkQueue[CHUNK_THREADS];
 
@@ -43,8 +43,6 @@ pthread_t chunkQueue[CHUNK_THREADS];
 //linked list
 Job_t *jobQueue = NULL;
 Job_t *lastJob = NULL;
-
-pthread_mutex_t jobMutex;
 
 void addJob(int32_t x, int32_t y, int32_t z){
 	pthread_mutex_lock(&jobMutex);
@@ -132,8 +130,10 @@ void *waitingRoom(void *arg){
 			//generate raw chunk data
 			generateChunk(tmpX, tmpY, tmpZ);
 
-			//update_shadowVBO and draw other one when done
-			update_shadowVBO = 1;
+			//add generated chunk to queue for transfer to VRAM
+			pthread_mutex_lock(&genChunksQueue_mutex);
+			genChunksQueue.push({tmpX, tmpY, tmpZ});
+			pthread_mutex_unlock(&genChunksQueue_mutex);
 		}else{
 			pthread_mutex_unlock(&jobMutex);
 		}
@@ -150,6 +150,7 @@ void setUpThreads(){
 	chunkMap = chunkMap_init(RENDERSPAN);
 
 	pthread_mutex_init(&jobMutex, NULL);
+	pthread_mutex_init(&genChunksQueue_mutex, NULL);
 	
 	for(uint8_t id = 0; id < CHUNK_THREADS; id++){
 		pthread_create(&chunkQueue[id], NULL, &waitingRoom, NULL);

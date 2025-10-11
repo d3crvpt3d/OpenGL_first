@@ -1,9 +1,11 @@
 #include "include/main.h"
 #include "include/chunkMap.h"
 #include <filesystem>
+#include <pthread.h>
 #include <string.h>
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -280,14 +282,16 @@ int main(){
 	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
 	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
 	
-	//TEST with one chunk
-	//TEST
 
+	//create Multiple Chunk buffers with chunk vector
 	glBindVertexArray(cubeVAO);
 
-	GLuint blockData;
-	glGenBuffers(1, &blockData);
+	std::vector<GLuint> chunkBuffers;
+	chunkBuffers.reserve(CHUNKS);
+	glGenBuffers(CHUNKS, chunkBuffers.data());
 
+
+	//TODO:put in when creating the actual data
 	glBindBuffer(GL_ARRAY_BUFFER,
 			blockData);
 	//define structure of blockData
@@ -300,9 +304,8 @@ int main(){
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 	
-	//TEST
-	//TEST
 
+	//use shader program
 	glUseProgram(shader_program);
 
 	//load textures
@@ -357,9 +360,7 @@ int main(){
 	
 	setUpThreads();
 	
-	generateSpawnLocation(); //TODO: check
-
-	update_shadowVBO = 0;
+	generateSpawnLocation();
 
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
@@ -387,17 +388,28 @@ int main(){
 			title_cd = 0.1; //reset value of title cd
 		}
 		
-		//update chunk VBOs
-		if(update_shadowVBO){
+		//push chunk data to VRAM
+		while(!genChunksQueue.empty()){
 			
+			//get first chunk in queue
+			pthread_mutex_lock(&genChunksQueue_mutex);
+			vec3i_t currCoords = genChunksQueue.front();
+			genChunksQueue.pop();
+			pthread_mutex_unlock(&genChunksQueue_mutex);
+
 			//get RAM data
-			Chunk_t *chunk = chunkMap_get(chunkMap, 0, 0, 0);
+			Chunk_t *chunk = chunkMap_get(chunkMap,
+					currCoords.x,
+					currCoords.y,
+					currCoords.z);
 
 			//optimize Data for VRAM
 			std::vector<Block_t> optimized_buffer_data = gen_optimized_buffer(*chunk);
+			
+			//TODO: bind right buffer GLuint
 
 			glBindVertexArray(cubeVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, blockData);
+			glBindBuffer(GL_ARRAY_BUFFER, );
 			
 			//fill buffer
 			glBufferData(GL_ARRAY_BUFFER,
