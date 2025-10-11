@@ -13,3 +13,14 @@
 ```
 make <[dbg|default|clean]>
 ```
+
+## TODO
+
+- [] Optimize Chunk on VRAM
+  - [x] Remove not Visible Blocks
+  - [] Only send Faces visible from player Chunk to VRAM
+- [] Interact with the world
+  - [] Break Blocks
+  - [] Place Blocks
+    - [] Select Block
+  - [] Hightlight selected Block
