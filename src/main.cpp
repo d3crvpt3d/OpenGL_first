@@ -22,7 +22,6 @@
 #include "bufferMap.h"
 
 #define ONLY_SPAWN_LOCATION 1
-#define WIREFRAME 0
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -377,12 +376,6 @@ int main(){
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
 
-	//turn on wireframe if WIREFRAME is true
-	if(WIREFRAME){
-		glPolygonMode(GL_FRONT, GL_LINE);
-		glPolygonMode(GL_BACK, GL_LINE);
-	}
-
 	
 	/* MAIN LOOP */
 	/* MAIN LOOP */
@@ -601,7 +594,26 @@ void handle_keys(GLFWwindow *window){
 			f_r_near_far_change |= 0x80;
 		}
 	}
-	
+
+	//Wireframe Toggle
+	static bool f3_down = false;
+	static bool wireframe_active = false;
+	if(glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS && !f3_down){
+		f3_down = true;
+
+		if(wireframe_active){
+			wireframe_active = false;
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}else{
+			wireframe_active = true;
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+
+	}
+	if(glfwGetKey(window, GLFW_KEY_F3) == GLFW_RELEASE){
+		f3_down = false;
+	}
+
 	//check if (f r near far) changed
 	updateNonFreq(&camera, &f_r_near_far_change, nonFreqLocations);
 	
