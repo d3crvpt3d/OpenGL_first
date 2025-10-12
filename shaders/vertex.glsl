@@ -9,6 +9,9 @@ layout(location = 3) in vec2 inTexCoord;
 uniform vec2 cam_dir;
 uniform vec3 cam_pos;
 
+//current chunk
+uniform vec3 chunkPos;
+
 //non freq coord
 uniform float f;
 uniform float ratio;
@@ -34,7 +37,7 @@ void main() {
 		(aBlockData >> 14) & 63
 	);
 
-	vec3 newPos = aVertexPosition + block_pos;
+	vec3 newPos = aVertexPosition + block_pos + chunkPos;
 
 	vec3 trans = newPos - cam_pos;
 

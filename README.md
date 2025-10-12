@@ -16,6 +16,7 @@ make <[dbg|default|clean]>
 
 ## TODO
 
+- [ ] Real Worker Queue
 - [ ] Optimize Chunk on VRAM
   - [x] Remove not Visible Blocks
   - [ ] Only send Faces visible from player Chunk to VRAM

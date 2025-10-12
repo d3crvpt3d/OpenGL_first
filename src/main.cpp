@@ -21,6 +21,8 @@
 #include "optimize_buffer.h"
 #include "bufferMap.h"
 
+#define ONLY_SPAWN_LOCATION 1
+
 #if defined(_WIN32)
 #include <windows.h>
 #endif
@@ -249,7 +251,8 @@ int main(){
 	
 	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
 	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
-	
+
+	GLint chunkPos_loc = glGetUniformLocation(shader_program, "chunkPos");
 	GLint faces_normal_loc = glGetUniformLocation(shader_program, "face_normal");
 	
 	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
@@ -450,37 +453,45 @@ int main(){
 		currChunk.y = ((int32_t) floorf(camera.xyz[1])) / 64;
 		currChunk.z = ((int32_t) floorf(camera.xyz[2])) / 64;
 		
-		if(
-			currChunk.x != lastChunk.x ||
-			currChunk.y != lastChunk.y ||
-			currChunk.z != lastChunk.z
-		){
-			//TODO: check
-			//fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
-			//fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
-			addNewChunkJobs(lastChunk.x,
-					lastChunk.y,
-					lastChunk.z,
-					currChunk.x,
-					currChunk.y,
-					currChunk.z);
-			lastChunk.x = currChunk.x;
-			lastChunk.y = currChunk.y;
-			lastChunk.z = currChunk.z;
+		if(!ONLY_SPAWN_LOCATION){
+			if(
+					currChunk.x != lastChunk.x ||
+					currChunk.y != lastChunk.y ||
+					currChunk.z != lastChunk.z
+			  ){
+				//TODO: check
+				//fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
+				//fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
+				addNewChunkJobs(lastChunk.x,
+						lastChunk.y,
+						lastChunk.z,
+						currChunk.x,
+						currChunk.y,
+						currChunk.z);
+				lastChunk.x = currChunk.x;
+				lastChunk.y = currChunk.y;
+				lastChunk.z = currChunk.z;
+			}
 		}
-		
+
 		glUseProgram(shader_program);
 		
 		//draw each chunk in RD instanced
 		for(uint32_t z = 0; z < RENDERSPAN; z++){
 			for(uint32_t y = 0; y < RENDERSPAN; y++){
 				for(uint32_t x = 0; x < RENDERSPAN; x++){
-			glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
-			glDrawElementsInstanced(GL_TRIANGLES,
-					36,
-					GL_UNSIGNED_INT,
-					0,
-					chunkMap_get(chunkMap, x, y, z)->bufferSize);
+
+					//send current chunk position to vertex shader
+					glUniform3f(chunkPos_loc,
+							static_cast<GLfloat>(x*64),
+							static_cast<GLfloat>(y*64),
+							static_cast<GLfloat>(z*64));
+					glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
+					glDrawElementsInstanced(GL_TRIANGLES,
+							36,
+							GL_UNSIGNED_INT,
+							0,
+							chunkMap_get(chunkMap, x, y, z)->bufferSize);
 				}
 			}
 		}

@@ -1,12 +1,12 @@
 #include "chunkGeneration.h"
 
+#include <cstdint>
 #include <pthread.h>
 #include <stdio.h>
 
-#define CHUNKDATA E:\Code\Projects\OpenGL\opengl_glfw_1\include\main.h
 #define PI 3.14159265358979323846f
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE_CHUNK_GEN 0
 
 uint8_t programRunning = 1;
 vec3i_t currChunk = {0, 0, 0};
@@ -66,33 +66,33 @@ void addJob(int32_t x, int32_t y, int32_t z){
 
 void chunkFunction(Chunk_t *chunk){
 
-	if(DEBUG_MODE){
-		// Ersetze die komplette Funktion mit diesem einfachen Code für den Test
+	int32_t x0 = chunk->x * CHUNK_WDH;
+	int32_t y0 = chunk->y * CHUNK_WDH;
+	int32_t z0 = chunk->z * CHUNK_WDH;
+
+	if(DEBUG_MODE_CHUNK_GEN){
 		for(int32_t z = 0; z < CHUNK_WDH; z++){
 			for(int32_t y = 0; y < CHUNK_WDH; y++){
 				for(int32_t x = 0; x < CHUNK_WDH; x++){
-					if (y < 32) {
-						chunk->blocks[z][y][x] = 2; // Typ 2 = Stein
-					} else {
-						chunk->blocks[z][y][x] = 0; // Typ 0 = Luft
-					}
+
+					int32_t x_world = x0 + x;
+					int32_t y_world = y0 + y;
+					int32_t z_world = z0 + z;
+
+					chunk->blocks[z_world][y_world][x_world] = y % 6;
 				}
 			}
 		}
-		return ;
 	}
-	
-	float x0 = chunk->x * CHUNK_WDH;
-	float y0 = chunk->y * CHUNK_WDH;
-	float z0 = chunk->z * CHUNK_WDH;
+	return;
 
 	for(int32_t z = 0; z < CHUNK_WDH; z++){
 		for(int32_t y = 0; y < CHUNK_WDH; y++){
 			for(int32_t x = 0; x < CHUNK_WDH; x++){
 
-				float x_world = x0 + x;
-                float y_world = y0 + y;
-                float z_world = z0 + z;
+				int32_t x_world = x0 + x;
+				int32_t y_world = y0 + y;
+				int32_t z_world = z0 + z;
 
 				chunk->blocks[z][y][x] = (uint16_t) (3.9999f / (1.f + expf(.5f * (float) (y_world - 30) - 2.f * sinf( ((float) x_world) / 10.f) * cosf( ((float) z_world) / 10.f) ) ) );
 				//fprintf(stderr, "%d,%d,%d: %f\n", x, y, z, chunk->blocks[z][y][x]);
@@ -139,6 +139,7 @@ void *waitingRoom(void *arg){
 			pthread_mutex_unlock(&genChunksQueue_mutex);
 		}else{
 			pthread_mutex_unlock(&jobMutex);
+			sleep(1); //performance hopefully
 		}
 	}
 
