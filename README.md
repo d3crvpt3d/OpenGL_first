@@ -18,6 +18,7 @@ make <[dbg|default|clean]>
 
 - [ ] Real Worker Queue
 - [ ] Debug Mode
+  - [ ] Debug Tree (to chose what to enable/disable)
   - [ ] F3 Mode
   - [ ] Chunk borders
   - [ ] Coordinates
