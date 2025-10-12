@@ -35,6 +35,9 @@ typedef struct ChunkMap{
 
 /* FUNCTIONS */
 
+//real modulus
+uint32_t mod(int32_t a, int32_t b);
+
 //malloc chunkMap
 ChunkMap_t *chunkMap_init(uint8_t wdh);
 

@@ -1,4 +1,4 @@
-#include "include/chunkGeneration.h"
+#include "chunkGeneration.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -36,6 +36,9 @@ uint32_t get_max_threads() {
 
 uint32_t gseed = 0; //currently 0
 std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VRAM
+
+pthread_mutex_t genChunksQueue_mutex;
+pthread_mutex_t jobMutex;
 
 pthread_t chunkQueue[CHUNK_THREADS];
 

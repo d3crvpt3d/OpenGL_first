@@ -1,9 +1,11 @@
-#include "include/main.h"
-#include "include/chunkMap.h"
+#include "main.h"
+#include "chunkMap.h"
+#include <cstdint>
 #include <filesystem>
 #include <pthread.h>
 #include <string.h>
 #include <string>
+#include <sys/types.h>
 #include <unistd.h>
 #include <vector>
 
@@ -13,10 +15,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "include/chunkGeneration.h"
-#include "include/voxelTrace.h"
-#include "include/stb_image.h"
-#include "include/optimize_buffer.h"
+#include "chunkGeneration.h"
+#include "voxelTrace.h"
+#include "stb_image.h"
+#include "optimize_buffer.h"
+#include "bufferMap.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -173,10 +176,7 @@ int main(){
 		20,	23,	22,	20,	21,	23
 	};
 	
-	GLuint cubeVAO, cubeVBO, cubeEAO;
-	//create cubeVAO
-	glGenVertexArrays(1, &cubeVAO);
-	glBindVertexArray(cubeVAO);
+	GLuint cubeVBO, cubeEAO;
 	
 	//create cubeVBO
 	glGenBuffers(1, &cubeVBO);
@@ -186,29 +186,6 @@ int main(){
 			cube_vertecies,
 			GL_STATIC_DRAW);
 	
-	glVertexAttribPointer(0,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			8 * sizeof(GLfloat),
-			(void *) 0); //pos
-	glVertexAttribPointer(1,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			8 * sizeof(GLfloat),
-			(void *) (sizeof(GLfloat) * 3)); //normal
-	glVertexAttribPointer(3,
-			2,
-			GL_FLOAT,
-			GL_FALSE,
-			8 * sizeof(GLfloat),
-			(void *) (sizeof(GLfloat) * 6)); //texcoord
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(3);
-	
 	//create cubeEAO
 	glGenBuffers(1, &cubeEAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
@@ -216,9 +193,7 @@ int main(){
 			sizeof(cube_index),
 			cube_index,
 			GL_STATIC_DRAW);
-	
-	glBindVertexArray(0);//unbind to not change it accidently
-	
+
 	
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");
@@ -283,27 +258,54 @@ int main(){
 	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
 	
 
-	//create Multiple Chunk buffers with chunk vector
-	glBindVertexArray(cubeVAO);
-
-	std::vector<GLuint> chunkBuffers;
-	chunkBuffers.reserve(CHUNKS);
-	glGenBuffers(CHUNKS, chunkBuffers.data());
-
-
-	//TODO:put in when creating the actual data
-	glBindBuffer(GL_ARRAY_BUFFER,
-			blockData);
-	//define structure of blockData
-	glVertexAttribIPointer(2,
-			1,
-			GL_UNSIGNED_INT,
-			sizeof(Block_t),
-			NULL);
-	glVertexAttribDivisor(2, 1); //increase by one for each instance
-	glEnableVertexAttribArray(2);
-	glBindVertexArray(0);
+	//create VAO/VBO buffer map
+	bufferMap chunkVAOmap;
 	
+	//gnerate VAOs at raw[0]
+	glGenVertexArrays(CHUNKS, chunkVAOmap.raw()[0].data());
+	
+	//for each VAO generate one VBO at raw[1][VAO idx] to hold blockData
+	for(uint32_t tmp = 0; tmp < RENDERSPAN; tmp++){
+		glBindVertexArray(chunkVAOmap.raw()[1][tmp]);
+
+		//set up global vertecies vbo
+		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+		glVertexAttribPointer(0,
+				3,
+				GL_FLOAT,
+				GL_FALSE,
+				8 * sizeof(GLfloat),
+				(void *) 0); //pos
+		glVertexAttribPointer(1,
+				3,
+				GL_FLOAT,
+				GL_FALSE,
+				8 * sizeof(GLfloat),
+				(void *) (sizeof(GLfloat) * 3)); //normal
+		glVertexAttribPointer(3,
+				2,
+				GL_FLOAT,
+				GL_FALSE,
+				8 * sizeof(GLfloat),
+				(void *) (sizeof(GLfloat) * 6)); //texcoord
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(3);
+
+		//set up per chunk Data VBO
+		glGenBuffers(1, &chunkVAOmap.raw()[1][tmp]);
+		glBindBuffer(GL_ARRAY_BUFFER, chunkVAOmap.raw()[1][tmp]);
+		glVertexAttribIPointer(2,
+				1,
+				GL_UNSIGNED_INT,
+				sizeof(Block_t),
+				NULL);
+		glVertexAttribDivisor(2, 1); //increase by one for each instance
+		glEnableVertexAttribArray(2);
+	}
+	glBindVertexArray(0);
+
 
 	//use shader program
 	glUseProgram(shader_program);
@@ -397,29 +399,30 @@ int main(){
 			genChunksQueue.pop();
 			pthread_mutex_unlock(&genChunksQueue_mutex);
 
+			int32_t x = currCoords.x;
+			int32_t y = currCoords.y;
+			int32_t z = currCoords.z;
+
 			//get RAM data
-			Chunk_t *chunk = chunkMap_get(chunkMap,
-					currCoords.x,
-					currCoords.y,
-					currCoords.z);
+			Chunk_t *chunk = chunkMap_get(chunkMap, x, y, z);
 
 			//optimize Data for VRAM
 			std::vector<Block_t> optimized_buffer_data = gen_optimized_buffer(*chunk);
 			
-			//TODO: bind right buffer GLuint
+			//bind Chunks VAO
+			glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
 
-			glBindVertexArray(cubeVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, );
+			//overwrite VAOs VBO
+			glBindBuffer(GL_ARRAY_BUFFER,
+					chunkVAOmap.atVBO(x, y, z));
 			
-			//fill buffer
 			glBufferData(GL_ARRAY_BUFFER,
 					sizeof(Block_t) * optimized_buffer_data.size(),
 					optimized_buffer_data.data(),
 					GL_STATIC_DRAW);
 
+			//unbind current Chunks VAO
 			glBindVertexArray(0);
-			
-			update_shadowVBO = 0;
 		}
 		
 		handle_keys(window);
@@ -437,9 +440,9 @@ int main(){
 		
 		
 		//check if new chunk
-		currChunk.x = ((int32_t) floorf(camera.xyz[0])) >> 6;
-		currChunk.y = ((int32_t) floorf(camera.xyz[1])) >> 6;
-		currChunk.z = ((int32_t) floorf(camera.xyz[2])) >> 6;
+		currChunk.x = ((int32_t) floorf(camera.xyz[0])) / 64;
+		currChunk.y = ((int32_t) floorf(camera.xyz[1])) / 64;
+		currChunk.z = ((int32_t) floorf(camera.xyz[2])) / 64;
 		
 		if(
 			currChunk.x != lastChunk.x ||
@@ -462,14 +465,20 @@ int main(){
 		
 		glUseProgram(shader_program);
 		
-		//TODO: draw cubes instanced
-		glBindVertexArray(cubeVAO);
-		glDrawElementsInstanced(GL_TRIANGLES,
-				36,
-				GL_UNSIGNED_INT,
-				0,
-				chunkMap_get(chunkMap, 0, 0, 0)->bufferSize);
-		
+		//draw each chunk in RD instanced
+		for(uint32_t z = 0; z < RENDERSPAN; z++){
+			for(uint32_t y = 0; y < RENDERSPAN; y++){
+				for(uint32_t x = 0; x < RENDERSPAN; x++){
+			glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
+			glDrawElementsInstanced(GL_TRIANGLES,
+					36,
+					GL_UNSIGNED_INT,
+					0,
+					chunkMap_get(chunkMap, x, y, z)->bufferSize);
+				}
+			}
+		}
+
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
 		
@@ -507,7 +516,7 @@ char *loadShaders(const char* relative_path){
 	
 	char *buffer = (char *) malloc(size + 1);
 	
-	fread(buffer, 1, size, fptr);
+	ssize_t num_read = fread(buffer, 1, size, fptr);
 	
 	buffer[size] = '\0';
 	

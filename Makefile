@@ -2,11 +2,12 @@ PROGRAM_NAME := program
 DEBUG_NAME := dbg_program
 BUILD_DIR := build
 SRC_DIR := src
+INCLUDE_DIR := include
 LINKER_FLAGS := -lglfw -lX11 -lGL -lm
 FLAGS := -std=c++17
 
 
-ONELINER := $(SRC_DIR)/*.cpp $(LINKER_FLAGS) -march=native $(FLAGS)
+ONELINER := $(SRC_DIR)/*.cpp $(LINKER_FLAGS) -march=native $(FLAGS) -I$(INCLUDE_DIR)
 
 default:
 	g++ -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER) -Ofast

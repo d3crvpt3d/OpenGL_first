@@ -1,4 +1,4 @@
-#include "include/voxelTrace.h"
+#include "voxelTrace.h"
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
