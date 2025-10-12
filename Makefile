@@ -7,13 +7,15 @@ LINKER_FLAGS := -lglfw -lX11 -lGL -lm
 FLAGS := -std=c++17
 
 
-ONELINER := $(SRC_DIR)/*.cpp $(LINKER_FLAGS) -march=native $(FLAGS) -I$(INCLUDE_DIR)
+ONELINER := $(SRC_DIR)/*.cpp -march=native $(FLAGS) -I$(INCLUDE_DIR)
+
+ONELINER_LINUX := $(ONELINER) $(LINKER_FLAGS)
 
 default:
-	g++ -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER) -Ofast
+	g++ -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER_LINUX) -Ofast 
 
 windows:
-	g++ src/*.cpp -o build/win_programm.exe -L "/g/Code/glfw-3.4.bin.WIN64/lib-mingw-w64/" -I "/g/Code/glfw-3.4.bin.WIN64/include/" -lglfw3 -lopengl32 -lgdi32
+	g++ -o $(BUILD_DIR)/win_programm.exe $(ONELINER) -L "/g/Code/glfw-3.4.bin.WIN64/lib-mingw-w64/" -I "/g/Code/glfw-3.4.bin.WIN64/include/" -lglfw3 -lopengl32 -lgdi32 -Ofast
 
 dbg:
 	g++ -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER) -O0 -pg -fsanitize=address
