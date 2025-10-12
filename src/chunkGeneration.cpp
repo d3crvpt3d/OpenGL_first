@@ -83,8 +83,8 @@ void chunkFunction(Chunk_t *chunk){
 				}
 			}
 		}
+		return;
 	}
-	return;
 
 	for(int32_t z = 0; z < CHUNK_WDH; z++){
 		for(int32_t y = 0; y < CHUNK_WDH; y++){
