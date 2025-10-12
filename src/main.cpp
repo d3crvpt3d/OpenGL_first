@@ -305,6 +305,8 @@ int main(){
 						NULL);
 				glVertexAttribDivisor(2, 1); //increase by one for each instance
 				glEnableVertexAttribArray(2);
+				//tell VAO the Element Array Buffer
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
 			}
 		}
 	}
