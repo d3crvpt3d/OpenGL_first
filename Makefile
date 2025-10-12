@@ -6,8 +6,8 @@ INCLUDE_DIR := include
 LINKER_FLAGS := -lglfw -lX11 -lGL -lm
 FLAGS := -std=c++17
 
-ifeq ($(OS), Windows_NT)
-	
+ifneq ($(OS), Windows_NT)
+OS := $(shell uname -s)
 endif
 
 ONELINER := $(SRC_DIR)/*.cpp -march=native $(FLAGS) -I$(INCLUDE_DIR)
