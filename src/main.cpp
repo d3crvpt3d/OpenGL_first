@@ -262,47 +262,51 @@ int main(){
 	bufferMap chunkVAOmap;
 	
 	//gnerate VAOs at raw[0]
-	glGenVertexArrays(CHUNKS, chunkVAOmap.raw()[0].data());
+	glGenVertexArrays(CHUNKS, chunkVAOmap.raw().at(0).data());
 	
 	//for each VAO generate one VBO at raw[1][VAO idx] to hold blockData
-	for(uint32_t tmp = 0; tmp < RENDERSPAN; tmp++){
-		glBindVertexArray(chunkVAOmap.raw()[1][tmp]);
+	for(uint32_t z = 0; z < RENDERSPAN; z++){
+		for(uint32_t y = 0; y < RENDERSPAN; y++){
+			for(uint32_t x = 0; x < RENDERSPAN; x++){
+				glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
 
-		//set up global vertecies vbo
-		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-		glVertexAttribPointer(0,
-				3,
-				GL_FLOAT,
-				GL_FALSE,
-				8 * sizeof(GLfloat),
-				(void *) 0); //pos
-		glVertexAttribPointer(1,
-				3,
-				GL_FLOAT,
-				GL_FALSE,
-				8 * sizeof(GLfloat),
-				(void *) (sizeof(GLfloat) * 3)); //normal
-		glVertexAttribPointer(3,
-				2,
-				GL_FLOAT,
-				GL_FALSE,
-				8 * sizeof(GLfloat),
-				(void *) (sizeof(GLfloat) * 6)); //texcoord
+				//set up global vertecies vbo
+				glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+				glVertexAttribPointer(0,
+						3,
+						GL_FLOAT,
+						GL_FALSE,
+						8 * sizeof(GLfloat),
+						(void *) 0); //pos
+				glVertexAttribPointer(1,
+						3,
+						GL_FLOAT,
+						GL_FALSE,
+						8 * sizeof(GLfloat),
+						(void *) (sizeof(GLfloat) * 3)); //normal
+				glVertexAttribPointer(3,
+						2,
+						GL_FLOAT,
+						GL_FALSE,
+						8 * sizeof(GLfloat),
+						(void *) (sizeof(GLfloat) * 6)); //texcoord
 
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(3);
+				glEnableVertexAttribArray(0);
+				glEnableVertexAttribArray(1);
+				glEnableVertexAttribArray(3);
 
-		//set up per chunk Data VBO
-		glGenBuffers(1, &chunkVAOmap.raw()[1][tmp]);
-		glBindBuffer(GL_ARRAY_BUFFER, chunkVAOmap.raw()[1][tmp]);
-		glVertexAttribIPointer(2,
-				1,
-				GL_UNSIGNED_INT,
-				sizeof(Block_t),
-				NULL);
-		glVertexAttribDivisor(2, 1); //increase by one for each instance
-		glEnableVertexAttribArray(2);
+				//set up per chunk Data VBO
+				glGenBuffers(1, &chunkVAOmap.atVBO(x, y, z));
+				glBindBuffer(GL_ARRAY_BUFFER, chunkVAOmap.atVBO(x, y, z));
+				glVertexAttribIPointer(2,
+						1,
+						GL_UNSIGNED_INT,
+						sizeof(Block_t),
+						NULL);
+				glVertexAttribDivisor(2, 1); //increase by one for each instance
+				glEnableVertexAttribArray(2);
+			}
+		}
 	}
 	glBindVertexArray(0);
 

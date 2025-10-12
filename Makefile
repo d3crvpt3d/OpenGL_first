@@ -16,7 +16,7 @@ windows:
 	g++ src/*.cpp -o build/win_programm.exe -L "/g/Code/glfw-3.4.bin.WIN64/lib-mingw-w64/" -I "/g/Code/glfw-3.4.bin.WIN64/include/" -lglfw3 -lopengl32 -lgdi32
 
 dbg:
-	g++ -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER) -pg
+	g++ -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER) -O0 -pg -fsanitize=address
 
 clean:
 	rm build/*

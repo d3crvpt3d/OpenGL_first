@@ -21,8 +21,8 @@ class bufferMap{
 			uint32_t y2 = mod(y, RENDERSPAN);
 			uint32_t z2 = mod(z, RENDERSPAN);
 
-			//curren VAO
-			return arrays[0][RENDERSPAN*RENDERSPAN*z2+RENDERSPAN*y2+x2];
+			//current VAO
+			return arrays.at(0).at(RENDERSPAN*RENDERSPAN*z2+RENDERSPAN*y2+x2);
 		}
 
 		GLuint &atVBO(int32_t x, int32_t y, int32_t z){
@@ -31,8 +31,8 @@ class bufferMap{
 			uint32_t y2 = mod(y, RENDERSPAN);
 			uint32_t z2 = mod(z, RENDERSPAN);
 
-			//curren VAO
-			return arrays[1][RENDERSPAN*RENDERSPAN*z2+RENDERSPAN*y2+x2];
+			//current VBO
+			return arrays.at(1).at(RENDERSPAN*RENDERSPAN*z2+RENDERSPAN*y2+x2);
 		}
 
 };
