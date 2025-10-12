@@ -17,6 +17,7 @@ make <[dbg|default|clean]>
 ## TODO
 
 - [ ] Real Worker Queue
+- [ ] Put all Blocks into one VAO, VBO with shadow Buffer
 - [ ] Debug Mode
   - [ ] Debug Tree (to chose what to enable/disable)
   - [ ] F3 Mode
