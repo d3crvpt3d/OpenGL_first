@@ -6,15 +6,24 @@ INCLUDE_DIR := include
 LINKER_FLAGS := -lglfw -lX11 -lGL -lm
 FLAGS := -std=c++17
 
+ifeq ($(OS), Windows_NT)
+	
+endif
 
 ONELINER := $(SRC_DIR)/*.cpp -march=native $(FLAGS) -I$(INCLUDE_DIR)
 
 ONELINER_LINUX := $(ONELINER) $(LINKER_FLAGS)
 
-default:
+default: $(OS)
+
+linux: Linux
+
+win: Windows_NT
+
+Linux:
 	g++ -o $(BUILD_DIR)/$(PROGRAM_NAME) $(ONELINER_LINUX) -Ofast 
 
-windows:
+Windows_NT:
 	g++ -o $(BUILD_DIR)/win_programm.exe $(ONELINER) -L "/g/Code/glfw-3.4.bin.WIN64/lib-mingw-w64/" -I "/g/Code/glfw-3.4.bin.WIN64/include/" -lglfw3 -lopengl32 -lgdi32 -Ofast
 
 dbg:

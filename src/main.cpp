@@ -22,6 +22,7 @@
 #include "bufferMap.h"
 
 #define ONLY_SPAWN_LOCATION 1
+#define WIREFRAME 0
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -375,6 +376,13 @@ int main(){
 
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
+
+	//turn on wireframe if WIREFRAME is true
+	if(WIREFRAME){
+		glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_BACK, GL_LINE);
+	}
+
 	
 	/* MAIN LOOP */
 	/* MAIN LOOP */
@@ -487,6 +495,7 @@ int main(){
 							static_cast<GLfloat>(y*64),
 							static_cast<GLfloat>(z*64));
 					glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
+
 					glDrawElementsInstanced(GL_TRIANGLES,
 							36,
 							GL_UNSIGNED_INT,
