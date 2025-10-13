@@ -478,9 +478,12 @@ int main(){
 		glUseProgram(shader_program);
 		
 		//draw each chunk in RD instanced
-		for(uint32_t z = 0; z < RENDERSPAN; z++){
-			for(uint32_t y = 0; y < RENDERSPAN; y++){
-				for(uint32_t x = 0; x < RENDERSPAN; x++){
+		int32_t xc = static_cast<int32_t>(camera.xyz[0]) / 64;
+		int32_t yc = static_cast<int32_t>(camera.xyz[1]) / 64;
+		int32_t zc = static_cast<int32_t>(camera.xyz[2]) / 64;
+		for(int32_t z = zc-RENDERDISTANCE; zc <= zc+RENDERDISTANCE; z++){
+			for(int32_t y = yc-RENDERDISTANCE; y <= yc+RENDERDISTANCE; y++){
+				for(int32_t x = xc-RENDERDISTANCE; x <= xc+RENDERDISTANCE; x++){
 
 					//send current chunk position to vertex shader
 					glUniform3f(chunkPos_loc,
