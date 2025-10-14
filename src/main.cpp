@@ -481,7 +481,7 @@ int main(){
 		int32_t xc = static_cast<int32_t>(camera.xyz[0]) / 64;
 		int32_t yc = static_cast<int32_t>(camera.xyz[1]) / 64;
 		int32_t zc = static_cast<int32_t>(camera.xyz[2]) / 64;
-		for(int32_t z = zc-RENDERDISTANCE; zc <= zc+RENDERDISTANCE; z++){
+		for(int32_t z = zc-RENDERDISTANCE; z <= zc+RENDERDISTANCE; z++){
 			for(int32_t y = yc-RENDERDISTANCE; y <= yc+RENDERDISTANCE; y++){
 				for(int32_t x = xc-RENDERDISTANCE; x <= xc+RENDERDISTANCE; x++){
 
