@@ -5,8 +5,11 @@
 #include "main.h"
 #include <vector>
 
-typedef GLuint Block_t;
+typedef struct {
+	GLfloat xyz[3];
+	GLuint type;
+} BlockGPU_t;
 
-std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk);
+std::vector<BlockGPU_t> gen_optimized_buffer(Chunk_t &chunk);
 
 #endif

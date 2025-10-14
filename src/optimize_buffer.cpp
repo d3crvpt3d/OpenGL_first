@@ -5,10 +5,9 @@
 
 #define SKIP_OPTIMIZED 0
 
-std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk){
+std::vector<BlockGPU_t> gen_optimized_buffer(Chunk_t &chunk){
 
-
-	std::vector<Block_t> out_data;
+	std::vector<BlockGPU_t> out_data;
 
 	//DEBUG
 	if(SKIP_OPTIMIZED){
@@ -17,12 +16,13 @@ std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk){
 			for(uint8_t y = 0; y < 64; y++){
 				for(uint8_t x = 0; x < 64; x++){
 
-					Block_t packed_data = 0;
-					packed_data |= (x & 63) << 26; // x:6
-					packed_data |= (y & 63) << 20; // y:6
-					packed_data |= (z & 63) << 14; // z:6
-					//packed_data |= ( something & 4 ) << 10; // block metadata:4
-					packed_data |= chunk.blocks[z][y][x] & 1023; //block type:10
+					BlockGPU_t packed_data = {};
+
+					packed_data.xyz[0] = 64 * chunk.x + x;
+					packed_data.xyz[1] = 64 * chunk.y + y;
+					packed_data.xyz[2] = 64 * chunk.z + z;
+					
+					packed_data.type = chunk.blocks[z][y][x]; //block type
 
 					out_data.push_back(packed_data);
 				}
@@ -49,12 +49,13 @@ std::vector<Block_t> gen_optimized_buffer(Chunk_t &chunk){
 					chunk.blocks[z-1][y][x] && chunk.blocks[z+1][y][x]) ) //z visible
 					){ 
 
-					Block_t packed_data = 0;
-					packed_data |= (x & 63) << 26; // x:6
-					packed_data |= (y & 63) << 20; // y:6
-					packed_data |= (z & 63) << 14; // z:6
-					//packed_data |= ( something & 4 ) << 10; // block metadata:4
-					packed_data |= chunk.blocks[z][y][x] & 1023; //block type:10
+					BlockGPU_t packed_data = {};
+
+					packed_data.xyz[0] = 64 * chunk.x + x;
+					packed_data.xyz[1] = 64 * chunk.y + y;
+					packed_data.xyz[2] = 64 * chunk.z + z;
+					
+					packed_data.type = chunk.blocks[z][y][x]; //block type
 
 					out_data.push_back(packed_data);
 				

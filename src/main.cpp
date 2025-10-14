@@ -19,7 +19,6 @@
 #include "voxelTrace.h"
 #include "stb_image.h"
 #include "optimize_buffer.h"
-#include "bufferMap.h"
 
 #define ONLY_SPAWN_LOCATION 1
 
@@ -252,7 +251,6 @@ int main(){
 	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
 	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
 
-	GLint chunkPos_loc = glGetUniformLocation(shader_program, "chunkPos");
 	GLint faces_normal_loc = glGetUniformLocation(shader_program, "face_normal");
 	
 	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
@@ -262,58 +260,68 @@ int main(){
 	
 
 	//create VAO/VBO buffer map
-	bufferMap chunkVAOmap;
+	GLuint blocksVAO, blocksVBO;
 	
 	//gnerate VAOs at raw[0]
-	glGenVertexArrays(CHUNKS, chunkVAOmap.raw().at(0).data());
+	glGenVertexArrays(1, &blocksVAO);
 	
-	//for each VAO generate one VBO at raw[1][VAO idx] to hold blockData
-	for(uint32_t z = 0; z < RENDERSPAN; z++){
-		for(uint32_t y = 0; y < RENDERSPAN; y++){
-			for(uint32_t x = 0; x < RENDERSPAN; x++){
-				glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
+	glGenBuffers(1, &blocksVBO);
 
-				//set up global vertecies vbo
-				glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-				glVertexAttribPointer(0,
-						3,
-						GL_FLOAT,
-						GL_FALSE,
-						8 * sizeof(GLfloat),
-						(void *) 0); //pos
-				glVertexAttribPointer(1,
-						3,
-						GL_FLOAT,
-						GL_FALSE,
-						8 * sizeof(GLfloat),
-						(void *) (sizeof(GLfloat) * 3)); //normal
-				glVertexAttribPointer(3,
-						2,
-						GL_FLOAT,
-						GL_FALSE,
-						8 * sizeof(GLfloat),
-						(void *) (sizeof(GLfloat) * 6)); //texcoord
+	//bind blocks vertex array
+	glBindVertexArray(blocksVAO);
 
-				glEnableVertexAttribArray(0);
-				glEnableVertexAttribArray(1);
-				glEnableVertexAttribArray(3);
 
-				//set up per chunk Data VBO
-				glGenBuffers(1, &chunkVAOmap.atVBO(x, y, z));
-				glBindBuffer(GL_ARRAY_BUFFER, chunkVAOmap.atVBO(x, y, z));
-				glVertexAttribIPointer(2,
-						1,
-						GL_UNSIGNED_INT,
-						sizeof(Block_t),
-						NULL);
-				glVertexAttribDivisor(2, 1); //increase by one for each instance
-				glEnableVertexAttribArray(2);
-				//tell VAO the Element Array Buffer
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
-			}
-		}
-	}
+	//bind cubeVBO
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glVertexAttribPointer(0,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			8 * sizeof(GLfloat),
+			(void *) 0); //pos
+	glVertexAttribPointer(1,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			8 * sizeof(GLfloat),
+			(void *) (sizeof(GLfloat) * 3)); //normal
+	glVertexAttribPointer(2,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			8 * sizeof(GLfloat),
+			(void *) (sizeof(GLfloat) * 6)); //texcoord
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+
+
+	//bind blocksVBO
+	glBindBuffer(GL_ARRAY_BUFFER, blocksVBO);
+	glVertexAttribIPointer(3,
+			1,
+			GL_UNSIGNED_INT,
+			sizeof(BlockGPU_t),
+			(void*) offsetof(BlockGPU_t, type));
+	glVertexAttribDivisor(3, 1); //increase by one for each instance
+
+	glVertexAttribPointer(4,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(BlockGPU_t),
+			(void*) offsetof(BlockGPU_t, xyz));
+	glVertexAttribDivisor(4, 1); //increase by one for each instance
+
+	glEnableVertexAttribArray(3);//block type
+	glEnableVertexAttribArray(4);//block pos
+
+	//tell VAO the Element Array Buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
+
 	glBindVertexArray(0);
+
 
 
 	//use shader program
@@ -376,12 +384,13 @@ int main(){
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
 
+	ssize_t numInstances = 0;
 	
 	/* MAIN LOOP */
 	/* MAIN LOOP */
 	/* MAIN LOOP */
 	while ( !glfwWindowShouldClose( window ) ) {
-		
+
 		// Wipe the drawing surface clear.
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		
@@ -400,39 +409,57 @@ int main(){
 			title_cd = 0.1; //reset value of title cd
 		}
 		
-		//push chunk data to VRAM
-		while(!genChunksQueue.empty()){
+		//push chunk data to non-active blockVBO
+		if(!genChunksQueue.empty()){
 			
-			//get first chunk in queue
 			pthread_mutex_lock(&genChunksQueue_mutex);
-			vec3i_t currCoords = genChunksQueue.front();
-			genChunksQueue.pop();
+			std::vector<BlockGPU_t> optimized_buffer_data;
+
+			while(!genChunksQueue.empty()){
+
+				//get all chunks in queue
+				vec3i_t currCoords = genChunksQueue.front();
+				genChunksQueue.pop();
+
+				int32_t x = currCoords.x;
+				int32_t y = currCoords.y;
+				int32_t z = currCoords.z;
+
+				//get RAM data
+				Chunk_t *chunk = chunkMap_get(chunkMap, x, y, z);
+
+				//append optimized Data for VRAM
+				std::vector<BlockGPU_t> currentblocks = gen_optimized_buffer(*chunk);
+				
+				//add to number of instances
+				numInstances += currentblocks.size();
+
+				optimized_buffer_data.insert(
+						optimized_buffer_data.end(),
+						currentblocks.begin(),
+						currentblocks.end()) ;
+			}
+			//unlock queue
 			pthread_mutex_unlock(&genChunksQueue_mutex);
 
-			int32_t x = currCoords.x;
-			int32_t y = currCoords.y;
-			int32_t z = currCoords.z;
-
-			//get RAM data
-			Chunk_t *chunk = chunkMap_get(chunkMap, x, y, z);
-
-			//optimize Data for VRAM
-			std::vector<Block_t> optimized_buffer_data = gen_optimized_buffer(*chunk);
-			
 			//bind Chunks VAO
-			glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
+			glBindVertexArray(blocksVAO);
 
-			//overwrite VAOs VBO
-			glBindBuffer(GL_ARRAY_BUFFER,
-					chunkVAOmap.atVBO(x, y, z));
+			//overwrite VAOs VBO with implicit shadow buffer
+			glBindBuffer(
+					GL_ARRAY_BUFFER,
+					blocksVBO);
 			
-			glBufferData(GL_ARRAY_BUFFER,
-					sizeof(Block_t) * optimized_buffer_data.size(),
+			glBufferData(
+					GL_ARRAY_BUFFER,
+					sizeof(BlockGPU_t) * optimized_buffer_data.size(),
 					optimized_buffer_data.data(),
 					GL_STATIC_DRAW);
 
 			//unbind current Chunks VAO
 			glBindVertexArray(0);
+
+			numInstances = optimized_buffer_data.size();
 		}
 		
 		handle_keys(window);
@@ -477,29 +504,13 @@ int main(){
 
 		glUseProgram(shader_program);
 		
-		//draw each chunk in RD instanced
-		int32_t xc = static_cast<int32_t>(camera.xyz[0]) / 64;
-		int32_t yc = static_cast<int32_t>(camera.xyz[1]) / 64;
-		int32_t zc = static_cast<int32_t>(camera.xyz[2]) / 64;
-		for(int32_t z = zc-RENDERDISTANCE; z <= zc+RENDERDISTANCE; z++){
-			for(int32_t y = yc-RENDERDISTANCE; y <= yc+RENDERDISTANCE; y++){
-				for(int32_t x = xc-RENDERDISTANCE; x <= xc+RENDERDISTANCE; x++){
+		glBindVertexArray(blocksVAO);
 
-					//send current chunk position to vertex shader
-					glUniform3f(chunkPos_loc,
-							static_cast<GLfloat>(x*64),
-							static_cast<GLfloat>(y*64),
-							static_cast<GLfloat>(z*64));
-					glBindVertexArray(chunkVAOmap.atVAO(x, y, z));
-
-					glDrawElementsInstanced(GL_TRIANGLES,
-							36,
-							GL_UNSIGNED_INT,
-							0,
-							chunkMap_get(chunkMap, x, y, z)->bufferSize);
-				}
-			}
-		}
+		glDrawElementsInstanced(GL_TRIANGLES,
+				36,
+				GL_UNSIGNED_INT,
+				0,
+				numInstances);
 
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
