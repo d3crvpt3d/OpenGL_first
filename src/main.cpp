@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -410,7 +411,7 @@ int main(){
 		}
 		
 		//push chunk data to non-active blockVBO
-		if(!genChunksQueue.empty()){
+		if(genChunksQueue.size() == CHUNKS){
 			
 			pthread_mutex_lock(&genChunksQueue_mutex);
 			std::vector<BlockGPU_t> optimized_buffer_data;
@@ -431,9 +432,6 @@ int main(){
 				//append optimized Data for VRAM
 				std::vector<BlockGPU_t> currentblocks = gen_optimized_buffer(*chunk);
 				
-				//add to number of instances
-				numInstances += currentblocks.size();
-
 				optimized_buffer_data.insert(
 						optimized_buffer_data.end(),
 						currentblocks.begin(),
@@ -455,6 +453,12 @@ int main(){
 					sizeof(BlockGPU_t) * optimized_buffer_data.size(),
 					optimized_buffer_data.data(),
 					GL_STATIC_DRAW);
+
+			//DEBUG
+			GLenum err = glGetError();
+			if (err != GL_NO_ERROR) {
+    			std::cerr << "OpenGL Error after glBufferData: " << err << std::endl;
+			}
 
 			//unbind current Chunks VAO
 			glBindVertexArray(0);
@@ -506,11 +510,14 @@ int main(){
 		
 		glBindVertexArray(blocksVAO);
 
-		glDrawElementsInstanced(GL_TRIANGLES,
-				36,
-				GL_UNSIGNED_INT,
-				0,
-				numInstances);
+		if(numInstances > 0){
+
+			glDrawElementsInstanced(GL_TRIANGLES,
+					36,
+					GL_UNSIGNED_INT,
+					0,
+					numInstances);
+		}
 
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
