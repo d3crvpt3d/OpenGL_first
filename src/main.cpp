@@ -1,5 +1,7 @@
 #include "main.h"
 #include "chunkMap.h"
+#include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <pthread.h>
@@ -261,68 +263,90 @@ int main(){
 	
 
 	//create VAO/VBO buffer map
-	GLuint blocksVAO, blocksVBO;
+	GLuint blocksVAO;
+	GLuint blocksVBO[2]; //two instance buffers for double buffering
+	void* mapped_regions[2]; //persistend mapped pointers
+	std::atomic<int> current_buffer{0};
+	std::atomic<int> instance_count_perBuffer[2]{0, 0};
 	
-	//gnerate VAOs at raw[0]
 	glGenVertexArrays(1, &blocksVAO);
-	
-	glGenBuffers(1, &blocksVBO);
+	glGenBuffers(2, blocksVBO);
 
-	//bind blocks vertex array
 	glBindVertexArray(blocksVAO);
 
-
-	//bind cubeVBO
+	//mesh data
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glVertexAttribPointer(0,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			8 * sizeof(GLfloat),
-			(void *) 0); //pos
-	glVertexAttribPointer(1,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			8 * sizeof(GLfloat),
-			(void *) (sizeof(GLfloat) * 3)); //normal
-	glVertexAttribPointer(2,
-			2,
-			GL_FLOAT,
-			GL_FALSE,
-			8 * sizeof(GLfloat),
-			(void *) (sizeof(GLfloat) * 6)); //texcoord
+
+	glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);                       // pos at offset 0
+	glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3);     // normal at offset 12
+	glVertexAttribFormat(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6);     // texcoord at offset 24
+
+	glVertexAttribBinding(0, 0);
+	glVertexAttribBinding(1, 0);
+	glVertexAttribBinding(2, 0);
+
+	glBindVertexBuffer(0, cubeVBO, 0, 8 * sizeof(GLfloat));
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
 
-	//bind blocksVBO
-	glBindBuffer(GL_ARRAY_BUFFER, blocksVBO);
-	glVertexAttribIPointer(3,
-			1,
-			GL_UNSIGNED_INT,
-			sizeof(BlockGPU_t),
-			(void*) offsetof(BlockGPU_t, type));
-	glVertexAttribDivisor(3, 1); //increase by one for each instance
+	//instance data
+	size_t max_instance_size = sizeof(BlockGPU_t) * CHUNKS*BLOCKS_PER_CHUNK;
 
-	glVertexAttribPointer(4,
-			3,
+	for(int i = 0; i < 2; i++){
+		glBindBuffer(GL_ARRAY_BUFFER, blocksVBO[i]);
+
+		//persistend mapped buffer
+		glBufferStorage(GL_ARRAY_BUFFER,
+				max_instance_size,
+				nullptr,
+				GL_MAP_WRITE_BIT |
+				GL_MAP_PERSISTENT_BIT |
+				GL_MAP_COHERENT_BIT);
+
+		//map permanently
+		mapped_regions[i] = glMapBufferRange(GL_ARRAY_BUFFER,
+				0,
+				max_instance_size,
+				GL_MAP_WRITE_BIT |
+				GL_MAP_PERSISTENT_BIT |
+				GL_MAP_COHERENT_BIT);
+
+		//DEBUG
+		if(mapped_regions[i] == nullptr){
+			GLenum err = glGetError();
+			fprintf(stderr, "Failed to map buffer %d! GL Error: %d\n", i, err);
+			return -1;
+		}
+	}
+
+	//bind first buffer initially
+	glBindBuffer(GL_ARRAY_BUFFER, blocksVBO[0]);
+
+	glVertexAttribFormat(4, 3,
 			GL_FLOAT,
 			GL_FALSE,
-			sizeof(BlockGPU_t),
-			(void*) offsetof(BlockGPU_t, xyz));
-	glVertexAttribDivisor(4, 1); //increase by one for each instance
+			offsetof(BlockGPU_t, xyz));
+	glVertexAttribIFormat(3, 1,
+			GL_UNSIGNED_INT,
+			offsetof(BlockGPU_t, type));
+	
+	glVertexAttribBinding(3, 1);
+	glVertexAttribBinding(4, 1);
 
-	glEnableVertexAttribArray(3);//block type
-	glEnableVertexAttribArray(4);//block pos
+	glBindVertexBuffer(1, blocksVBO[0], 0, sizeof(BlockGPU_t));
 
-	//tell VAO the Element Array Buffer
+	glVertexBindingDivisor(1, 1);
+
+	glEnableVertexAttribArray(3);
+	glEnableVertexAttribArray(4);
+
+	//bind CubeEAO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
 
 	glBindVertexArray(0);
-
 
 
 	//use shader program
@@ -366,7 +390,6 @@ int main(){
 
 	//end load textures
 
-	
 	//opengl state changes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
@@ -385,8 +408,6 @@ int main(){
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
 
-	ssize_t numInstances = 0;
-	
 	/* MAIN LOOP */
 	/* MAIN LOOP */
 	/* MAIN LOOP */
@@ -443,16 +464,19 @@ int main(){
 			//bind Chunks VAO
 			glBindVertexArray(blocksVAO);
 
-			//overwrite VAOs VBO with implicit shadow buffer
-			glBindBuffer(
-					GL_ARRAY_BUFFER,
-					blocksVBO);
-			
-			glBufferData(
-					GL_ARRAY_BUFFER,
-					sizeof(BlockGPU_t) * optimized_buffer_data.size(),
+			//write directly to not used buffer
+			int write_buf = 1 - current_buffer.load(std::memory_order_relaxed);
+			BlockGPU_t *instance_data = (BlockGPU_t*) mapped_regions[write_buf];
+
+			//copy optimized instance data to VRAM buffer
+			memcpy(instance_data,
 					optimized_buffer_data.data(),
-					GL_STATIC_DRAW);
+					optimized_buffer_data.size() * sizeof(BlockGPU_t));
+
+			//swap currently active buffer
+			current_buffer.store(write_buf, std::memory_order_release);
+			instance_count_perBuffer[write_buf].store(optimized_buffer_data.size(),
+					std::memory_order_release);
 
 			//DEBUG
 			GLenum err = glGetError();
@@ -463,7 +487,6 @@ int main(){
 			//unbind current Chunks VAO
 			glBindVertexArray(0);
 
-			numInstances = optimized_buffer_data.size();
 		}
 		
 		handle_keys(window);
@@ -510,14 +533,18 @@ int main(){
 		
 		glBindVertexArray(blocksVAO);
 
-		if(numInstances > 0){
+		//ACTUAL DRAW
+		int buff = current_buffer.load(std::memory_order_acquire);
+		int count = instance_count_perBuffer[buff].load(std::memory_order_relaxed);
 
-			glDrawElementsInstanced(GL_TRIANGLES,
-					36,
-					GL_UNSIGNED_INT,
-					0,
-					numInstances);
-		}
+		glBindVertexBuffer(1, blocksVBO[buff], 0, sizeof(BlockGPU_t));
+
+		glDrawElementsInstanced(GL_TRIANGLES,
+				36,
+				GL_UNSIGNED_INT,
+				0,
+				count);
+		//ACTUAL DRAW END
 
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
