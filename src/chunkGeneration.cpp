@@ -1,6 +1,8 @@
 #include "chunkGeneration.h"
+#include "perlinGeneration.hpp"
 
 #include <cstdint>
+#include <cstdlib>
 #include <pthread.h>
 #include <stdio.h>
 
@@ -64,54 +66,18 @@ void addJob(int32_t x, int32_t y, int32_t z){
 	pthread_mutex_unlock(&jobMutex);
 }
 
-void chunkFunction(Chunk_t *chunk){
-
-	int32_t x0 = chunk->x * CHUNK_WDH;
-	int32_t y0 = chunk->y * CHUNK_WDH;
-	int32_t z0 = chunk->z * CHUNK_WDH;
-
-	if(DEBUG_MODE_CHUNK_GEN){
-		for(int32_t z = 0; z < CHUNK_WDH; z++){
-			for(int32_t y = 0; y < CHUNK_WDH; y++){
-				for(int32_t x = 0; x < CHUNK_WDH; x++){
-
-					int32_t x_world = x0 + x;
-					int32_t y_world = y0 + y;
-					int32_t z_world = z0 + z;
-
-					chunk->blocks[z_world][y_world][x_world] = y % 6;
-				}
-			}
-		}
-		return;
-	}
-
-	for(int32_t z = 0; z < CHUNK_WDH; z++){
-		for(int32_t y = 0; y < CHUNK_WDH; y++){
-			for(int32_t x = 0; x < CHUNK_WDH; x++){
-
-				int32_t x_world = x0 + x;
-				int32_t y_world = y0 + y;
-				int32_t z_world = z0 + z;
-
-				chunk->blocks[z][y][x] = (uint16_t) (3.9999f / (1.f + expf(.5f * (float) (y_world - 30) - 2.f * sinf( ((float) x_world) / 10.f) * cosf( ((float) z_world) / 10.f) ) ) );
-				//fprintf(stderr, "%d,%d,%d: %f\n", x, y, z, chunk->blocks[z][y][x]);
-			}
-		}
-	}
-}
 
 //generate chunk on chunk coord [pos]
 void generateChunk(int32_t x, int32_t y, int32_t z){
 	
 	Chunk_t *handle = chunkMap_get(chunkMap, x, y, z);
-	
+
 	handle->x = x;
 	handle->y = y;
 	handle->z = z;
-	srand(gseed); //regenerate random values
 	
-	chunkFunction(handle);
+	generate_chunk_with_caves(*handle, x, y, z);
+
 }
 
 void *waitingRoom(void *arg){
