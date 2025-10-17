@@ -21,6 +21,7 @@
 #include "stb_image.h"
 #include "optimize_buffer.h"
 
+#define TEXTURE_PATH "texData/faithful_32.png"
 #define ONLY_SPAWN_LOCATION 1
 
 #if defined(_WIN32)
@@ -110,7 +111,7 @@ int main(){
 	}
 	
 	/* GLFW Window Hints */
-	//glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
 	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
@@ -363,7 +364,7 @@ int main(){
 
 	//relative texData path
 	std::filesystem::path exeRoot = getRelativeRootDir();
-	std::filesystem::path img_path = exeRoot / "../texData" / "firstGLAtlats.png";
+	std::filesystem::path img_path = exeRoot / "../" / TEXTURE_PATH;
 	uint8_t *texData = stbi_load(img_path.u8string().c_str(),
 			&texWidth,
 			&texHeight,

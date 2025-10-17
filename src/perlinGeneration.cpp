@@ -157,8 +157,8 @@ void generate_chunk_with_caves(
 				float depth_from_surface = terrain_height - world_y;
 
 				// 2. Definiere die Schutzzonen.
-				const float surface_protection_depth = 10.0f; // Keine Höhlen in den obersten 10 Blöcken.
-				const float full_cave_depth = 25.0f;          // Ab 25 Blöcken Tiefe beginnt die volle Höhlengeneration.
+				const float surface_protection_depth = -10.0f; // Keine Höhlen in den obersten 10 Blöcken.
+				const float full_cave_depth = 10.0f;          // Ab 25 Blöcken Tiefe beginnt die volle Höhlengeneration.
 
 				// 3. Berechne einen Maskierungsfaktor (0.0 an der Oberfläche, 1.0 in der Tiefe).
 				float cave_mask_factor = smoothstep(surface_protection_depth, full_cave_depth, depth_from_surface);
