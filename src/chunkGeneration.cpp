@@ -96,6 +96,8 @@ void generationWorker(){
 		cv.wait(uqlock, []{return !jobQueue.empty() || !programRunning;});
 
 		if(!programRunning){
+			uqlock.unlock();
+			cv.notify_all();
 			break;
 		}
 
@@ -111,6 +113,7 @@ void generationWorker(){
 
 		//unlock jobQueue
 		uqlock.unlock();
+		cv.notify_one();
 
 		//generate raw chunk data
 		generateChunk(x, y, z);
@@ -250,10 +253,6 @@ void updateVramWorker(){
 void setUpThreads(){
 	
 	programRunning = 1;
-
-	lastChunk.x = -99;
-	lastChunk.y = -99;
-	lastChunk.z = -99;
 	
 	chunkMap = chunkMap_init(RENDERSPAN);
 

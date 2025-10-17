@@ -111,7 +111,7 @@ int main(){
 	}
 	
 	/* GLFW Window Hints */
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER , GLFW_TRUE);
 	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); 
@@ -398,7 +398,7 @@ int main(){
 	//mouse position
 	glfwGetCursorPos(window, &xpos_old, &ypos_old);
 	
-	lastChunk = {0, 0, 0};
+	currChunk = {0, 0, 0};
 	
 	setUpThreads();
 
