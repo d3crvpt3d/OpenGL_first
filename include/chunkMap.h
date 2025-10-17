@@ -2,9 +2,13 @@
 
 #include <array>
 #include <cstdint>
+#include <mutex>
 #include <stdlib.h>
 #include <stdint.h>
 
+/* GLOBALS */
+
+extern std::mutex chunkMap_mutex;
 
 /* DEFINES */
 #define RENDERDISTANCE 2

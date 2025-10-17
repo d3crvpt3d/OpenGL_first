@@ -1,6 +1,7 @@
 #ifndef MAIN_HEADER
 #define MAIN_HEADER
 
+#include <atomic>
 #include <pthread.h>
 #include <stdint.h>
 #include "glad/gl.h"
@@ -39,5 +40,10 @@ typedef struct Light{
 } Light;
 
 void generateSpawnLocation();
+
+
+extern void* mapped_regions[2]; //persistend mapped pointers
+extern std::atomic<int> current_buffer;
+extern std::atomic<int> instance_count_perBuffer[2];
 
 #endif

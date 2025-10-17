@@ -9,8 +9,6 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
-#include <vector>
-#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -63,11 +61,14 @@ double title_cd = 0.1; //Update title only every 100ms (if changed change reset 
 double xpos_old, ypos_old;
 GLint nonFreqLocations[4];
 
-
 char *loadShaders(const char* relative_path);
 void cursor_callback(GLFWwindow *window, double xpos, double ypos);
 void handle_keys(GLFWwindow *window);
 
+//for updateVramThread to have access
+void* mapped_regions[2]; //persistend mapped pointers
+std::atomic<int> current_buffer{0};
+std::atomic<int> instance_count_perBuffer[2]{0, 0};
 
 void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
 	uint8_t mask = *m;
@@ -265,9 +266,6 @@ int main(){
 	//create VAO/VBO buffer map
 	GLuint blocksVAO;
 	GLuint blocksVBO[2]; //two instance buffers for double buffering
-	void* mapped_regions[2]; //persistend mapped pointers
-	std::atomic<int> current_buffer{0};
-	std::atomic<int> instance_count_perBuffer[2]{0, 0};
 	
 	glGenVertexArrays(1, &blocksVAO);
 	glGenBuffers(2, blocksVBO);
@@ -399,11 +397,9 @@ int main(){
 	//mouse position
 	glfwGetCursorPos(window, &xpos_old, &ypos_old);
 	
-	vec3i_t lastChunk = {0, 0, 0};
+	lastChunk = {0, 0, 0};
 	
 	setUpThreads();
-	
-	generateSpawnLocation();
 
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
@@ -430,65 +426,7 @@ int main(){
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
 		}
-		
-		//push chunk data to non-active blockVBO
-		if(genChunksQueue.size() == CHUNKS){
-			
-			pthread_mutex_lock(&genChunksQueue_mutex);
-			std::vector<BlockGPU_t> optimized_buffer_data;
 
-			while(!genChunksQueue.empty()){
-
-				//get all chunks in queue
-				vec3i_t currCoords = genChunksQueue.front();
-				genChunksQueue.pop();
-
-				int32_t x = currCoords.x;
-				int32_t y = currCoords.y;
-				int32_t z = currCoords.z;
-
-				//get RAM data
-				Chunk_t *chunk = chunkMap_get(chunkMap, x, y, z);
-
-				//append optimized Data for VRAM
-				std::vector<BlockGPU_t> currentblocks = gen_optimized_buffer(*chunk);
-				
-				optimized_buffer_data.insert(
-						optimized_buffer_data.end(),
-						currentblocks.begin(),
-						currentblocks.end()) ;
-			}
-			//unlock queue
-			pthread_mutex_unlock(&genChunksQueue_mutex);
-
-			//bind Chunks VAO
-			glBindVertexArray(blocksVAO);
-
-			//write directly to not used buffer
-			int write_buf = 1 - current_buffer.load(std::memory_order_relaxed);
-			BlockGPU_t *instance_data = (BlockGPU_t*) mapped_regions[write_buf];
-
-			//copy optimized instance data to VRAM buffer
-			memcpy(instance_data,
-					optimized_buffer_data.data(),
-					optimized_buffer_data.size() * sizeof(BlockGPU_t));
-
-			//swap currently active buffer
-			current_buffer.store(write_buf, std::memory_order_release);
-			instance_count_perBuffer[write_buf].store(optimized_buffer_data.size(),
-					std::memory_order_release);
-
-			//DEBUG
-			GLenum err = glGetError();
-			if (err != GL_NO_ERROR) {
-    			std::cerr << "OpenGL Error after glBufferData: " << err << std::endl;
-			}
-
-			//unbind current Chunks VAO
-			glBindVertexArray(0);
-
-		}
-		
 		handle_keys(window);
 		
 		//update place/break block coordinates
@@ -502,33 +440,6 @@ int main(){
 		glUniform3fv(campos_loc, 1, camera.xyz);
 		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
 		
-		
-		//check if new chunk
-		currChunk.x = ((int32_t) floorf(camera.xyz[0])) / 64;
-		currChunk.y = ((int32_t) floorf(camera.xyz[1])) / 64;
-		currChunk.z = ((int32_t) floorf(camera.xyz[2])) / 64;
-		
-		if(!ONLY_SPAWN_LOCATION){
-			if(
-					currChunk.x != lastChunk.x ||
-					currChunk.y != lastChunk.y ||
-					currChunk.z != lastChunk.z
-			  ){
-				//TODO: check
-				//fprintf(stderr,"Current Chunk:%d,%d,%d\n", currChunk.x, currChunk.y, currChunk.z); //DEBUG
-				//fprintf(stderr, "Pos: %f, %f, %f\n", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
-				addNewChunkJobs(lastChunk.x,
-						lastChunk.y,
-						lastChunk.z,
-						currChunk.x,
-						currChunk.y,
-						currChunk.z);
-				lastChunk.x = currChunk.x;
-				lastChunk.y = currChunk.y;
-				lastChunk.z = currChunk.z;
-			}
-		}
-
 		glUseProgram(shader_program);
 		
 		glBindVertexArray(blocksVAO);
@@ -591,6 +502,9 @@ char *loadShaders(const char* relative_path){
 	return buffer;
 }
 
+inline int32_t worldToChunk(float worldPos){
+	return (int32_t) floor(worldPos / 64.0f);
+}
 
 void handle_keys(GLFWwindow *window){
 	
@@ -674,6 +588,11 @@ void handle_keys(GLFWwindow *window){
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE){
 		esc_down = 0;
 	}
+
+	//update currChunk
+	currChunk.x = worldToChunk(camera.xyz[0]);
+	currChunk.y = worldToChunk(camera.xyz[1]);
+	currChunk.z = worldToChunk(camera.xyz[2]);
 }
 
 //mouse callback
@@ -691,15 +610,5 @@ void cursor_callback(GLFWwindow *window, double xpos, double ypos){
 	}
 	if(camera.yaw_pitch[1] < -PI/2){
 		camera.yaw_pitch[1] = -PI/2;
-	}
-}
-
-void generateSpawnLocation(){
-	for(int16_t z = -RENDERDISTANCE; z <= RENDERDISTANCE; z++){
-		for(int16_t y = -RENDERDISTANCE; y <= RENDERDISTANCE; y++){
-			for(int16_t x = -RENDERDISTANCE; x <= RENDERDISTANCE; x++){
-				addJob(x, y, z);
-			}
-		}
 	}
 }

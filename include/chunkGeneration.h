@@ -1,5 +1,6 @@
 #ifndef CHUNK_GENERATION
 #define CHUNK_GENERATION
+#include <mutex>
 #include <pthread.h>
 #include <queue>
 #include <stdlib.h>
@@ -25,14 +26,14 @@ typedef struct Job {
 
 /* GLOBALS */
 extern uint8_t programRunning;
-extern Job_t *lastJob;
-extern Job_t *jobQueue;
+extern std::queue<vec3i_t> jobQueue;
 extern ChunkMap_t *chunkMap;
 extern vec3i_t currChunk;
+extern vec3i_t lastChunk;
 extern std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VRAM
 
-extern pthread_mutex_t jobMutex;
-extern pthread_mutex_t genChunksQueue_mutex;
+extern std::mutex jobMutex;
+extern std::mutex genChunksQueue_mutex;
 
 /* FUNCTIONS */
 
@@ -44,4 +45,5 @@ void addJob(int32_t x, int32_t y, int32_t z);
 void addNewChunkJobs(int32_t lastX, int32_t lastY, int32_t lastZ, int32_t currX, int32_t currY, int32_t currZ);
 uint8_t inRenderRegion(Chunk_t *chunk);
 
+void checkIfNewChunk(float xyz[3]);
 #endif

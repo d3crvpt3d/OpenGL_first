@@ -1,5 +1,7 @@
 #include "chunkMap.h"
 
+std::mutex chunkMap_mutex;
+
 //b has to be in 2^n
 uint32_t modulo_n2(int32_t a, int32_t b){
 	return a & (b-1);
