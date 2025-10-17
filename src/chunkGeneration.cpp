@@ -115,8 +115,6 @@ void generationWorker(){
 		//generate raw chunk data
 		generateChunk(x, y, z);
 
-		printf("Generated chunk (%d, %d, %d)\n", x, y, z);//DEBUG
-
 		//increase atomic by 1 if done for right base chunk
 		chunkDoneMutex.lock();
 
@@ -138,41 +136,28 @@ void generationWorker(){
 //and upload them
 void updateVramWorker(){
 
-	printf("[VRAM] Thread started!\n");
-	printf("[VRAM] Initial currChunk: (%d, %d, %d)\n", currChunk.x, currChunk.y, currChunk.z);
-	printf("[VRAM] Initial lastChunk: (%d, %d, %d)\n", lastChunk.x, lastChunk.y, lastChunk.z);
-	fflush(stdout);
-
 	while(programRunning){
 
-		printf("[VRAM] Loop iteration: currChunk=(%d,%d,%d) lastChunk=(%d,%d,%d)\n",
-               currChunk.x, currChunk.y, currChunk.z,
-               lastChunk.x, lastChunk.y, lastChunk.z);
 
 		if( currChunk.x != lastChunk.x ||
 			currChunk.y != lastChunk.y ||
 			currChunk.z != lastChunk.z){
 			
-            printf("[VRAM] ENTERING IF BLOCK!\n");
 
 			lastChunk.x = currChunk.x;
 			lastChunk.y = currChunk.y;
 			lastChunk.z = currChunk.z;
 
 
-            printf("[VRAM] reset chunkDone to 0!\n");
 			chunkDone.store(0, std::memory_order_release);
 
-            printf("[VRAM] locking jobMutex!\n");
 			//clear queue from last chunk
 			jobMutex.lock();
 			
-            printf("[VRAM] empty jobQueue!\n");
 			while(!jobQueue.empty()){
 				jobQueue.pop();
 			}
 
-            printf("[VRAM] Checking which job to add!\n");
 			//add jobs to jobQueue for each chunk
 			//not initialized or wrong coord
 			//in chunk map
@@ -198,7 +183,6 @@ void updateVramWorker(){
 				}
 			}
 
-            printf("[VRAM] store chunksTodo to number of jobs!\n");
 			chunksTodo.store(localtodo);
 
 			jobMutex.unlock();
@@ -247,8 +231,6 @@ void updateVramWorker(){
 						optimized_buffer_data.data(),
 						copy_size);
 
-				printf("Copied %zu blocks to GPU\n", optimized_buffer_data.size());//DEBUG
-
 				//swap currently active buffer
 				current_buffer.store(write_buf, std::memory_order_release);
 				instance_count_perBuffer[write_buf].store(optimized_buffer_data.size(),
@@ -258,8 +240,6 @@ void updateVramWorker(){
 				chunksTodo.store(0);
 			}else{
 				//currently nothing to do
-				printf("ChunkDone: %d, ChunksTodo: %d\n",
-						chunkDone.load(), chunksTodo.load());
 				std::this_thread::sleep_for(std::chrono::microseconds(100));
 			}
 		}
