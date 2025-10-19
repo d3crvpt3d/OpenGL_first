@@ -466,6 +466,9 @@ int main(){
 		
 	}
 	
+	//join children
+	clearThreads();
+
 	chunkMap_destroy(chunkMap);
 	
 	glfwTerminate();

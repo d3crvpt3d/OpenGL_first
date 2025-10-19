@@ -50,7 +50,6 @@ uint32_t get_max_threads() {
 uint32_t gseed = 0; //currently 0
 
 std::mutex jobMutex;
-std::mutex chunkDoneMutex;
 
 std::atomic<uint32_t> chunkDone{0};
 std::atomic<uint32_t> chunksTodo{0};
@@ -97,7 +96,7 @@ void generationWorker(){
 
 		if(!programRunning){
 			uqlock.unlock();
-			cv.notify_all();
+			cv.notify_one();
 			break;
 		}
 
@@ -118,9 +117,6 @@ void generationWorker(){
 		//generate raw chunk data
 		generateChunk(x, y, z);
 
-		//increase atomic by 1 if done for right base chunk
-		chunkDoneMutex.lock();
-
 		if( myBaseChunk.x == currChunk.x &&
 			myBaseChunk.y == currChunk.y &&
 			myBaseChunk.z == currChunk.z
@@ -130,7 +126,6 @@ void generationWorker(){
 			
 		}
 
-		chunkDoneMutex.unlock();
 	}
 }
 
@@ -273,7 +268,7 @@ void clearThreads(){
 	programRunning = 0;//make threads end waiting
 	cv.notify_all(); //notify if currently waiting
 
-	for(uint32_t id = 0; id < threadVec.size(); id++){
+	while(!threadVec.empty()){
 		threadVec.back().join();
 		threadVec.pop_back();
 	}
