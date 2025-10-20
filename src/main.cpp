@@ -293,8 +293,8 @@ int main(){
 	glEnableVertexAttribArray(2);
 
 
-	//instance data
-	size_t max_instance_size = sizeof(BlockGPU_t) * CHUNKS*BLOCKS_PER_CHUNK;
+	//realistic max size ~100MB
+	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
 
 	for(int i = 0; i < 2; i++){
 		glBindBuffer(GL_ARRAY_BUFFER, blocksVBO[i]);
@@ -471,8 +471,6 @@ int main(){
 	//join children
 	clearThreads();
 
-	chunkMap_destroy(chunkMap);
-	
 	glfwTerminate();
 	
 	free((void*) vertex_shader);
@@ -599,6 +597,7 @@ void handle_keys(GLFWwindow *window){
 	currChunk.x = worldToChunk(camera.xyz[0]);
 	currChunk.y = worldToChunk(camera.xyz[1]);
 	currChunk.z = worldToChunk(camera.xyz[2]);
+	updateThreadCV.notify_one();
 }
 
 //mouse callback

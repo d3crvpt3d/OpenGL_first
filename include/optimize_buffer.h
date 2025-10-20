@@ -6,14 +6,11 @@
 #include <vector>
 
 typedef struct {
-	GLfloat xyz[3];
-	GLuint type;
-} BlockGPU_t;
+	GLfloat xyz[3];	//pos
+	GLuint size[2];	//width/height
+	GLushort type;	//type
+} QuadGPU_t;
 
-static_assert(sizeof(BlockGPU_t) == 16, "BlockGPU_t must be 16 bytes!");
-static_assert(offsetof(BlockGPU_t, xyz) == 0, "xyz offset must be 0");
-static_assert(offsetof(BlockGPU_t, type) == 12, "type offset must be 12");
-
-std::vector<BlockGPU_t> gen_optimized_buffer(Chunk_t &chunk);
+std::vector<QuadGPU_t> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z);
 
 #endif

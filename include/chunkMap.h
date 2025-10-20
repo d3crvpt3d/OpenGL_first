@@ -32,21 +32,42 @@ typedef struct Chunk{
 	uint8_t initialized: 1;
 } Chunk_t;
 
-typedef struct ChunkMap{
-	uint16_t wdh;
-	Chunk_t *chunks;
-} ChunkMap_t;
 
 /* FUNCTIONS */
 
 //real modulus
 uint32_t mod(int32_t a, int32_t b);
 
-//malloc chunkMap
-ChunkMap_t *chunkMap_init(uint8_t wdh);
+class ChunkMap{
+	std::array<std::array<std::array<Chunk_t, CHUNK_WDH>, CHUNK_WDH>, CHUNK_WDH> chunks;
 
-//get pointer to memory of chunk at (x,y,z)
-Chunk_t *chunkMap_get(ChunkMap_t *chunkMap, int32_t x, int32_t y, int32_t z);
+	public:
+		
+		//wird oft aufgerufen
+		inline uint16_t getBlockAtWorldPos(int32_t worldX, int32_t worldY, int32_t worldZ){
+			int32_t chunkX = worldX >> 6;
+			int32_t chunkY = worldY >> 6;
+			int32_t chunkZ = worldZ >> 6;
 
-//free chunkMap
-void chunkMap_destroy(ChunkMap_t *chunkMap);
+			Chunk_t &chunk = at(chunkX, chunkY, chunkZ);
+
+			//check if right chunk
+			if(!chunk.initialized ||
+					chunk.x != chunkX ||
+					chunk.y != chunkY ||
+					chunk.z != chunkZ){
+				return 0;
+			}
+
+			//optimized for 2^n modulus
+			return chunk.blocks[worldZ & 63][worldY & 63][worldX & 63];
+		}
+
+		//modulus index
+		Chunk_t &at(int32_t x, int32_t y, int32_t z){
+			return chunks
+				.at(mod(z, CHUNK_WDH))
+				.at(mod(y, CHUNK_WDH))
+				.at(mod(x, CHUNK_WDH));
+		}
+};

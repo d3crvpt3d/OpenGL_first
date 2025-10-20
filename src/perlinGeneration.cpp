@@ -47,13 +47,16 @@ inline int height_to_block_id(float terrain_height, float y) {
 }
 
 void generate_chunk_with_caves(
-    Chunk_t& chunk,
+    ChunkMap &map,
     int chunk_x,
     int chunk_y,
     int chunk_z,
     int octaves = 4,
     int sample_rate = 4)
 {
+
+	Chunk_t chunk = map.at(chunk_x, chunk_y, chunk_z);
+
     constexpr int sample_size = (CHUNK_WDH / 4) + 1;
     
     const siv::PerlinNoise::seed_type seed = 0xABC152;

@@ -3,7 +3,7 @@
 #include "chunkMap.h"
 
 void generate_chunk_with_caves(
-    Chunk_t& chunk,
+    ChunkMap &map,
     int chunk_x,
     int chunk_y,
     int chunk_z,
