@@ -21,11 +21,11 @@
 #define DEBUG_MODE_CHUNK_GEN 0
 
 uint8_t programRunning = 1;
-vec3i_t currChunk = {0, 0, 0};
+AtomicVec3i_t currChunk;
 ChunkMap chunkMap;
 
 //generate Spawn location by lastChunk != currChunk
-vec3i_t lastChunk = {-1, -1, -1};
+AtomicVec3i_t lastChunk;
 
 //get num of processors
 #ifdef _WIN32
@@ -64,7 +64,7 @@ std::condition_variable updateThreadCV;
 
 std::queue<vec3i_t> jobQueue;
 
-void *face_offset[2][6]; //offset of each face inside vram buffer
+ssize_t face_offset[2][6]; //offset of each face inside vram buffer
 
 void addJob(int32_t x, int32_t y, int32_t z){
 
@@ -114,7 +114,10 @@ void generationWorker(){
 		jobQueue.pop();
 
 		//save base chunk
-		vec3i_t myBaseChunk = currChunk;
+		AtomicVec3i_t myBaseChunk;
+		myBaseChunk.x = currChunk.x.load(std::memory_order_relaxed);
+		myBaseChunk.y = currChunk.y.load(std::memory_order_relaxed);
+		myBaseChunk.z = currChunk.z.load(std::memory_order_relaxed);
 
 		//unlock jobQueue
 		uqlock.unlock();
@@ -123,9 +126,9 @@ void generationWorker(){
 		//generate raw chunk data
 		generateChunk(x, y, z);
 
-		if( myBaseChunk.x == currChunk.x &&
-			myBaseChunk.y == currChunk.y &&
-			myBaseChunk.z == currChunk.z
+		if( myBaseChunk.x == currChunk.x.load(std::memory_order_relaxed) &&
+			myBaseChunk.y == currChunk.y.load(std::memory_order_relaxed) &&
+			myBaseChunk.z == currChunk.z.load(std::memory_order_relaxed)
 			){
 
 			chunkDone.fetch_add(1, std::memory_order_relaxed);
@@ -139,15 +142,19 @@ void generationWorker(){
 }
 
 bool newChunk(){
-	return	currChunk.x != lastChunk.x ||
-			currChunk.y != lastChunk.y ||
-			currChunk.z != lastChunk.z;
+	return	currChunk.x != lastChunk.x.load(std::memory_order_relaxed) ||
+			currChunk.y != lastChunk.y.load(std::memory_order_relaxed) ||
+			currChunk.z != lastChunk.z.load(std::memory_order_relaxed);
 }
 
 //check if new chunk and when all chunks
 //for this new chunk are done optimize
 //and upload them
 void updateVramWorker(){
+
+	lastChunk.x.store(-1,std::memory_order_relaxed);
+	lastChunk.y.store(-1,std::memory_order_relaxed);
+	lastChunk.z.store(-1,std::memory_order_relaxed);
 	
 	BufferMap bufferCache;
 
@@ -156,9 +163,9 @@ void updateVramWorker(){
 		//new chunk
 		if(newChunk()){
 
-			lastChunk.x = currChunk.x;
-			lastChunk.y = currChunk.y;
-			lastChunk.z = currChunk.z;
+			lastChunk.x.store(currChunk.x.load(std::memory_order_relaxed));
+			lastChunk.y.store(currChunk.y.load(std::memory_order_relaxed));
+			lastChunk.z.store(currChunk.z.load(std::memory_order_relaxed));
 
 			chunkDone.store(0, std::memory_order_release);
 
@@ -173,9 +180,9 @@ void updateVramWorker(){
 			//not initialized or wrong coord
 			//in chunk map
 			uint32_t localtodo = 0;
-			for(int z = currChunk.z-RENDERDISTANCE; z <= currChunk.z+RENDERDISTANCE; z++){
-				for(int y = currChunk.y-RENDERDISTANCE; y <= currChunk.y+RENDERDISTANCE; y++){
-					for(int x = currChunk.x-RENDERDISTANCE; x <= currChunk.x+RENDERDISTANCE; x++){
+			for(int z = currChunk.z.load(std::memory_order_relaxed)-RENDERDISTANCE; z <= currChunk.z.load(std::memory_order_relaxed)+RENDERDISTANCE; z++){
+				for(int y = currChunk.y.load(std::memory_order_relaxed)-RENDERDISTANCE; y <= currChunk.y.load(std::memory_order_relaxed)+RENDERDISTANCE; y++){
+					for(int x = currChunk.x.load(std::memory_order_relaxed)-RENDERDISTANCE; x <= currChunk.x.load(std::memory_order_relaxed)+RENDERDISTANCE; x++){
 
 						Chunk_t handle = chunkMap.at(x, y, z);
 
@@ -194,21 +201,21 @@ void updateVramWorker(){
 				}
 			}
 
-			chunksTodo.store(localtodo);
+			chunksTodo.store(localtodo, std::memory_order_relaxed);
 
 			jobMutex.unlock();
 			cv.notify_all();
 
-		}else if(chunkDone.load() == chunksTodo.load() && chunksTodo.load() > 0){
+		}else if(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed) && chunksTodo.load(std::memory_order_relaxed) > 0){
 
 			//chunk generation done
 
 			std::array<std::vector<QuadGPU_t>, 6> optimized_buffer_data;
 
 			//optimize each chunk
-			int32_t cx = currChunk.x;
-			int32_t cy = currChunk.y;
-			int32_t cz = currChunk.z;
+			int32_t cx = currChunk.x.load(std::memory_order_relaxed);
+			int32_t cy = currChunk.y.load(std::memory_order_relaxed);
+			int32_t cz = currChunk.z.load(std::memory_order_relaxed);
 			for(int32_t z = cz-RENDERDISTANCE; z <= cz+RENDERDISTANCE; z++){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
@@ -216,12 +223,17 @@ void updateVramWorker(){
 						//check if already optimized
 						BufferCache_t *cache = bufferCache.at(x, y, z);
 
-						if(	cache->x != x ||
+						if(	!cache->initialized ||
+							cache->x != x ||
 							cache->y != y ||
 							cache->z != z){
 
 							//not in cache, so generate optimized data
 							cache->data = gen_optimized_buffer(chunkMap, x, y, z);
+							cache->initialized = true;
+							cache->x = x;
+							cache->y = y;
+							cache->z = z;
 						}
 
 						//insert data into each side buffer
@@ -252,10 +264,10 @@ void updateVramWorker(){
 				copy_size += sizeof(QuadGPU_t) * optimized_buffer_data[face].size();
 
 				if(face == 0){
-					face_offset[write_buf][face] = (void*) 0;
+					face_offset[write_buf][face] = 0;
 				}else{
-					face_offset[write_buf][face] = (void*)
-						(sizeof(QuadGPU_t) * optimized_buffer_data[face-1].size());
+					face_offset[write_buf][face] = sizeof(QuadGPU_t) * optimized_buffer_data[face-1].size()
+						 + face_offset[write_buf][face-1];
 				}
 
 				//check if memcpy would work
@@ -270,14 +282,14 @@ void updateVramWorker(){
 				//copy optimized instance data to VRAM buffer
 				memcpy((QuadGPU_t*) ((uint64_t) instance_data + (uint64_t) face_offset[write_buf][face]),
 						optimized_buffer_data[face].data(),
-						copy_size);
+						sizeof(QuadGPU_t) * optimized_buffer_data[face].size());
 			}
 
 			//swap vram buffer pointer,
 			//now that all data is uploaded
 			current_buffer.store(write_buf, std::memory_order_release);
 
-			chunksTodo.store(0);
+			chunksTodo.store(0, std::memory_order_relaxed);
 		}else{
 			//currently nothing to do
 			std::unique_lock updateThreaduq(updateThreadMutex);
@@ -285,7 +297,8 @@ void updateVramWorker(){
 			updateThreadCV.wait(updateThreaduq,
 					[]{
 					return newChunk() ||
-					(chunkDone.load() == chunksTodo.load() && chunksTodo.load() > 0);
+					(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed)
+					 && chunksTodo.load(std::memory_order_relaxed) > 0);
 					});
 
 		}

@@ -34,7 +34,6 @@ class BufferMap{
 				.at(mod(y, CHUNK_WDH))
 				.at(mod(x, CHUNK_WDH));
 
-			//if not return nullptr
 			return check;
 		}
 
