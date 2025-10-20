@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <vector>
 
-#define SKIP_OPTIMIZED 0
 #define TRANSPARENT_MASK 0x80 //uint16_t
 
 std::vector<QuadGPU_t> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z){
