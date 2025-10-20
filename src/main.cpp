@@ -281,7 +281,7 @@ int main(){
 
 	glVertexAttribBinding(0, 0);
 
-	glBindVertexBuffer(0, faceVBO, 0, 8 * sizeof(GLfloat));
+	glBindVertexBuffer(0, faceVBO, 0, 3 * sizeof(GLfloat));
 
 	glEnableVertexAttribArray(0);
 
@@ -330,7 +330,7 @@ int main(){
 			offsetof(QuadGPU_t, size));
 
 	glVertexAttribIFormat(5, 1,
-			GL_UNSIGNED_INT,
+			GL_UNSIGNED_SHORT,
 			offsetof(QuadGPU_t, type));
 	
 	glVertexAttribBinding(3, 1);

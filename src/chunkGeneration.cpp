@@ -126,17 +126,10 @@ void generationWorker(){
 		//generate raw chunk data
 		generateChunk(x, y, z);
 
-		if( myBaseChunk.x == currChunk.x.load(std::memory_order_relaxed) &&
-			myBaseChunk.y == currChunk.y.load(std::memory_order_relaxed) &&
-			myBaseChunk.z == currChunk.z.load(std::memory_order_relaxed)
-			){
+		chunkDone.fetch_add(1, std::memory_order_relaxed);
 
-			chunkDone.fetch_add(1, std::memory_order_relaxed);
-
-			//notify chunk to check if now all data generated
-			updateThreadCV.notify_one();
-			
-		}
+		//notify chunk to check if now all data generated
+		updateThreadCV.notify_one();
 
 	}
 }
@@ -184,7 +177,7 @@ void updateVramWorker(){
 				for(int y = currChunk.y.load(std::memory_order_relaxed)-RENDERDISTANCE; y <= currChunk.y.load(std::memory_order_relaxed)+RENDERDISTANCE; y++){
 					for(int x = currChunk.x.load(std::memory_order_relaxed)-RENDERDISTANCE; x <= currChunk.x.load(std::memory_order_relaxed)+RENDERDISTANCE; x++){
 
-						Chunk_t handle = chunkMap->at(x, y, z);
+						Chunk_t &handle = chunkMap->at(x, y, z);
 
 						if( handle.x != x ||
 							handle.y != y ||
@@ -296,7 +289,7 @@ void updateVramWorker(){
 
 			updateThreadCV.wait(updateThreaduq,
 					[]{
-					return newChunk() ||
+					return newChunk() || !programRunning ||
 					(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed)
 					 && chunksTodo.load(std::memory_order_relaxed) > 0);
 					});
@@ -328,6 +321,7 @@ void setUpThreads(){
 void clearThreads(){
 	programRunning = 0;//make threads end waiting
 	cv.notify_all(); //notify if currently waiting
+	updateThreadCV.notify_one();
 
 	while(!threadVec.empty()){
 		threadVec.back().join();
