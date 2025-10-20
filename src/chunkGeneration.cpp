@@ -76,7 +76,7 @@ void addJob(int32_t x, int32_t y, int32_t z){
 //generate chunk on chunk coord [pos]
 void generateChunk(int32_t x, int32_t y, int32_t z){
 	
-	Chunk_t handle = chunkMap.at(x, y, z);
+	Chunk_t &handle = chunkMap.at(x, y, z);
 
 	handle.x = x;
 	handle.y = y;
@@ -214,18 +214,22 @@ void updateVramWorker(){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
 						//check if already optimized
-						std::array<std::vector<QuadGPU_t>, 6> *cache = bufferCache.at(x, y, z);
+						BufferCache_t *cache = bufferCache.at(x, y, z);
 
-						if(cache == nullptr){
+						if(	cache->x != x ||
+							cache->y != y ||
+							cache->z != z){
+
 							//not in cache, so generate optimized data
-							*cache = gen_optimized_buffer(chunkMap, x, y, z);
+							cache->data = gen_optimized_buffer(chunkMap, x, y, z);
 						}
 
 						//insert data into each side buffer
-						for(std::vector<QuadGPU_t> side_buffer: optimized_buffer_data){
-							side_buffer.insert(side_buffer.end(),
-									cache->begin(),
-									cache->end());
+						for(int side = 0; side < 6; side++){
+							optimized_buffer_data[side].insert(
+									optimized_buffer_data[side].end(),
+									cache->data[side].begin(),
+									cache->data[side].end());
 						}
 
 					}
@@ -247,7 +251,12 @@ void updateVramWorker(){
 			for(int face = 0; face < 6; face++){
 				copy_size += sizeof(QuadGPU_t) * optimized_buffer_data[face].size();
 
-				face_offset[write_buf][face] = (void*) (sizeof(QuadGPU_t) * optimized_buffer_data[face].size());
+				if(face == 0){
+					face_offset[write_buf][face] = (void*) 0;
+				}else{
+					face_offset[write_buf][face] = (void*)
+						(sizeof(QuadGPU_t) * optimized_buffer_data[face-1].size());
+				}
 
 				//check if memcpy would work
 				if(copy_size > max_size){
@@ -255,12 +264,12 @@ void updateVramWorker(){
 				}
 
 				//set size of new data
-				instance_count_perBuffer[write_buf][face].store(optimized_buffer_data.size(),
+				instance_count_perBuffer[write_buf][face].store(optimized_buffer_data[face].size(),
 						std::memory_order_release);
 
 				//copy optimized instance data to VRAM buffer
-				memcpy(instance_data,
-						optimized_buffer_data.data(),
+				memcpy((QuadGPU_t*) ((uint64_t) instance_data + (uint64_t) face_offset[write_buf][face]),
+						optimized_buffer_data[face].data(),
 						copy_size);
 			}
 

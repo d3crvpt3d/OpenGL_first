@@ -20,20 +20,20 @@ uniform float ratio;
 uniform float near;
 uniform float far;
 
-out float aLight;
-out vec2 aTexCoord;
+//out float aLight;
+//out vec2 aTexCoord;
 
 void main() {
 
 	//sunlight
-	aLight = max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
+	//aLight = max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
 	
 	//offset texCoord.u by block type
-	aTexCoord = vec2(inTexCoord.x + float(aBlockData & 1023) * 0.0625, inTexCoord.y);
+	//aTexCoord = vec2(inTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, inTexCoord.y);
 
-	vec3 newPos = aVertexPosition + aBlockPos;
+	vec4 newPos = face_transform_matrix * vec4(aQuadPos, 1);
 
-	vec3 trans = newPos - cam_pos;
+	vec4 trans = newPos - vec4(cam_pos, 1);
 
 	mat4 view1 = mat4(
 		cos(cam_dir.x), 0.0, sin(cam_dir.x), 0.0,
@@ -56,9 +56,10 @@ void main() {
 		0.0, 0.0, -2.0*far*near/(far-near), 0.0
 	);
 
-	gl_Position = proj * view2 * view1 * vec4(trans, 1.0);
+	gl_Position = proj * view2 * view1 * trans;
 
-	if( (aBlockData & 1023) == 0 ){
+	//prob useless
+	if(aQuadType == 0){
 		gl_Position = vec4(0.0, 0.0, -10.0, 1.0);
 	}
 }

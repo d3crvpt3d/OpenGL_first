@@ -28,21 +28,14 @@ class BufferMap{
 	CHUNK_WDH> buffers;
 
 	public:
-		std::array<std::vector<QuadGPU_t>, 6> *at(int32_t x, int32_t y, int32_t z){
+		BufferCache_t *at(int32_t x, int32_t y, int32_t z){
 			BufferCache_t *check = &buffers
 				.at(mod(z, CHUNK_WDH))
 				.at(mod(y, CHUNK_WDH))
 				.at(mod(x, CHUNK_WDH));
 
-			//check if right buffer
-			if(	check->x == x &&
-				check->y == y &&
-				check->z == z ){
-				return &check->data;
-			}
-
 			//if not return nullptr
-			return nullptr;
+			return check;
 		}
 
 };
