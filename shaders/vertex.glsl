@@ -1,10 +1,13 @@
 #version 410 core
 
 layout(location = 0) in vec3 aVertexPosition;
-layout(location = 1) in vec3 aVertexNormal;
-layout(location = 2) in vec2 inTexCoord;
-layout(location = 3) in uint aBlockData; //last 10 bit -> blockType
-layout(location = 4) in vec3 aBlockPos;
+
+layout(location = 3) in vec3 aQuadPos;
+layout(location = 4) in uvec2 aQuadSize; //width & height
+layout(location = 5) in uint aQuadType; //block type
+
+//face currently drawing
+uniform uint face; //-x,+x,-y,+y,-z,+z
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;

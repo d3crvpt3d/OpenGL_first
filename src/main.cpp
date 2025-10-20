@@ -141,65 +141,33 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
-	const GLfloat cube_vertecies[] = {
-		
-		//positions			//normals			 //texCoord
-		0.f, 0.f, 0.f, -1.f, 0.f, 0.f, 0.0625f,	0.5f,		//right bot	//side
-		0.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f,			0.5f,		//left bot
-		0.f, 1.f, 0.f, -1.f, 0.f, 0.f, 0.0625f,	0.25f,	//right top
-		0.f, 1.f, 1.f, -1.f, 0.f, 0.f, 0.f,			0.25f,	//left top
-		
-		1.f, 0.f, 0.f,	1.f, 0.f, 0.f, 0.f,			0.5f,		//left bot	//side
-		1.f, 0.f, 1.f,	1.f, 0.f, 0.f, 0.0625f,	0.5f,		//right bot
-		1.f, 1.f, 0.f,	1.f, 0.f, 0.f, 0.f,			0.25f,	//left top
-		1.f, 1.f, 1.f,	1.f, 0.f, 0.f, 0.0625f,	0.25f,	//right top
-
-		0.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.f,			0.5f,		//left top	//bot
-		0.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.f,			0.75f,	//left bot
-		1.f, 0.f, 0.f,	0.f,-1.f, 0.f, 0.0625f,	0.5f,		//right top
-		1.f, 0.f, 1.f,	0.f,-1.f, 0.f, 0.0625f,	0.75f,	//right bot
-		
-		0.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.f,			0.25f,	//left bot	//top
-		0.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.f,			0.f,		//left top
-		1.f, 1.f, 0.f,	0.f, 1.f, 0.f, 0.0625f,	0.25f,	//right bot
-		1.f, 1.f, 1.f,	0.f, 1.f, 0.f, 0.0625f,	0.f,		//right top
-		
-		0.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.f,			0.5f,		//left bot	//side
-		0.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.f,			0.25f,	//left top
-		1.f, 0.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	0.5f,		//right bot
-		1.f, 1.f, 0.f,	0.f, 0.f,-1.f, 0.0625f,	0.25f,	//right top
-		
-		0.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	0.5f,		//right bot	//side
-		0.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.0625f,	0.25f,	//right top
-		1.f, 0.f, 1.f,	0.f, 0.f, 1.f, 0.f,			0.5f,		//left bot
-		1.f, 1.f, 1.f,	0.f, 0.f, 1.f, 0.f,			0.25f,	//left top
+	const GLfloat face_vertecies[] = {
+		0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f
 	};
 	
-	const GLuint cube_index[] = {
-		0,	3,	1,	0,	2,	3,
-		4,	5,	7,	4,	7,	6,
-		8,	9,	10, 9,	11,	10,
-		12,	14,	13,	14,	15,	13,
-		16,	18,	19,	16,	19,	17,
-		20,	23,	22,	20,	21,	23
+	const GLuint face_index[] = {
+		0, 1, 2, 3
 	};
 	
-	GLuint cubeVBO, cubeEAO;
+	GLuint faceVBO, faceEAO;
 	
 	//create cubeVBO
-	glGenBuffers(1, &cubeVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glGenBuffers(1, &faceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
 	glBufferData(GL_ARRAY_BUFFER,
-			sizeof(cube_vertecies),
-			cube_vertecies,
+			sizeof(face_vertecies),
+			face_vertecies,
 			GL_STATIC_DRAW);
 	
-	//create cubeEAO
-	glGenBuffers(1, &cubeEAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
+	//create faceEAO
+	glGenBuffers(1, &faceEAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, faceEAO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-			sizeof(cube_index),
-			cube_index,
+			sizeof(face_index),
+			face_index,
 			GL_STATIC_DRAW);
 
 	
@@ -260,6 +228,8 @@ int main(){
 
 	GLint faces_normal_loc = glGetUniformLocation(shader_program, "face_normal");
 	
+	GLint face_loc = glGetUniformLocation(shader_program, "face");
+	
 	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
 	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
 	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
@@ -267,37 +237,31 @@ int main(){
 	
 
 	//create VAO/VBO buffer map
-	GLuint blocksVAO;
-	GLuint blocksVBO[2]; //two instance buffers for double buffering
+	GLuint facesVAO;
+	GLuint facesVBO[2]; //two instance buffers for double buffering
 	
-	glGenVertexArrays(1, &blocksVAO);
-	glGenBuffers(2, blocksVBO);
+	glGenVertexArrays(1, &facesVAO);
+	glGenBuffers(2, facesVBO);
 
-	glBindVertexArray(blocksVAO);
+	glBindVertexArray(facesVAO);
 
 	//mesh data
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
 
 	glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);                       // pos at offset 0
-	glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3);     // normal at offset 12
-	glVertexAttribFormat(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6);     // texcoord at offset 24
 
 	glVertexAttribBinding(0, 0);
-	glVertexAttribBinding(1, 0);
-	glVertexAttribBinding(2, 0);
 
-	glBindVertexBuffer(0, cubeVBO, 0, 8 * sizeof(GLfloat));
+	glBindVertexBuffer(0, faceVBO, 0, 8 * sizeof(GLfloat));
 
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
 
 
 	//realistic max size ~100MB
 	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
 
 	for(int i = 0; i < 2; i++){
-		glBindBuffer(GL_ARRAY_BUFFER, blocksVBO[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, facesVBO[i]);
 
 		//persistend mapped buffer
 		glBufferStorage(GL_ARRAY_BUFFER,
@@ -324,31 +288,38 @@ int main(){
 	}
 
 	//bind first buffer initially
-	glBindBuffer(GL_ARRAY_BUFFER, blocksVBO[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, facesVBO[0]);
 
-	glVertexAttribFormat(4, 3,
+	//pos -> size -> type
+	glVertexAttribFormat(3, 3,
 			GL_FLOAT,
 			GL_FALSE,
-			offsetof(BlockGPU_t, xyz));
-	glVertexAttribIFormat(3, 1,
+			offsetof(QuadGPU_t, xyz));
+
+	glVertexAttribIFormat(4, 2,
 			GL_UNSIGNED_INT,
-			offsetof(BlockGPU_t, type));
+			offsetof(QuadGPU_t, size));
+
+	glVertexAttribIFormat(5, 1,
+			GL_UNSIGNED_INT,
+			offsetof(QuadGPU_t, type));
 	
 	glVertexAttribBinding(3, 1);
 	glVertexAttribBinding(4, 1);
+	glVertexAttribBinding(5, 1);
 
-	glBindVertexBuffer(1, blocksVBO[0], 0, sizeof(BlockGPU_t));
+	glBindVertexBuffer(1, facesVBO[0], 0, sizeof(QuadGPU_t));
 
 	glVertexBindingDivisor(1, 1);
 
 	glEnableVertexAttribArray(3);
 	glEnableVertexAttribArray(4);
+	glEnableVertexAttribArray(5);
 
 	//bind CubeEAO
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, faceEAO);
 
 	glBindVertexArray(0);
-
 
 	//use shader program
 	glUseProgram(shader_program);
@@ -445,16 +416,16 @@ int main(){
 		
 		glUseProgram(shader_program);
 		
-		glBindVertexArray(blocksVAO);
+		glBindVertexArray(facesVAO);
 
 		//ACTUAL DRAW
 		int buff = current_buffer.load(std::memory_order_acquire);
 		int count = instance_count_perBuffer[buff].load(std::memory_order_relaxed);
 
-		glBindVertexBuffer(1, blocksVBO[buff], 0, sizeof(BlockGPU_t));
+		glBindVertexBuffer(1, facesVBO[buff], 0, sizeof(QuadGPU_t));
 
-		glDrawElementsInstanced(GL_TRIANGLES,
-				36,
+		glDrawElementsInstanced(GL_TRIANGLE_STRIP,
+				4,
 				GL_UNSIGNED_INT,
 				0,
 				count);
