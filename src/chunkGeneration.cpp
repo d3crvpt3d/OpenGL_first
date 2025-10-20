@@ -4,6 +4,7 @@
 #include "bufferMap.h"
 #include "perlinGeneration.hpp"
 
+#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <csignal>
@@ -62,6 +63,8 @@ std::condition_variable cv;
 std::condition_variable updateThreadCV;
 
 std::queue<vec3i_t> jobQueue;
+
+void *face_offset[2][6]; //offset of each face inside vram buffer
 
 void addJob(int32_t x, int32_t y, int32_t z){
 
@@ -200,7 +203,7 @@ void updateVramWorker(){
 
 			//chunk generation done
 
-			std::vector<QuadGPU_t> optimized_buffer_data;
+			std::array<std::vector<QuadGPU_t>, 6> optimized_buffer_data;
 
 			//optimize each chunk
 			int32_t cx = currChunk.x;
@@ -211,42 +214,55 @@ void updateVramWorker(){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
 						//check if already optimized
-						std::vector<QuadGPU_t> *cache = bufferCache.at(x, y, z);
+						std::array<std::vector<QuadGPU_t>, 6> *cache = bufferCache.at(x, y, z);
 
 						if(cache == nullptr){
 							//not in cache, so generate optimized data
 							*cache = gen_optimized_buffer(chunkMap, x, y, z);
 						}
 
-						optimized_buffer_data.insert(optimized_buffer_data.end(),
-								cache->begin(),
-								cache->end());
+						//insert data into each side buffer
+						for(std::vector<QuadGPU_t> side_buffer: optimized_buffer_data){
+							side_buffer.insert(side_buffer.end(),
+									cache->begin(),
+									cache->end());
+						}
+
 					}
 				}
 			}
-			//optimized_buffer_data now has all instance data
-
-			ssize_t copy_size = sizeof(QuadGPU_t) * optimized_buffer_data.size();
+			//optimized_buffer_data now has all instance data of all sides
 
 			//realistic max size ~100MB
 			ssize_t max_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
 
-			if(copy_size > max_size){
-				fprintf(stderr, "Buffer overflow prevented! %zu > %zu\n", copy_size, max_size);
-			}
-
-			//write directly to not used buffer
+			//get not used buffers
 			int write_buf = 1 - current_buffer.load(std::memory_order_relaxed);
 			QuadGPU_t *instance_data = (QuadGPU_t*) mapped_regions[write_buf];
 
-			//copy optimized instance data to VRAM buffer
-			memcpy(instance_data,
-					optimized_buffer_data.data(),
-					copy_size);
+			//get total size in bytes
+			//+put size/offset information to offset
+			//them memcpy data to mapped buffer
+			ssize_t copy_size = 0;
+			for(int face = 0; face < 6; face++){
+				copy_size += sizeof(QuadGPU_t) * optimized_buffer_data[face].size();
 
-			//set size of new data
-			instance_count_perBuffer[write_buf].store(optimized_buffer_data.size(),
-					std::memory_order_release);
+				face_offset[write_buf][face] = (void*) (sizeof(QuadGPU_t) * optimized_buffer_data[face].size());
+
+				//check if memcpy would work
+				if(copy_size > max_size){
+					fprintf(stderr, "Buffer overflow prevented! %zu > %zu\n", copy_size, max_size);
+				}
+
+				//set size of new data
+				instance_count_perBuffer[write_buf][face].store(optimized_buffer_data.size(),
+						std::memory_order_release);
+
+				//copy optimized instance data to VRAM buffer
+				memcpy(instance_data,
+						optimized_buffer_data.data(),
+						copy_size);
+			}
 
 			//swap vram buffer pointer,
 			//now that all data is uploaded

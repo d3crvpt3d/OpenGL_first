@@ -11,6 +11,6 @@ typedef struct {
 	GLushort type;	//type
 } QuadGPU_t;
 
-std::vector<QuadGPU_t> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z);
+std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z);
 
 #endif

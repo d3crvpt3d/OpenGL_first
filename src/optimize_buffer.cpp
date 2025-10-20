@@ -1,12 +1,15 @@
 #include "optimize_buffer.h"
 #include "chunkGeneration.h"
 #include "chunkMap.h"
+#include <array>
 #include <cstdint>
 #include <vector>
 
 #define TRANSPARENT_MASK 0x80 //uint16_t
 
-std::vector<QuadGPU_t> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z){
+void *face_offset[2][6];
+
+std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z){
 
 	std::vector<QuadGPU_t> out_data;
 

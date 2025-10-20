@@ -71,7 +71,7 @@ void handle_keys(GLFWwindow *window);
 //for updateVramThread to have access
 void* mapped_regions[2]; //persistend mapped pointers
 std::atomic<int> current_buffer{0};
-std::atomic<int> instance_count_perBuffer[2]{0, 0};
+std::atomic<int> instance_count_perBuffer[2][6]{0};
 
 void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
 	uint8_t mask = *m;
@@ -259,6 +259,7 @@ int main(){
 	GLint faces_normal_loc = glGetUniformLocation(shader_program, "face_normal");
 	
 	GLint face_loc = glGetUniformLocation(shader_program, "face");
+	GLint transform_matrix_loc = glGetUniformLocation(shader_program, "face_transform_matrix");
 	
 	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
 	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
@@ -450,15 +451,30 @@ int main(){
 
 		//ACTUAL DRAW
 		int buff = current_buffer.load(std::memory_order_acquire);
-		int count = instance_count_perBuffer[buff].load(std::memory_order_relaxed);
 
-		glBindVertexBuffer(1, facesVBO[buff], 0, sizeof(QuadGPU_t));
+		//draw each face
+		for(uint8_t side = 0; side < 6; side++){
 
-		glDrawElementsInstanced(GL_TRIANGLE_STRIP,
-				4,
-				GL_UNSIGNED_INT,
-				0,
-				count);
+			int count = instance_count_perBuffer[buff][side].load(std::memory_order_relaxed);
+
+			//upload transformation matrix for current face
+			glUniformMatrix4fv(transform_matrix_loc,
+					1,
+					GL_FALSE,
+					face_affine_transformation[side]);
+
+			glBindVertexBuffer(1,
+					facesVBO[buff],
+					(long) face_offset[buff][side],
+					sizeof(QuadGPU_t));
+
+			glDrawElementsInstanced(GL_TRIANGLE_STRIP,
+					4,
+					GL_UNSIGNED_INT,
+					0,
+					count);
+		}
+
 		//ACTUAL DRAW END
 
 		// Put the stuff we've been drawing onto the visible area.

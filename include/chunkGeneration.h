@@ -37,6 +37,8 @@ extern std::mutex genChunksQueue_mutex;
 
 extern std::condition_variable updateThreadCV;
 
+extern void *face_offset[2][6];
+
 /* FUNCTIONS */
 
 //use at start of program to generate the chunk gen threads

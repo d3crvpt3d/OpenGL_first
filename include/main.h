@@ -44,6 +44,6 @@ void generateSpawnLocation();
 
 extern void* mapped_regions[2]; //persistend mapped pointers
 extern std::atomic<int> current_buffer;
-extern std::atomic<int> instance_count_perBuffer[2];
+extern std::atomic<int> instance_count_perBuffer[2][6];
 
 #endif

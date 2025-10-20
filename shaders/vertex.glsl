@@ -8,6 +8,7 @@ layout(location = 5) in uint aQuadType; //block type
 
 //face currently drawing
 uniform uint face; //-x,+x,-y,+y,-z,+z
+uniform mat4 face_transform_matrix;
 
 //Model View Projection Matrix
 uniform vec2 cam_dir;
