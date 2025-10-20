@@ -22,7 +22,7 @@
 
 uint8_t programRunning = 1;
 AtomicVec3i_t currChunk;
-ChunkMap chunkMap;
+ChunkMap *chunkMap = nullptr;
 
 //generate Spawn location by lastChunk != currChunk
 AtomicVec3i_t lastChunk;
@@ -76,7 +76,7 @@ void addJob(int32_t x, int32_t y, int32_t z){
 //generate chunk on chunk coord [pos]
 void generateChunk(int32_t x, int32_t y, int32_t z){
 	
-	Chunk_t &handle = chunkMap.at(x, y, z);
+	Chunk_t &handle = chunkMap->at(x, y, z);
 
 	handle.x = x;
 	handle.y = y;
@@ -84,7 +84,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 
 	handle.initialized = 1;
 	
-	generate_chunk_with_caves(chunkMap, x, y, z);
+	generate_chunk_with_caves(*chunkMap, x, y, z);
 
 }
 
@@ -156,7 +156,7 @@ void updateVramWorker(){
 	lastChunk.y.store(-1,std::memory_order_relaxed);
 	lastChunk.z.store(-1,std::memory_order_relaxed);
 	
-	BufferMap bufferCache;
+	static BufferMap *bufferCache = new BufferMap();
 
 	while(programRunning){
 
@@ -184,7 +184,7 @@ void updateVramWorker(){
 				for(int y = currChunk.y.load(std::memory_order_relaxed)-RENDERDISTANCE; y <= currChunk.y.load(std::memory_order_relaxed)+RENDERDISTANCE; y++){
 					for(int x = currChunk.x.load(std::memory_order_relaxed)-RENDERDISTANCE; x <= currChunk.x.load(std::memory_order_relaxed)+RENDERDISTANCE; x++){
 
-						Chunk_t handle = chunkMap.at(x, y, z);
+						Chunk_t handle = chunkMap->at(x, y, z);
 
 						if( handle.x != x ||
 							handle.y != y ||
@@ -221,7 +221,7 @@ void updateVramWorker(){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
 						//check if already optimized
-						BufferCache_t *cache = bufferCache.at(x, y, z);
+						BufferCache_t *cache = bufferCache->at(x, y, z);
 
 						if(	!cache->initialized ||
 							cache->x != x ||
@@ -229,7 +229,7 @@ void updateVramWorker(){
 							cache->z != z){
 
 							//not in cache, so generate optimized data
-							cache->data = gen_optimized_buffer(chunkMap, x, y, z);
+							cache->data = gen_optimized_buffer(*chunkMap, x, y, z);
 							cache->initialized = true;
 							cache->x = x;
 							cache->y = y;
@@ -308,6 +308,8 @@ void updateVramWorker(){
 //create worker threads and one vramUpdateThread
 void setUpThreads(){
 	
+	chunkMap = new ChunkMap();
+
 	programRunning = 1;
 	
 	threadVec.reserve(std::thread::hardware_concurrency());

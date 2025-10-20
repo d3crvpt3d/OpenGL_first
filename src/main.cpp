@@ -104,6 +104,7 @@ void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
 }
 
 int main(){
+
 	GLenum err;
 	
 	GLFWwindow *window;
@@ -197,9 +198,6 @@ int main(){
 		 -1.0, 0.0, 0.0, 1.0,
 		  0.0, 0.0, 0.0, 1.0},//+z
 	};
-
-
-
 	
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");

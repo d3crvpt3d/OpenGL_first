@@ -23,16 +23,16 @@ class BufferMap{
 		std::array<
 			std::array<
 				BufferCache_t,
-			CHUNK_WDH>,
-		CHUNK_WDH >,
-	CHUNK_WDH> buffers;
+			RENDERSPAN>,
+		RENDERSPAN>,
+	RENDERSPAN> buffers;
 
 	public:
 		BufferCache_t *at(int32_t x, int32_t y, int32_t z){
 			BufferCache_t *check = &buffers
-				.at(mod(z, CHUNK_WDH))
-				.at(mod(y, CHUNK_WDH))
-				.at(mod(x, CHUNK_WDH));
+				.at(mod(z, RENDERSPAN))
+				.at(mod(y, RENDERSPAN))
+				.at(mod(x, RENDERSPAN));
 
 			return check;
 		}

@@ -39,7 +39,7 @@ typedef struct Chunk{
 uint32_t mod(int32_t a, int32_t b);
 
 class ChunkMap{
-	std::array<std::array<std::array<Chunk_t, CHUNK_WDH>, CHUNK_WDH>, CHUNK_WDH> chunks;
+	std::array<std::array<std::array<Chunk_t, RENDERSPAN>, RENDERSPAN>, RENDERSPAN> chunks;
 
 	public:
 		
@@ -66,8 +66,8 @@ class ChunkMap{
 		//modulus index
 		Chunk_t &at(int32_t x, int32_t y, int32_t z){
 			return chunks
-				.at(mod(z, CHUNK_WDH))
-				.at(mod(y, CHUNK_WDH))
-				.at(mod(x, CHUNK_WDH));
+				.at(mod(z, RENDERSPAN))
+				.at(mod(y, RENDERSPAN))
+				.at(mod(x, RENDERSPAN));
 		}
 };
