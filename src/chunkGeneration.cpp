@@ -21,11 +21,11 @@
 #define DEBUG_MODE_CHUNK_GEN 0
 
 uint8_t programRunning = 1;
-AtomicVec3i_t currChunk;
+vec3i_t currChunk;
 ChunkMap *chunkMap = nullptr;
 
 //generate Spawn location by lastChunk != currChunk
-AtomicVec3i_t lastChunk;
+vec3i_t lastChunk;
 
 //get num of processors
 #ifdef _WIN32
@@ -76,13 +76,13 @@ void addJob(int32_t x, int32_t y, int32_t z){
 //generate chunk on chunk coord [pos]
 void generateChunk(int32_t x, int32_t y, int32_t z){
 	
-	Chunk_t &handle = chunkMap->at(x, y, z);
+	Chunk_t *handle = chunkMap->at(x, y, z);
 
-	handle.x = x;
-	handle.y = y;
-	handle.z = z;
+	handle->x = x;
+	handle->y = y;
+	handle->z = z;
 
-	handle.initialized = 1;
+	handle->initialized = 1;
 	
 	generate_chunk_with_caves(*chunkMap, x, y, z);
 
@@ -114,10 +114,10 @@ void generationWorker(){
 		jobQueue.pop();
 
 		//save base chunk
-		AtomicVec3i_t myBaseChunk;
-		myBaseChunk.x = currChunk.x.load(std::memory_order_relaxed);
-		myBaseChunk.y = currChunk.y.load(std::memory_order_relaxed);
-		myBaseChunk.z = currChunk.z.load(std::memory_order_relaxed);
+		vec3i_t myBaseChunk;
+		myBaseChunk.x = currChunk.x;
+		myBaseChunk.y = currChunk.y;
+		myBaseChunk.z = currChunk.z;
 
 		//unlock jobQueue
 		uqlock.unlock();
@@ -135,9 +135,9 @@ void generationWorker(){
 }
 
 bool newChunk(){
-	return	currChunk.x != lastChunk.x.load(std::memory_order_relaxed) ||
-			currChunk.y != lastChunk.y.load(std::memory_order_relaxed) ||
-			currChunk.z != lastChunk.z.load(std::memory_order_relaxed);
+	return	currChunk.x != lastChunk.x ||
+			currChunk.y != lastChunk.y ||
+			currChunk.z != lastChunk.z;
 }
 
 //check if new chunk and when all chunks
@@ -145,9 +145,9 @@ bool newChunk(){
 //and upload them
 void updateVramWorker(){
 
-	lastChunk.x.store(-1,std::memory_order_relaxed);
-	lastChunk.y.store(-1,std::memory_order_relaxed);
-	lastChunk.z.store(-1,std::memory_order_relaxed);
+	lastChunk.x = -2;
+	lastChunk.y = -2;
+	lastChunk.z = -2;
 	
 	static BufferMap *bufferCache = new BufferMap();
 
@@ -156,11 +156,13 @@ void updateVramWorker(){
 		//new chunk
 		if(newChunk()){
 
-			lastChunk.x.store(currChunk.x.load(std::memory_order_relaxed));
-			lastChunk.y.store(currChunk.y.load(std::memory_order_relaxed));
-			lastChunk.z.store(currChunk.z.load(std::memory_order_relaxed));
+			lastChunk.x = currChunk.x;
+			lastChunk.y = currChunk.y;
+			lastChunk.z = currChunk.z;
 
 			chunkDone.store(0, std::memory_order_release);
+
+			vec3i_t localChunk = {currChunk.x, currChunk.y, currChunk.z};
 
 			//clear queue from last chunk
 			jobMutex.lock();
@@ -173,16 +175,16 @@ void updateVramWorker(){
 			//not initialized or wrong coord
 			//in chunk map
 			uint32_t localtodo = 0;
-			for(int z = currChunk.z.load(std::memory_order_relaxed)-RENDERDISTANCE; z <= currChunk.z.load(std::memory_order_relaxed)+RENDERDISTANCE; z++){
-				for(int y = currChunk.y.load(std::memory_order_relaxed)-RENDERDISTANCE; y <= currChunk.y.load(std::memory_order_relaxed)+RENDERDISTANCE; y++){
-					for(int x = currChunk.x.load(std::memory_order_relaxed)-RENDERDISTANCE; x <= currChunk.x.load(std::memory_order_relaxed)+RENDERDISTANCE; x++){
+			for(int z = localChunk.z-RENDERDISTANCE; z <= localChunk.z+RENDERDISTANCE; z++){
+				for(int y = localChunk.y-RENDERDISTANCE; y <= localChunk.y+RENDERDISTANCE; y++){
+					for(int x = localChunk.x-RENDERDISTANCE; x <= localChunk.x+RENDERDISTANCE; x++){
 
-						Chunk_t &handle = chunkMap->at(x, y, z);
+						Chunk_t *handle = chunkMap->at(x, y, z);
 
-						if( handle.x != x ||
-							handle.y != y ||
-							handle.z != z ||
-							!handle.initialized){
+						if( handle->x != x ||
+							handle->y != y ||
+							handle->z != z ||
+							!handle->initialized){
 
 							//rewrite in modular chunkmap
 							addJob(x, y, z);
@@ -199,16 +201,17 @@ void updateVramWorker(){
 			jobMutex.unlock();
 			cv.notify_all();
 
-		}else if(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed) && chunksTodo.load(std::memory_order_relaxed) > 0){
+		}else if(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed)
+				&& chunksTodo.load(std::memory_order_relaxed) > 0){
 
 			//chunk generation done
 
 			std::array<std::vector<QuadGPU_t>, 6> optimized_buffer_data;
 
 			//optimize each chunk
-			int32_t cx = currChunk.x.load(std::memory_order_relaxed);
-			int32_t cy = currChunk.y.load(std::memory_order_relaxed);
-			int32_t cz = currChunk.z.load(std::memory_order_relaxed);
+			int32_t cx = currChunk.x;
+			int32_t cy = currChunk.y;
+			int32_t cz = currChunk.z;
 			for(int32_t z = cz-RENDERDISTANCE; z <= cz+RENDERDISTANCE; z++){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
@@ -227,6 +230,11 @@ void updateVramWorker(){
 							cache->x = x;
 							cache->y = y;
 							cache->z = z;
+
+							//DEBUG
+							fprintf(stderr,
+									"Optimized Chunk %d,%d,%d with -x size %lu\n",
+									x, y, z, cache->data[0].size());
 						}
 
 						//insert data into each side buffer

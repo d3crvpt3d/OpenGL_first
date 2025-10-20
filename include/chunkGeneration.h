@@ -21,12 +21,6 @@ typedef struct vec3i_t{
 	int32_t z;
 } vec3i_t;
 
-typedef struct AtomicVec3i{
-	std::atomic<int32_t> x{0};
-	std::atomic<int32_t> y{0};
-	std::atomic<int32_t> z{0};
-} AtomicVec3i_t;
-
 typedef struct Job {
 	int32_t x;
 	int32_t y;
@@ -37,8 +31,8 @@ typedef struct Job {
 /* GLOBALS */
 extern uint8_t programRunning;
 extern std::queue<vec3i_t> jobQueue;
-extern AtomicVec3i_t currChunk;
-extern AtomicVec3i_t lastChunk;
+extern vec3i_t currChunk;
+extern vec3i_t lastChunk;
 extern std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VRAM
 
 extern std::mutex jobMutex;

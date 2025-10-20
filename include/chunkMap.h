@@ -49,23 +49,23 @@ class ChunkMap{
 			int32_t chunkY = worldY >> 6;
 			int32_t chunkZ = worldZ >> 6;
 
-			Chunk_t &chunk = at(chunkX, chunkY, chunkZ);
+			Chunk_t *chunk = at(chunkX, chunkY, chunkZ);
 
 			//check if right chunk
-			if(!chunk.initialized ||
-					chunk.x != chunkX ||
-					chunk.y != chunkY ||
-					chunk.z != chunkZ){
+			if(!chunk->initialized ||
+					chunk->x != chunkX ||
+					chunk->y != chunkY ||
+					chunk->z != chunkZ){
 				return 0;
 			}
 
 			//optimized for 2^n modulus
-			return chunk.blocks[worldZ & 63][worldY & 63][worldX & 63];
+			return chunk->blocks[worldZ & 63][worldY & 63][worldX & 63];
 		}
 
 		//modulus index
-		Chunk_t &at(int32_t x, int32_t y, int32_t z){
-			return chunks
+		Chunk_t *at(int32_t x, int32_t y, int32_t z){
+			return &chunks
 				.at(mod(z, RENDERSPAN))
 				.at(mod(y, RENDERSPAN))
 				.at(mod(x, RENDERSPAN));

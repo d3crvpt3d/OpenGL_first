@@ -55,7 +55,7 @@ void generate_chunk_with_caves(
     int sample_rate = 4)
 {
 
-	Chunk_t &chunk = map.at(chunk_x, chunk_y, chunk_z);
+	Chunk_t *chunk = map.at(chunk_x, chunk_y, chunk_z);
 
     constexpr int sample_size = (CHUNK_WDH / 4) + 1;
     
@@ -179,7 +179,7 @@ void generate_chunk_with_caves(
 					block_id = 0;  // Block zu Luft machen.
 				}
                 
-                chunk.blocks[z][y][x] = static_cast<uint16_t>(block_id);
+                chunk->blocks[z][y][x] = static_cast<uint16_t>(block_id);
             }
         }
     }

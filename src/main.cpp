@@ -400,9 +400,9 @@ int main(){
 	//mouse position
 	glfwGetCursorPos(window, &xpos_old, &ypos_old);
 	
-	currChunk.x.store(0);
-	currChunk.y.store(0);
-	currChunk.z.store(0);
+	currChunk.x = 0;
+	currChunk.y = 0;
+	currChunk.z = 0;
 	
 	setUpThreads();
 
@@ -611,9 +611,9 @@ void handle_keys(GLFWwindow *window){
 	}
 
 	//update currChunk
-	currChunk.x.store(worldToChunk(camera.xyz[0]));
-	currChunk.y.store(worldToChunk(camera.xyz[1]));
-	currChunk.z.store(worldToChunk(camera.xyz[2]));
+	currChunk.x = worldToChunk(camera.xyz[0]);
+	currChunk.y = worldToChunk(camera.xyz[1]);
+	currChunk.z = worldToChunk(camera.xyz[2]);
 	updateThreadCV.notify_one();
 }
 
