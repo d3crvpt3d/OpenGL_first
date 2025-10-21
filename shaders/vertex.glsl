@@ -20,8 +20,7 @@ uniform float far;
 
 //output
 out float vLight;
-//out vec2 vTexCoord;
-//out float vTexLayer;
+out vec2 vTexCoord;
 
 void main() {
 
@@ -55,9 +54,7 @@ void main() {
 	//sunlight
 	vLight = max(0.2, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
 	
-	//TODO
 	//offset texCoord.u by block type
-	//vTexCoord = vec2(inTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, inTexCoord.y);
-	//vTexLayer = float(aQuadType);
+	vTexCoord = vec2(aTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, aTexCoord.y);
 
 }
