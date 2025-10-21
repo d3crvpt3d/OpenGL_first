@@ -20,13 +20,12 @@ make <[dbg|default|clean]>
 - [x] Put all Blocks into one VAO with double buffered VBO
 - [ ] Debug Mode
   - [ ] Debug Tree (to chose what to enable/disable)
-  - [ ] F3 Mode
+  - [x] F3 Wireframe Toggle
   - [ ] Chunk borders
   - [ ] Coordinates
-  - [x] Wireframe
 - [ ] Optimize Chunk on VRAM
   - [x] Remove not Visible Blocks
-  - [ ] Only send Faces visible from player Chunk to VRAM
+  - [ ] Greedy Meshing
 - [ ] Interact with the world
   - [ ] Break Blocks
   - [ ] Place Blocks
