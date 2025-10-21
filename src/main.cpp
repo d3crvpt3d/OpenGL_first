@@ -24,8 +24,6 @@
 //#define TEXTURE_PATH "texData/firstGLAtlats.png"
 #define TEXTURE_PATH "texData/faithful_32.png"
 
-#define ONLY_SPAWN_LOCATION 1
-
 #if defined(_WIN32)
 #include <windows.h>
 #endif
