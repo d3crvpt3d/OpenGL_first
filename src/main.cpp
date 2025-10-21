@@ -1,6 +1,7 @@
 #include "main.h"
 #include "chunkMap.h"
 #include <atomic>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -71,36 +72,6 @@ void* mapped_regions[2]; //persistend mapped pointers
 std::atomic<int> current_buffer{0};
 std::atomic<int> instance_count_perBuffer[2][6]{0};
 
-void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
-	uint8_t mask = *m;
-	
-	//f
-	if(mask & 0x80){
-		mask ^= 0x80;
-		glUniform1f(locations[0], cam->f);
-	}
-	//ratio
-	if(mask & 0x40){
-		mask ^= 0x40;
-		glUniform1f(locations[1], cam->aspectRatio);
-	}
-	//near
-	if(mask & 0x20){
-		mask ^= 0x20;
-		glUniform1f(locations[2], cam->near_far[0]);
-		glUniform1f(locations[3], cam->near_far[1]);
-	}
-	//far
-	if(mask & 0x10){
-		mask ^= 0x10;
-	}
-	if(mask & 0x10){
-		mask ^= 0x10;
-	}
-	
-	*m = mask;
-}
-
 struct BaseVertex {
 	GLfloat pos[3];
 	GLfloat nml[3];
@@ -135,7 +106,7 @@ int main(){
 	glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);//toggle cursor
 	
 	//1 = cap vsync to monitor fps
-	glfwSwapInterval(1);
+	//glfwSwapInterval(1);
 	
 	int version_glad = gladLoadGL(glfwGetProcAddress);
 	if ( version_glad == 0 ) {
@@ -260,15 +231,9 @@ int main(){
 	double currTime = glfwGetTime();
 	double lastTime;
 	
-	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
-	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
-
 	GLint face_loc = glGetUniformLocation(shader_program, "face");
-	
-	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
-	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
-	nonFreqLocations[2] = glGetUniformLocation(shader_program, "near");
-	nonFreqLocations[3] = glGetUniformLocation(shader_program, "far");
+	GLint projMatrix_loc = glGetUniformLocation(shader_program, "projMatrix");
+	GLint camPos_loc = glGetUniformLocation(shader_program, "camPos");
 	
 
 	//create VAO/VBO buffer map
@@ -453,14 +418,38 @@ int main(){
 		if(title_cd <= 0.0 && deltaTime > 0.0 ){
 			double fps = 1.0 / deltaTime;
 			char tmp[32];
-			//snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
-			snprintf(tmp, sizeof(tmp), "pos: %.1f, %.1f, %.1f", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
+			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
 		}
 
 		handle_keys(window);
-		
+
+
+		//update transformation matrix
+		GLfloat a = cos(camera.yaw_pitch[0]);
+		GLfloat b = sin(camera.yaw_pitch[0]);
+		GLfloat c = cos(camera.yaw_pitch[1]);
+		GLfloat j = sin(camera.yaw_pitch[1]);
+		GLfloat e = camera.aspectRatio;
+		GLfloat f = camera.f;
+		GLfloat g = camera.near_far[1];
+		GLfloat h = camera.near_far[0];
+
+		//wolfram alpha regelt
+		GLfloat projMatrix[16] = {
+			a*f, 0, -b*f, 0,
+			e*b*f*j, e*c*f, e*a*f*j, 0,
+			b*c*(g+h)/(g-h), -j*(g+h)/(g-h), a*c*(g+h)/(g-h), -2*g*h/(g-h),
+			b*c, -j, a*c, 0
+		};
+
+		glUniformMatrix4fv(projMatrix_loc, 1, GL_TRUE, projMatrix);
+
+		//add camera pos (could be included in projMat)
+		glUniform3fv(camPos_loc, 1, camera.xyz);
+
+
 		//update place/break block coordinates
 		update_lookingAt(camera.xyz,
 				camera.yaw_pitch,
@@ -468,15 +457,12 @@ int main(){
 				&place_block,
 				BLOCK_RANGE);
 
-		// update Uniforms
-		glUniform3fv(campos_loc, 1, camera.xyz);
-		glUniform2fv(camdir_loc, 1, camera.yaw_pitch);
-		
 		glUseProgram(shader_program);
 		
+
+		//DRAW of blocks
 		glBindVertexArray(facesVAO);
 
-		//ACTUAL DRAW
 		int buff = current_buffer.load(std::memory_order_acquire);
 
 		//draw each face
@@ -620,9 +606,6 @@ void handle_keys(GLFWwindow *window){
 		f3_down = false;
 	}
 
-	//check if (f r near far) changed
-	updateNonFreq(&camera, &f_r_near_far_change, nonFreqLocations);
-	
 	// toggle mouse capture
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !esc_down){
 		esc_down = 1;
