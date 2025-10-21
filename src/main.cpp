@@ -219,9 +219,9 @@ int main(){
 	}
 	
 	/* OpenGL Options */
-	glCullFace(GL_BACK);
+	glCullFace(GL_FRONT);
 	glFrontFace(GL_CCW);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
