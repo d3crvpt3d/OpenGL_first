@@ -27,7 +27,7 @@ Windows_NT:
 	g++ -o $(BUILD_DIR)/win_programm.exe $(ONELINER) -L "/g/Code/glfw-3.4.bin.WIN64/lib-mingw-w64/" -I "/g/Code/glfw-3.4.bin.WIN64/include/" -lglfw3 -lopengl32 -lgdi32 -Ofast
 
 dbg:
-	g++ -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER_LINUX) -O0 -pg -fsanitize=address
+	g++ -o $(BUILD_DIR)/$(DEBUG_NAME) $(ONELINER_LINUX) -Ofast -pg -fsanitize=address
 
 clean:
 	rm build/*

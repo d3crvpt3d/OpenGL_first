@@ -314,7 +314,7 @@ int main(){
 	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 
 	//realistic max size ~100MB
-	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 16);
+	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
 
 	for(int i = 0; i < 2; i++){
 		glBindBuffer(GL_ARRAY_BUFFER, facesVBO[i]);
@@ -455,7 +455,7 @@ int main(){
 			double fps = 1.0 / deltaTime;
 			char tmp[32];
 			//snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
-			snprintf(tmp, sizeof(tmp), "pos: %.1f, %.1f, %.1f", camera.xyz[0], camera.xyz[1], camera.xyz[1]);
+			snprintf(tmp, sizeof(tmp), "pos: %.1f, %.1f, %.1f", camera.xyz[0], camera.xyz[1], camera.xyz[2]);
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
 		}
