@@ -7,7 +7,7 @@
 
 #define TRANSPARENT_MASK 0x80 //uint16_t
 
-std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z){
+std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t chunkX, int32_t chunkY, int32_t chunkZ){
 
 	std::array<std::vector<QuadGPU_t>, 6> out_data;
 
@@ -17,7 +17,7 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 	//TODO: maybe insert caching
 	//for neighbor chunks here
 
-	Chunk_t *thisChunk = map.at(x, y, z);
+	Chunk_t *thisChunk = map.at(chunkX, chunkY, chunkZ);
 
 	for(uint8_t z = 0; z < 64; z++){
 		for(uint8_t y = 0; y < 64; y++){
@@ -32,18 +32,18 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 				}
 
 				//vector from player pos to chunk
-				int32_t vecX = thisChunk->x - currChunk.x;
-				int32_t vecY = thisChunk->y - currChunk.y;
-				int32_t vecZ = thisChunk->z - currChunk.z;
+				int32_t vecX = chunkX - currChunk.x;
+				int32_t vecY = chunkY - currChunk.y;
+				int32_t vecZ = chunkZ - currChunk.z;
 
 				//cull x
 				if(vecX > 1){
 
 					if(x == 0){
 						side_visible[0] = !map.getBlockAtWorldPos(
-								thisChunk->x+x-1,
-								thisChunk->y+y,
-								thisChunk->z+z);
+								chunkX+x-1,
+								chunkY+y,
+								chunkZ+z);
 					}else{
 						side_visible[0] = !thisChunk->blocks[z][y][x-1];
 					}
@@ -52,9 +52,9 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(x == 63){
 						side_visible[1] = !map.getBlockAtWorldPos(
-								thisChunk->x+x+1,
-								thisChunk->y+y,
-								thisChunk->z+z);
+								chunkX+x+1,
+								chunkY+y,
+								chunkZ+z);
 					}else{
 						side_visible[1] = !thisChunk->blocks[z][y][x+1];
 					}
@@ -63,18 +63,18 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(x == 0){
 						side_visible[0] = !map.getBlockAtWorldPos(
-								thisChunk->x+x-1,
-								thisChunk->y+y,
-								thisChunk->z+z);
+								chunkX+x-1,
+								chunkY+y,
+								chunkZ+z);
 					}else{
 						side_visible[0] = !thisChunk->blocks[z][y][x-1];
 					}
 
 					if(x == 63){
 						side_visible[1] = !map.getBlockAtWorldPos(
-								thisChunk->x+x+1,
-								thisChunk->y+y,
-								thisChunk->z+z);
+								chunkX+x+1,
+								chunkY+y,
+								chunkZ+z);
 					}else{
 						side_visible[1] = !thisChunk->blocks[z][y][x+1];
 					}
@@ -86,9 +86,9 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(y == 0){
 						side_visible[2] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y-1,
-								thisChunk->z+z);
+								chunkX+x,
+								chunkY+y-1,
+								chunkZ+z);
 					}else{
 						side_visible[2] = !thisChunk->blocks[z][y-1][x];
 					}
@@ -97,9 +97,9 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(y == 63){
 						side_visible[3] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y+1,
-								thisChunk->z+z);
+								chunkX+x,
+								chunkY+y+1,
+								chunkZ+z);
 					}else{
 						side_visible[3] = !thisChunk->blocks[z][y+1][x];
 					}
@@ -108,18 +108,18 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(y == 0){
 						side_visible[2] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y-1,
-								thisChunk->z+z);
+								chunkX+x,
+								chunkY+y-1,
+								chunkZ+z);
 					}else{
 						side_visible[2] = !thisChunk->blocks[z][y-1][x];
 					}
 
 					if(y == 63){
 						side_visible[3] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y+1,
-								thisChunk->z+z);
+								chunkX+x,
+								chunkY+y+1,
+								chunkZ+z);
 					}else{
 						side_visible[3] = !thisChunk->blocks[z][y+1][x];
 					}
@@ -131,9 +131,9 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(z == 0){
 						side_visible[4] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y,
-								thisChunk->z+z-1);
+								chunkX+x,
+								chunkY+y,
+								chunkZ+z-1);
 					}else{
 						side_visible[4] = !thisChunk->blocks[z-1][y][x];
 					}
@@ -142,9 +142,9 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(z == 63){
 						side_visible[5] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y,
-								thisChunk->z+z+1);
+								chunkX+x,
+								chunkY+y,
+								chunkZ+z+1);
 					}else{
 						side_visible[5] = !thisChunk->blocks[z+1][y][x];
 					}
@@ -153,18 +153,18 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 					if(z == 0){
 						side_visible[4] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y,
-								thisChunk->z+z-1);
+								chunkX+x,
+								chunkY+y,
+								chunkZ+z-1);
 					}else{
 						side_visible[4] = !thisChunk->blocks[z-1][y][x];
 					}
 
 					if(z == 63){
 						side_visible[5] = !map.getBlockAtWorldPos(
-								thisChunk->x+x,
-								thisChunk->y+y,
-								thisChunk->z+z+1);
+								chunkX+x,
+								chunkY+y,
+								chunkZ+z+1);
 					}else{
 						side_visible[5] = !thisChunk->blocks[z+1][y][x];
 					}
@@ -182,9 +182,9 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 						tmp.size[0] = 1;
 						tmp.size[1] = 1;
 						tmp.type = block;
-						tmp.xyz[0] = x;
-						tmp.xyz[1] = y;
-						tmp.xyz[2] = z;
+						tmp.xyz[0] = (chunkX << 6) + x;
+						tmp.xyz[1] = (chunkY << 6) + y;
+						tmp.xyz[2] = (chunkZ << 6) + z;
 
 						out_data[side].push_back(tmp);
 					}

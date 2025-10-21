@@ -103,6 +103,12 @@ void updateNonFreq(Camera *cam, uint8_t *m, GLint *locations){
 	*m = mask;
 }
 
+struct BaseVertex {
+	GLfloat pos[3];
+	GLfloat nml[3];
+	GLfloat uv[2];
+};
+
 int main(){
 
 	GLenum err;
@@ -142,11 +148,42 @@ int main(){
 	printf( "Renderer: %s.\n", glGetString( GL_RENDERER ) );
 	printf( "OpenGL version supported %s.\n", glGetString( GL_VERSION ) );
 	
-	const GLfloat face_vertecies[] = {
-		0.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f
+	const BaseVertex baseMeshes[24] = {
+		// 0: -X Face (Links)
+    { {0,0,0}, {-1,0,0}, {0,0} },
+    { {0,0,1}, {-1,0,0}, {1,0} },
+    { {0,1,0}, {-1,0,0}, {0,1} },
+    { {0,1,1}, {-1,0,0}, {1,1} },
+    
+    // 1: +X Face (Rechts)
+    { {1,0,1}, { 1,0,0}, {1,0} },
+    { {1,0,0}, { 1,0,0}, {0,0} },
+    { {1,1,1}, { 1,0,0}, {1,1} },
+    { {1,1,0}, { 1,0,0}, {0,1} },
+
+    // 2: -Y Face (Unten)
+    { {0,0,0}, { 0,-1,0}, {0,0} },
+    { {1,0,0}, { 0,-1,0}, {1,0} },
+    { {0,0,1}, { 0,-1,0}, {0,1} },
+    { {1,0,1}, { 0,-1,0}, {1,1} },
+
+    // 3: +Y Face (Oben)
+    { {1,1,0}, { 0, 1,0}, {1,0} },
+    { {0,1,0}, { 0, 1,0}, {0,0} },
+    { {1,1,1}, { 0, 1,0}, {1,1} },
+    { {0,1,1}, { 0, 1,0}, {0,1} },
+
+    // 4: -Z Face (Vorne)
+    { {1,0,0}, { 0,0,-1}, {1,0} },
+    { {0,0,0}, { 0,0,-1}, {0,0} },
+    { {1,1,0}, { 0,0,-1}, {1,1} },
+    { {0,1,0}, { 0,0,-1}, {0,1} },
+
+    // 5: +Z Face (Hinten)
+    { {0,0,1}, { 0,0, 1}, {0,0} },
+    { {1,0,1}, { 0,0, 1}, {1,0} },
+    { {0,1,1}, { 0,0, 1}, {0,1} },
+    { {1,1,1}, { 0,0, 1}, {1,1} }
 	};
 	
 	const GLuint face_index[] = {
@@ -159,8 +196,8 @@ int main(){
 	glGenBuffers(1, &faceVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
 	glBufferData(GL_ARRAY_BUFFER,
-			sizeof(face_vertecies),
-			face_vertecies,
+			sizeof(baseMeshes),
+			baseMeshes,
 			GL_STATIC_DRAW);
 	
 	//create faceEAO
@@ -171,33 +208,6 @@ int main(){
 			face_index,
 			GL_STATIC_DRAW);
 
-	//Affine Transformation LUT
-	GLfloat face_affine_transformation[6][16] = {
-		{ 1.0, 0.0, 0.0, 0.0,
-		  0.0, 1.0, 0.0, 0.0,
-		  0.0, 0.0, 1.0, 0.0,
-		  0.0, 0.0, 0.0, 1.0},//-x
-		{-1.0, 0.0, 0.0, 1.0,
-		  0.0, 1.0, 0.0, 0.0,
-		  0.0, 0.0,-1.0, 1.0,
-		  0.0, 0.0, 0.0, 1.0},//+x
-		{ 0.0, 1.0, 0.0, 0.0,
-		 -1.0, 0.0, 0.0, 1.0,
-		  0.0, 0.0, 1.0, 0.0,
-		  0.0, 0.0, 0.0, 1.0},//-y
-		{ 0.0,-1.0, 0.0, 1.0,
-		  1.0, 0.0, 0.0, 0.0,
-		  0.0, 0.0, 1.0, 0.0,
-		  0.0, 0.0, 0.0, 1.0},//+y
-		{ 0.0, 0.0,-1.0, 1.0,
-		  0.0, 1.0, 0.0, 0.0,
-		  1.0, 0.0, 0.0, 0.0,
-		  0.0, 0.0, 0.0, 1.0},//-z
-		{ 0.0, 0.0, 1.0, 0.0,
-		  0.0, 1.0, 0.0, 0.0,
-		 -1.0, 0.0, 0.0, 1.0,
-		  0.0, 0.0, 0.0, 1.0},//+z
-	};
 	
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");
@@ -211,7 +221,7 @@ int main(){
 	/* OpenGL Options */
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	
 	/* Link Shaders */
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -254,10 +264,7 @@ int main(){
 	GLint campos_loc = glGetUniformLocation(shader_program, "cam_pos");
 	GLint camdir_loc = glGetUniformLocation(shader_program, "cam_dir");
 
-	GLint faces_normal_loc = glGetUniformLocation(shader_program, "face_normal");
-	
 	GLint face_loc = glGetUniformLocation(shader_program, "face");
-	GLint transform_matrix_loc = glGetUniformLocation(shader_program, "face_transform_matrix");
 	
 	nonFreqLocations[0] = glGetUniformLocation(shader_program, "f");
 	nonFreqLocations[1] = glGetUniformLocation(shader_program, "ratio");
@@ -276,15 +283,35 @@ int main(){
 
 	//mesh data
 	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
-
-	glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);                       // pos at offset 0
-
+	
+	//aVertexPosition
+	glVertexAttribFormat(0,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, pos));
 	glVertexAttribBinding(0, 0);
-
-	glBindVertexBuffer(0, faceVBO, 0, 3 * sizeof(GLfloat));
-
 	glEnableVertexAttribArray(0);
 
+	//aNormal
+	glVertexAttribFormat(1,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, nml));
+	glVertexAttribBinding(1, 0);
+	glEnableVertexAttribArray(1);
+
+	//aTexCoord
+	glVertexAttribFormat(2,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, uv));
+	glVertexAttribBinding(2, 0);
+	glEnableVertexAttribArray(2);
+
+	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 
 	//realistic max size ~100MB
 	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 16);
@@ -337,13 +364,13 @@ int main(){
 	glVertexAttribBinding(4, 1);
 	glVertexAttribBinding(5, 1);
 
-	glBindVertexBuffer(1, facesVBO[0], 0, sizeof(QuadGPU_t));
-
-	glVertexBindingDivisor(1, 1);
-
 	glEnableVertexAttribArray(3);
 	glEnableVertexAttribArray(4);
 	glEnableVertexAttribArray(5);
+
+	glBindVertexBuffer(1, facesVBO[0], 0, sizeof(QuadGPU_t));
+
+	glVertexBindingDivisor(1, 1);
 
 	//bind CubeEAO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, faceEAO);
@@ -426,8 +453,9 @@ int main(){
 		title_cd -= deltaTime;
 		if(title_cd <= 0.0 && deltaTime > 0.0 ){
 			double fps = 1.0 / deltaTime;
-			char tmp[16];
-			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
+			char tmp[32];
+			//snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
+			snprintf(tmp, sizeof(tmp), "pos: %.1f, %.1f, %.1f", camera.xyz[0], camera.xyz[1], camera.xyz[1]);
 			glfwSetWindowTitle(window, tmp);
 			title_cd = 0.1; //reset value of title cd
 		}
@@ -458,21 +486,17 @@ int main(){
 			int count = instance_count_perBuffer[buff][side].load(std::memory_order_relaxed);
 
 			//upload transformation matrix for current face
-			glUniformMatrix4fv(transform_matrix_loc,
-					1,
-					GL_FALSE,
-					face_affine_transformation[side]);
-
 			glBindVertexBuffer(1,
 					facesVBO[buff],
 					(long) face_offset[buff][side],
 					sizeof(QuadGPU_t));
 
-			glDrawElementsInstanced(GL_TRIANGLE_STRIP,
+			glDrawElementsInstancedBaseVertex(GL_TRIANGLE_STRIP,
 					4,
 					GL_UNSIGNED_INT,
 					0,
-					count);
+					count,
+					side * 4);
 		}
 
 		//ACTUAL DRAW END

@@ -231,10 +231,6 @@ void updateVramWorker(){
 							cache->y = y;
 							cache->z = z;
 
-							//DEBUG
-							fprintf(stderr,
-									"Optimized Chunk %d,%d,%d with -x size %lu\n",
-									x, y, z, cache->data[0].size());
 						}
 
 						//insert data into each side buffer

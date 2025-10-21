@@ -1,39 +1,33 @@
 #version 410 core
 
+//binding 0
 layout(location = 0) in vec3 aVertexPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec3 aTexCoord;
 
-layout(location = 3) in vec3 aQuadPos;
+//binding 1
+layout(location = 3) in vec3 aQuadPos; //pos
 layout(location = 4) in uvec2 aQuadSize; //width & height
 layout(location = 5) in uint aQuadType; //block type
 
-//face currently drawing
-uniform uint face; //-x,+x,-y,+y,-z,+z
-uniform mat4 face_transform_matrix;
-
 //Model View Projection Matrix
-uniform vec2 cam_dir;
 uniform vec3 cam_pos;
-
-//non freq coord
+uniform vec2 cam_dir;
 uniform float f;
 uniform float ratio;
 uniform float near;
 uniform float far;
 
-//out float aLight;
-//out vec2 aTexCoord;
+//output
+out float vLight;
+//out vec2 vTexCoord;
+//out float vTexLayer;
 
 void main() {
 
-	//sunlight
-	//aLight = max(0.2, dot(aVertexNormal, vec3(0.408248, 0.816497, 0.408248)));
-	
-	//offset texCoord.u by block type
-	//aTexCoord = vec2(inTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, inTexCoord.y);
+	vec3 worldPos = aVertexPosition + aQuadPos;
 
-	vec4 newPos = face_transform_matrix * vec4(aQuadPos, 1);
-
-	vec4 trans = newPos - vec4(cam_pos, 1);
+	vec4 trans = vec4(worldPos - cam_pos, 1.0);
 
 	mat4 view1 = mat4(
 		cos(cam_dir.x), 0.0, sin(cam_dir.x), 0.0,
@@ -58,8 +52,12 @@ void main() {
 
 	gl_Position = proj * view2 * view1 * trans;
 
-	//prob useless
-	if(aQuadType == 0){
-		gl_Position = vec4(0.0, 0.0, -10.0, 1.0);
-	}
+	//sunlight
+	vLight = max(0.2, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
+	
+	//TODO
+	//offset texCoord.u by block type
+	//vTexCoord = vec2(inTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, inTexCoord.y);
+	//vTexLayer = float(aQuadType);
+
 }
