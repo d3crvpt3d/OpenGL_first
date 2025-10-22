@@ -106,7 +106,7 @@ int main(){
 	glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);//toggle cursor
 	
 	//1 = cap vsync to monitor fps
-	//glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	
 	int version_glad = gladLoadGL(glfwGetProcAddress);
 	if ( version_glad == 0 ) {
