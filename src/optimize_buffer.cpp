@@ -1,16 +1,27 @@
 #include "optimize_buffer.h"
 #include "chunkMap.h"
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <vector>
 
 #define TRANSPARENT_MASK 0x80 //uint16_t
+#define LOD_BIAS 0
 
 bool transparent(uint16_t id){
 	return !id || (id & TRANSPARENT_MASK);
 }
 
+//log2 of unsigned integer
+uint32_t log2i(uint32_t num){
+	uint32_t i = 0;
+	while(num != 0){
+		num = num >> 1;
+		i++;
+	}
+	return i;
+}
 
 std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t chunkX, int32_t chunkY, int32_t chunkZ){
 
@@ -30,6 +41,11 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 		fprintf(stderr,"recieved nullptr from chunkmap\n");
 		return out_data;
 	}
+
+
+	//check lod for this chunk
+	uint32_t each_chunk = log2i();
+
 
 	for(uint8_t z = 0; z < 64; z++){
 		const int32_t worldZ = worldChunkZ + z;

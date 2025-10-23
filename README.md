@@ -24,6 +24,7 @@ make <[dbg|default|clean]>
   - [ ] Chunk borders
   - [ ] Coordinates
 - [ ] Optimize Chunk on VRAM
+  - [ ] LODs
   - [x] Remove not Visible Blocks
   - [ ] Greedy Meshing
 - [ ] Interact with the world
