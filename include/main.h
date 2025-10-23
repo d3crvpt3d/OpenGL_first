@@ -18,24 +18,18 @@
 
 typedef struct Camera{
 	GLfloat xyz[3];
-
 	GLfloat f;
-	
 	GLfloat yaw_pitch[2];
-	
 	GLfloat near_far[2];
-	
 	GLfloat aspectRatio;
-  GLfloat deltaTime;
+	GLfloat deltaTime;
+	GLfloat grace_space;
 } Camera;
 
 typedef struct Light{
 	GLfloat xyz[3];
-
 	GLfloat direction[3];
-
 	GLfloat rgb[3];
-
 	GLfloat intensity;
 } Light;
 

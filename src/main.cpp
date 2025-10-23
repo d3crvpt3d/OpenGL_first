@@ -56,6 +56,7 @@ Camera camera = {
 	.yaw_pitch={0.0f, 0.0f},
 	.near_far={0.01f, 1000.0f},
 	.aspectRatio=16.0f/9.0f,
+	.grace_space=PI-PI/(2.0*1.79),
 };
 
 double deltaTime;
@@ -465,8 +466,34 @@ int main(){
 
 		int buff = current_buffer.load(std::memory_order_acquire);
 
+		//CPU side culling to skip sending backside of faces
+		float cos_yaw = cos(camera.yaw_pitch[0]);
+		float sin_yaw = sin(camera.yaw_pitch[0]);
+		float cos_pit = cos(camera.yaw_pitch[1]);
+		float sin_pit = sin(camera.yaw_pitch[1]);
+
+		float cam_normal_x = sin_yaw * cos_pit;
+		float cam_normal_y = -sin_pit;
+		float cam_normal_z = cos_yaw * cos_pit;
+
+		float theta_face[6];
+		theta_face[0] = acos(cam_normal_x);
+		theta_face[1] = acos(-cam_normal_x);
+		theta_face[2] = acos(cam_normal_y);
+		theta_face[3] = acos(-cam_normal_y);
+		theta_face[4] = acos(cam_normal_z);
+		theta_face[5] = acos(-cam_normal_z);
+		//end CPU side culling to skip sending backside of faces
+
 		//draw each face
+		float grace_space = camera.grace_space;
 		for(uint8_t side = 0; side < 6; side++){
+
+			//cpu side z-component culling
+			if(theta_face[side] > grace_space){
+				continue;
+			}
+			//cpu side z-component culling
 
 			int count = instance_count_perBuffer[buff][side].load(std::memory_order_relaxed);
 
@@ -539,7 +566,6 @@ inline int32_t worldToChunk(float worldPos){
 void handle_keys(GLFWwindow *window){
 	
 	static uint8_t esc_down = 0;
-	static uint8_t f_r_near_far_change = 0xFF; //if focal length, aspect-ratio, near or far changed
 	static uint32_t flyspeed = FLYSPEED;
 	
 	//movement
@@ -576,14 +602,14 @@ void handle_keys(GLFWwindow *window){
 	
 	//zoom
 	if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
-		if(camera.f != 2.0f){
-			camera.f = 2.0f;
-			f_r_near_far_change |= 0x80;
+		if(camera.f != 4.0f){
+			camera.f = 4.0f;
+			camera.grace_space = PI-PI/(1.79*2.0*camera.f);
 		}
 	}else{
 		if(camera.f != 1.0f){
 			camera.f = 1.0f;
-			f_r_near_far_change |= 0x80;
+			camera.grace_space = PI-PI/(1.79*2.0*camera.f);
 		}
 	}
 
@@ -639,4 +665,5 @@ void cursor_callback(GLFWwindow *window, double xpos, double ypos){
 	if(camera.yaw_pitch[1] < -PI/2){
 		camera.yaw_pitch[1] = -PI/2;
 	}
+
 }
