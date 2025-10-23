@@ -14,13 +14,22 @@ bool transparent(uint16_t id){
 }
 
 //log2 of unsigned integer
-uint32_t log2i(uint32_t num){
-	uint32_t i = 0;
-	while(num != 0){
-		num = num >> 1;
-		i++;
+uint32_t log2u(uint32_t num){
+
+	if(num == 0){
+		return 1;
 	}
-	return i;
+
+	return 31 - __builtin_clz(num);
+}
+
+//returns lod level based on euclidean distance
+//its linear but only in steps of 2^n | n in N
+uint32_t lod_level(int32_t x, int32_t y, int32_t z){
+
+	uint32_t distance = sqrt(x*x+y*y+z*z);
+
+	return 1 << (log2u(distance) - 1);
 }
 
 std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t chunkX, int32_t chunkY, int32_t chunkZ){
@@ -43,15 +52,16 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 	}
 
 
-	//check lod for this chunk
-	uint32_t each_chunk = log2i();
+	//calculate lod level of this chunk
+	//used every num blocks
+	uint32_t lod_num = lod_level(chunkX, chunkY, chunkZ);
 
 
-	for(uint8_t z = 0; z < 64; z++){
+	for(uint8_t z = 0; z < 64; z+= lod_num){
 		const int32_t worldZ = worldChunkZ + z;
-		for(uint8_t y = 0; y < 64; y++){
+		for(uint8_t y = 0; y < 64; y+= lod_num){
 			const int32_t worldY = worldChunkY + y;
-			for(uint8_t x = 0; x < 64; x++){
+			for(uint8_t x = 0; x < 64; x+= lod_num){
 				const int32_t worldX = worldChunkX + x;
 
 				//get actual block
@@ -64,30 +74,42 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 				bool side_visible[6] = {false};
 
-				//check each direction
-				side_visible[0] = (x == 0) ?
-					transparent(map.getBlockAtWorldPos(worldX - 1, worldY, worldZ))
-					: transparent(thisChunk->blocks[z][y][x-1]);
+				//loop through all skipped blocks
+				//and only dont draw if every
+				//TODO: test all blocks in neighboring faces instead of this trash implementation
+				for(uint8_t partX = 0; partX < lod_num; partX++){
+					for(uint8_t partY = 0; partY < lod_num; partY++){
+						for(uint8_t partZ = 0; partZ < lod_num; partZ++){
 
-				side_visible[1] = (x == 63) ?
-					transparent(map.getBlockAtWorldPos(worldX + 1, worldY, worldZ))
-					: transparent(thisChunk->blocks[z][y][x+1]);
+							//check each direction
+							side_visible[0] |= (x == 0) ?
+								transparent(map.getBlockAtWorldPos(worldX+partX - 1, worldY+partY, worldZ+partZ))
+								: transparent(thisChunk->blocks[z+partZ][y+partY][x+partX-1]);
 
-				side_visible[2] = (y == 0) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY - 1, worldZ))
-					: transparent(thisChunk->blocks[z][y-1][x]);
+							side_visible[1] |= (x == 63) ?
+								transparent(map.getBlockAtWorldPos(worldX+partX + 1, worldY+partY, worldZ+partZ))
+								: transparent(thisChunk->blocks[z+partZ][y+partY][x+partX+1]);
 
-				side_visible[3] = (y == 63) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY + 1, worldZ))
-					: transparent(thisChunk->blocks[z][y+1][x]);
+							side_visible[2] |= (y == 0) ?
+								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY - 1, worldZ+partZ))
+								: transparent(thisChunk->blocks[z+partZ][y+partY-1][x+partX]);
 
-				side_visible[4] = (z == 0) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ - 1))
-					: transparent(thisChunk->blocks[z-1][y][x]);
+							side_visible[3] |= (y == 63) ?
+								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY + 1, worldZ+partZ))
+								: transparent(thisChunk->blocks[z+partZ][y+partY+1][x+partX]);
 
-				side_visible[5] = (z == 63) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ + 1))
-					: transparent(thisChunk->blocks[z+1][y][x]);
+							side_visible[4] |= (z == 0) ?
+								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY, worldZ+partZ - 1))
+								: transparent(thisChunk->blocks[z+partZ-1][y+partY][x+partX]);
+
+							side_visible[5] |= (z == 63) ?
+								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY, worldZ+partZ + 1))
+								: transparent(thisChunk->blocks[z+partZ+1][y+partY][x+partX]);
+
+						}
+					}
+				}
+
 
 				//push each visible face
 				for(uint8_t side = 0; side < 6; side++){
