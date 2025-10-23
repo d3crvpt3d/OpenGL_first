@@ -465,8 +465,31 @@ int main(){
 
 		int buff = current_buffer.load(std::memory_order_acquire);
 
+		//CPU side culling to skip sending backside of faces
+		float cos_yaw = cos(camera.yaw_pitch[0]);
+		float sin_yaw = sin(camera.yaw_pitch[0]);
+		float cos_pit = cos(camera.yaw_pitch[1]);
+		float sin_pit = sin(camera.yaw_pitch[1]);
+
+		float viewspace_normal_z[6];
+
+		viewspace_normal_z[0] =  cos_pit * sin_yaw; //-x
+		viewspace_normal_z[1] = -cos_pit * sin_yaw; //+x
+		viewspace_normal_z[2] =  -sin_pit; //-y
+		viewspace_normal_z[3] =  sin_pit; //+y
+		viewspace_normal_z[4] =  -cos_pit * cos_yaw; //-z
+		viewspace_normal_z[5] =  cos_pit * cos_yaw; //+z
+			
+		//CPU side culling to skip sending backside of faces
+
 		//draw each face
 		for(uint8_t side = 0; side < 6; side++){
+
+			//cpu side z-component culling
+			if(viewspace_normal_z[side] > 0.0f){
+				continue;
+			}
+			//cpu side z-component culling
 
 			int count = instance_count_perBuffer[buff][side].load(std::memory_order_relaxed);
 
