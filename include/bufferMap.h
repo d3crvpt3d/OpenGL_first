@@ -6,6 +6,7 @@
 #include "optimize_buffer.h"
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 //stores face data for each side
@@ -37,4 +38,30 @@ class BufferMap{
 			return check;
 		}
 
+};
+
+typedef std::array<std::vector<QuadGPU_t>, 6> QuadArray_t;
+
+class BufferLodMap{
+
+	//3d array of lod-array[6] of BufferCache_t
+	std::array<
+		std::array<
+			std::array<
+				std::array<
+					BufferCache_t
+				, 6>
+			, RENDERSPAN>
+		, RENDERSPAN>
+	, RENDERSPAN> map;
+
+	public:
+		//get Quad Vector of specific LOD
+	BufferCache_t *at(int32_t x, int32_t y, int32_t z, uint8_t lod){
+
+			return &map	.at(mod(z, RENDERSPAN))
+						.at(mod(y, RENDERSPAN))
+						.at(mod(x, RENDERSPAN))
+						.at(lod);
+		}
 };
