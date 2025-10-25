@@ -21,4 +21,8 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
 		int32_t py,
 		int32_t pz);
 
+//log2 of unsigned integer
+uint32_t log2u(uint32_t num);
+uint32_t lod_number(int32_t x, int32_t y, int32_t z);
+uint32_t lod_index(int32_t x, int32_t y, int32_t z);
 #endif

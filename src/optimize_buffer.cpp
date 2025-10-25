@@ -37,6 +37,19 @@ uint32_t lod_number(int32_t x, int32_t y, int32_t z){
 	return 1 << (comp <= 6 ? comp : 0);
 }
 
+//get lod index
+//n | x = 2^n
+//1=0, 2=1, 4=2, ...
+uint32_t lod_index(int32_t x, int32_t y, int32_t z){
+
+	uint32_t distance = sqrt(x*x+y*y+z*z);
+
+	uint32_t comp = log2u(distance) + LOD_BIAS;
+
+	//clamp to 1 if "negative"
+	return comp <= 6 ? comp : 0;
+}
+
 std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
 		ChunkMap &map,
 		int32_t cx,
