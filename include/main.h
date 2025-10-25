@@ -10,8 +10,8 @@
 #define BLOCK_RANGE 4.5f
 #define WIDTH 	1920
 #define HEIGHT 	1080
-#define FLYSPEED 24.0
-#define FLYSPEED_MAX (FLYSPEED * 3)
+#define FLYSPEED 5
+#define FLYSPEED_MAX (FLYSPEED * 6)
 #define RADPERPIXEL 0.00418879f //mouse sensitivity
 #define PI 3.1415927f
 #define LIGHTS 1 //num lights

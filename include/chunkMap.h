@@ -11,7 +11,7 @@
 extern std::mutex chunkMap_mutex;
 
 /* DEFINES */
-#define RENDERDISTANCE 2
+#define RENDERDISTANCE 5
 #define CHUNK_WDH 64	//chunk width/depth/height
 #define BLOCKS_PER_CHUNK (CHUNK_WDH * CHUNK_WDH * CHUNK_WDH)
 

@@ -1,6 +1,5 @@
 #ifndef CHUNK_GENERATION
 #define CHUNK_GENERATION
-#include <atomic>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>

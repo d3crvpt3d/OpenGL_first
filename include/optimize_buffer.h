@@ -3,6 +3,7 @@
 
 #include "chunkMap.h"
 #include "main.h"
+#include <cstdint>
 #include <vector>
 
 typedef struct {
@@ -11,6 +12,13 @@ typedef struct {
 	GLushort type;	//type
 } QuadGPU_t;
 
-std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t x, int32_t y, int32_t z);
+std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
+		ChunkMap &map,
+		int32_t cx,
+		int32_t cy,
+		int32_t cz,
+		int32_t px,
+		int32_t py,
+		int32_t pz);
 
 #endif

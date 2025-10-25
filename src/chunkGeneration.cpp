@@ -216,22 +216,27 @@ void updateVramWorker(){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
-						//check if already optimized
+						//TODO: use lod buffer map for caching
 						BufferCache_t *cache = bufferCache->at(x, y, z);
 
-						if(	!cache->initialized ||
-							cache->x != x ||
-							cache->y != y ||
-							cache->z != z){
+						//check if already optimized
+					//	if(	!cache->initialized ||
+					//		cache->x != x ||
+					//		cache->y != y ||
+					//		cache->z != z){
 
 							//not in cache, so generate optimized data
-							cache->data = gen_optimized_buffer(*chunkMap, x, y, z);
+							cache->data = gen_optimized_buffer(*chunkMap,
+									x, y, z,
+									currChunk.x,
+									currChunk.y,
+									currChunk.z);
 							cache->initialized = true;
 							cache->x = x;
 							cache->y = y;
 							cache->z = z;
 
-						}
+					//	}
 
 						//insert data into each side buffer
 						for(int side = 0; side < 6; side++){

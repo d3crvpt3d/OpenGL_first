@@ -7,7 +7,7 @@
 #include <vector>
 
 #define TRANSPARENT_MASK 0x80 //uint16_t
-#define LOD_BIAS 0
+#define LOD_BIAS -1
 
 bool transparent(uint16_t id){
 	return !id || (id & TRANSPARENT_MASK);
@@ -17,33 +17,45 @@ bool transparent(uint16_t id){
 uint32_t log2u(uint32_t num){
 
 	if(num == 0){
-		return 1;
+		return 0;
 	}
 
 	return 31 - __builtin_clz(num);
 }
 
-//returns lod level based on euclidean distance
+//returns lod number based on euclidean distance
 //its linear but only in steps of 2^n | n in N
-uint32_t lod_level(int32_t x, int32_t y, int32_t z){
+//{1,1,2,2,4,4,4,4,8,8,...}
+// n = n + LOD_BIAS
+uint32_t lod_number(int32_t x, int32_t y, int32_t z){
 
 	uint32_t distance = sqrt(x*x+y*y+z*z);
 
-	return 1 << (log2u(distance) - 1);
+	uint32_t comp = log2u(distance) + LOD_BIAS;
+
+	//clamp to 1 if "negative"
+	return 1 << (comp <= 6 ? comp : 0);
 }
 
-std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_t chunkX, int32_t chunkY, int32_t chunkZ){
+std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
+		ChunkMap &map,
+		int32_t cx,
+		int32_t cy,
+		int32_t cz,
+		int32_t px,
+		int32_t py,
+		int32_t pz){
 
-	const int32_t worldChunkX = (chunkX << 6);
-	const int32_t worldChunkY = (chunkY << 6);
-	const int32_t worldChunkZ = (chunkZ << 6);
+	const int32_t worldChunkX = (cx << 6);
+	const int32_t worldChunkY = (cy << 6);
+	const int32_t worldChunkZ = (cz << 6);
 
 	std::array<std::vector<QuadGPU_t>, 6> out_data;
 
 	//TODO: greedy meshing
 	//bool visited [6][64][64][64] = {false}; //face,z,y,x
 
-	Chunk_t *thisChunk = map.at(chunkX, chunkY, chunkZ);
+	Chunk_t *thisChunk = map.at(cx, cy, cz);
 
 	//shouldnt be possible
 	if(thisChunk == nullptr){
@@ -52,11 +64,12 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 	}
 
 
-	//calculate lod level of this chunk
-	//used every num blocks
-	uint32_t lod_num = lod_level(chunkX, chunkY, chunkZ);
+	//calculate lod number of this chunk
+	uint32_t lod_num = lod_number(cx-px, cy-py, cz-pz);
 
 
+	//check only every 'lod_num' block and
+	//generate quads with size of lod_num
 	for(uint8_t z = 0; z < 64; z+= lod_num){
 		const int32_t worldZ = worldChunkZ + z;
 		for(uint8_t y = 0; y < 64; y+= lod_num){
@@ -74,41 +87,31 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 
 				bool side_visible[6] = {false};
 
-				//loop through all skipped blocks
-				//and only dont draw if every
-				//TODO: test all blocks in neighboring faces instead of this trash implementation
-				for(uint8_t partX = 0; partX < lod_num; partX++){
-					for(uint8_t partY = 0; partY < lod_num; partY++){
-						for(uint8_t partZ = 0; partZ < lod_num; partZ++){
+				//TODO: if not same chunk, check every of face
+				//check each direction
+				side_visible[0] = (x == 0) ?
+					transparent(map.getBlockAtWorldPos(worldX - 1, worldY, worldZ))
+					: transparent(thisChunk->blocks[z][y][x-lod_num]);
 
-							//check each direction
-							side_visible[0] |= (x == 0) ?
-								transparent(map.getBlockAtWorldPos(worldX+partX - 1, worldY+partY, worldZ+partZ))
-								: transparent(thisChunk->blocks[z+partZ][y+partY][x+partX-1]);
+				side_visible[1] = (x == 63) ?
+					transparent(map.getBlockAtWorldPos(worldX + 1, worldY, worldZ))
+					: transparent(thisChunk->blocks[z][y][x+lod_num]);
 
-							side_visible[1] |= (x == 63) ?
-								transparent(map.getBlockAtWorldPos(worldX+partX + 1, worldY+partY, worldZ+partZ))
-								: transparent(thisChunk->blocks[z+partZ][y+partY][x+partX+1]);
+				side_visible[2] = (y == 0) ?
+					transparent(map.getBlockAtWorldPos(worldX, worldY - 1, worldZ))
+					: transparent(thisChunk->blocks[z][y-lod_num][x]);
 
-							side_visible[2] |= (y == 0) ?
-								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY - 1, worldZ+partZ))
-								: transparent(thisChunk->blocks[z+partZ][y+partY-1][x+partX]);
+				side_visible[3] = (y == 63) ?
+					transparent(map.getBlockAtWorldPos(worldX, worldY + 1, worldZ))
+					: transparent(thisChunk->blocks[z][y+lod_num][x]);
 
-							side_visible[3] |= (y == 63) ?
-								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY + 1, worldZ+partZ))
-								: transparent(thisChunk->blocks[z+partZ][y+partY+1][x+partX]);
+				side_visible[4] = (z == 0) ?
+					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ - 1))
+					: transparent(thisChunk->blocks[z-lod_num][y][x]);
 
-							side_visible[4] |= (z == 0) ?
-								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY, worldZ+partZ - 1))
-								: transparent(thisChunk->blocks[z+partZ-1][y+partY][x+partX]);
-
-							side_visible[5] |= (z == 63) ?
-								transparent(map.getBlockAtWorldPos(worldX+partX, worldY+partY, worldZ+partZ + 1))
-								: transparent(thisChunk->blocks[z+partZ+1][y+partY][x+partX]);
-
-						}
-					}
-				}
+				side_visible[5] = (z == 63) ?
+					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ + 1))
+					: transparent(thisChunk->blocks[z+lod_num][y][x]);
 
 
 				//push each visible face
@@ -117,8 +120,8 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(ChunkMap &map, int32_
 					if(side_visible[side]){
 						QuadGPU_t tmp;
 
-						tmp.size[0] = 1;
-						tmp.size[1] = 1;
+						tmp.size[0] = lod_num;
+						tmp.size[1] = lod_num;
 						tmp.type = block;
 						tmp.xyz[0] = worldX;
 						tmp.xyz[1] = worldY;

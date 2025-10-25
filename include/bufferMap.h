@@ -6,7 +6,6 @@
 #include "optimize_buffer.h"
 #include <array>
 #include <cstdint>
-#include <optional>
 #include <vector>
 
 //stores face data for each side
@@ -39,8 +38,6 @@ class BufferMap{
 		}
 
 };
-
-typedef std::array<std::vector<QuadGPU_t>, 6> QuadArray_t;
 
 class BufferLodMap{
 
