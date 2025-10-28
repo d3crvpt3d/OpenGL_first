@@ -443,12 +443,18 @@ int main(){
 
 		//each frame upload one VBO
 		//orphaning if data already there
+		toUploadQueue_mutex.lock();
 		if(!toUploadQueue.empty()){
 
 			BufferCache_t q = std::move(toUploadQueue.front());
 			toUploadQueue.pop();
+			toUploadQueue_mutex.unlock();
 
 			ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
+			chunk->x = q.x;
+			chunk->y = q.y;
+			chunk->z = q.z;
+
 			if(!chunk){
 				fprintf(stderr, "BufferMap data not there");
 				continue;
@@ -484,10 +490,12 @@ int main(){
 			//bind vbo of this chunk
 			glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
 
-			glBufferData(chunk->instanceVBO,
+			glBufferData(GL_ARRAY_BUFFER,
 					q.data.at(0).size() * sizeof(QuadGPU_t),
 					q.data.at(0).data(),
 					GL_DYNAMIC_DRAW);
+		}else{
+			toUploadQueue_mutex.unlock();
 		}
 
 

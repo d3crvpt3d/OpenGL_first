@@ -38,6 +38,7 @@ extern std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VR
 extern std::mutex jobMutex;
 extern std::mutex currChunk_mutex;
 extern std::mutex genChunksQueue_mutex;
+extern std::mutex toUploadQueue_mutex;
 
 extern std::condition_variable updateThreadCV;
 

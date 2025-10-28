@@ -26,7 +26,7 @@ ChunkMap *chunkMap = nullptr;
 //queue for the main thread to upload to VBO
 std::queue<BufferCache_t> toUploadQueue;
 BufferMap bufferMap = BufferMap();
-
+std::mutex toUploadQueue_mutex;
 //generate Spawn location by lastChunk != currChunk
 vec3i_t lastChunk;
 
@@ -232,7 +232,9 @@ void updateVramWorker(){
 
 						//insert into Queue for main
 						//thread to upload to GPU
+						toUploadQueue_mutex.lock();
 						toUploadQueue.push(std::move(bufferData));
+						toUploadQueue_mutex.unlock();
 
 					}
 				}

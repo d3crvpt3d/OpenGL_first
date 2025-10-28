@@ -23,9 +23,13 @@ class BufferMap{
 				ChunkCPU_t,
 			RENDERSPAN>,
 		RENDERSPAN>,
-	RENDERSPAN> data = {0};
+	RENDERSPAN> data;
 
 	public:
+		BufferMap(){
+			data = {0};
+		}
+
 		ChunkCPU_t *at(int32_t x, int32_t y, int32_t z){
 			return &data.at(mod(z, RENDERSPAN))
 						.at(mod(y, RENDERSPAN))
