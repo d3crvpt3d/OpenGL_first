@@ -1,64 +1,35 @@
-//cache for optimized per chunk
-//instance data with modular indexing
 #pragma once
 
-#include "chunkMap.h"
-#include "optimize_buffer.h"
 #include <array>
 #include <cstdint>
-#include <vector>
 
-//stores face data for each side
-typedef struct BufferCache{
-	std::array<std::vector<QuadGPU_t>, 6> data;
+#include "chunkMap.h"
+#include "main.h"
+
+typedef struct {
 	int32_t x;
 	int32_t y;
 	int32_t z;
-	bool initialized = false;
-} BufferCache_t;
+	uint64_t count[6];
+	uint64_t offset[6];
+	GLuint instanceVBO;
+} ChunkCPU_t;
 
 class BufferMap{
 
 	std::array<
 		std::array<
 			std::array<
-				BufferCache_t,
+				ChunkCPU_t,
 			RENDERSPAN>,
 		RENDERSPAN>,
-	RENDERSPAN> buffers;
+	RENDERSPAN> data = {0};
 
 	public:
-		BufferCache_t *at(int32_t x, int32_t y, int32_t z){
-			BufferCache_t *check = &buffers
-				.at(mod(z, RENDERSPAN))
-				.at(mod(y, RENDERSPAN))
-				.at(mod(x, RENDERSPAN));
-
-			return check;
-		}
-
-};
-
-class BufferLodMap{
-
-	//3d array of lod-array[6] of BufferCache_t
-	std::array<
-		std::array<
-			std::array<
-				std::array<
-					BufferCache_t
-				, 6>
-			, RENDERSPAN>
-		, RENDERSPAN>
-	, RENDERSPAN> map;
-
-	public:
-		//get Quad Vector of specific LOD
-	BufferCache_t *at(int32_t x, int32_t y, int32_t z, uint8_t lod){
-
-			return &map	.at(mod(z, RENDERSPAN))
+		ChunkCPU_t *at(int32_t x, int32_t y, int32_t z){
+			return &data.at(mod(z, RENDERSPAN))
 						.at(mod(y, RENDERSPAN))
-						.at(mod(x, RENDERSPAN))
-						.at(lod);
+						.at(mod(x, RENDERSPAN));
 		}
+
 };

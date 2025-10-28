@@ -1,5 +1,4 @@
-#include "main.h"
-#include "chunkMap.h"
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <cstddef>
@@ -10,6 +9,7 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -17,10 +17,14 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "main.h"
+#include "chunkMap.h"
 #include "chunkGeneration.h"
 #include "voxelTrace.h"
 #include "stb_image.h"
 #include "optimize_buffer.h"
+#include "frustumCulling.h"
+#include "bufferMap.h"
 
 //#define TEXTURE_PATH "texData/firstGLAtlats.png"
 #define TEXTURE_PATH "texData/faithful_32.png"
@@ -238,13 +242,27 @@ int main(){
 	
 
 	//create VAO/VBO buffer map
-	GLuint facesVAO;
-	GLuint facesVBO[2]; //two instance buffers for double buffering
-	
-	glGenVertexArrays(1, &facesVAO);
-	glGenBuffers(2, facesVBO);
+	GLuint instanceVAO;
+	glGenVertexArrays(1, &instanceVAO);
+	glBindVertexArray(instanceVAO);
 
-	glBindVertexArray(facesVAO);
+	//two instance buffers for double buffering
+	std::array<std::array<std::array<GLuint, RENDERSPAN>, RENDERSPAN>, RENDERSPAN> instanceVBO;
+
+	//gen instance VBOs
+	std::array<GLuint, CHUNKS> tmpIDS;
+	glGenBuffers(CHUNKS, tmpIDS.data());
+
+	//copy instanceVBO IDs to data structure
+	uint64_t idx = 0;
+	for(uint32_t z = 0; z < RENDERSPAN; z++){
+		for(uint32_t y = 0; y < RENDERSPAN; y++){
+			for(uint32_t x = 0; x < RENDERSPAN; x++){
+				bufferMap.at(x, y, z)->instanceVBO = tmpIDS[idx++];
+			}
+		}
+	}
+
 
 	//mesh data
 	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
@@ -278,39 +296,6 @@ int main(){
 
 	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 
-	//realistic max size ~100MB
-	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
-
-	for(int i = 0; i < 2; i++){
-		glBindBuffer(GL_ARRAY_BUFFER, facesVBO[i]);
-
-		//persistend mapped buffer
-		glBufferStorage(GL_ARRAY_BUFFER,
-				max_instance_size,
-				nullptr,
-				GL_MAP_WRITE_BIT |
-				GL_MAP_PERSISTENT_BIT |
-				GL_MAP_COHERENT_BIT);
-
-		//map permanently
-		mapped_regions[i] = glMapBufferRange(GL_ARRAY_BUFFER,
-				0,
-				max_instance_size,
-				GL_MAP_WRITE_BIT |
-				GL_MAP_PERSISTENT_BIT |
-				GL_MAP_COHERENT_BIT);
-
-		//DEBUG
-		if(mapped_regions[i] == nullptr){
-			GLenum err = glGetError();
-			fprintf(stderr, "Failed to map buffer %d! GL Error: %d\n", i, err);
-			return -1;
-		}
-	}
-
-	//bind first buffer initially
-	glBindBuffer(GL_ARRAY_BUFFER, facesVBO[0]);
-
 	//pos -> size -> type
 	glVertexAttribFormat(3, 3,
 			GL_FLOAT,
@@ -332,8 +317,6 @@ int main(){
 	glEnableVertexAttribArray(3);
 	glEnableVertexAttribArray(4);
 	glEnableVertexAttribArray(5);
-
-	glBindVertexBuffer(1, facesVBO[0], 0, sizeof(QuadGPU_t));
 
 	glVertexBindingDivisor(1, 1);
 
@@ -458,14 +441,57 @@ int main(){
 				&place_block,
 				BLOCK_RANGE);
 
-		glUseProgram(shader_program);
-		
+		//each frame upload one VBO
+		//orphaning if data already there
+		if(!toUploadQueue.empty()){
+
+			BufferCache_t q = std::move(toUploadQueue.front());
+			toUploadQueue.pop();
+
+			ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
+			if(!chunk){
+				fprintf(stderr, "BufferMap data not there");
+				continue;
+			} //safety first
+
+			//reserve space in first buffer
+			auto reserve = 0;
+			for(uint32_t side = 0; side < 6; side ++){
+				reserve += q.data.at(side).size();
+			}
+			q.data.at(0).reserve(reserve);
+
+			chunk->count[0] = q.data.at(0).size();
+			chunk->offset[0] = 0;
+			for(uint8_t side = 1; side < 6; side++){
+				
+				//set size anmd offset 
+				//of data for draw
+				chunk->count[side] = q.data.at(side).size();
+				chunk->offset[side] = chunk->offset[side-1] + q.data.at(side-1).size() * sizeof(QuadGPU_t);
+
+				//put all into one vector
+				//to upload all at once
+				q.data.at(0).insert(
+						q.data.at(0).end(),
+						q.data.at(side).begin(),
+						q.data.at(side).end());
+
+
+
+			}
+
+			//bind vbo of this chunk
+			glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
+
+			glBufferData(chunk->instanceVBO,
+					q.data.at(0).size() * sizeof(QuadGPU_t),
+					q.data.at(0).data(),
+					GL_DYNAMIC_DRAW);
+		}
+
 
 		//DRAW of blocks
-		glBindVertexArray(facesVAO);
-
-		int buff = current_buffer.load(std::memory_order_acquire);
-
 		//CPU side culling to skip sending backside of faces
 		float cos_yaw = cos(camera.yaw_pitch[0]);
 		float sin_yaw = sin(camera.yaw_pitch[0]);
@@ -486,31 +512,53 @@ int main(){
 		//end CPU side culling to skip sending backside of faces
 
 		//draw each face
+		glUseProgram(shader_program);
+		glBindVertexArray(instanceVAO);
 		float grace_space = camera.grace_space;
-		for(uint8_t side = 0; side < 6; side++){
 
-			//cpu side z-component culling
-			if(theta_face[side] > grace_space){
-				continue;
+		//for each chunk
+		for(uint64_t lz = currChunk.z - RENDERDISTANCE; lz <= currChunk.z + RENDERDISTANCE; lz++){
+			for(uint64_t ly = currChunk.y - RENDERDISTANCE; ly <= currChunk.y + RENDERDISTANCE; ly++){
+				for(uint64_t lx = currChunk.x - RENDERDISTANCE; lx <= currChunk.x + RENDERDISTANCE; lx++){
+
+					ChunkCPU_t *chunkData = bufferMap.at(lx, ly, lz);
+
+					if(chunkData->instanceVBO == 0){
+						continue;
+					}
+
+					//TODO:implement
+					if(outOfFrustum()){
+						continue;
+					}
+
+					for(uint8_t side = 0; side < 6; side++){
+
+						uint64_t count = chunkData->count[side];
+						if(!count){
+							continue;
+						}
+
+						if(theta_face[side] > grace_space){
+							//continue; //TODO:CHECK IF WORKING
+						}
+
+						glBindVertexBuffer(1,
+								chunkData->instanceVBO,
+								chunkData->offset[side],
+								sizeof(QuadGPU_t));
+
+						glDrawElementsInstancedBaseVertex(GL_TRIANGLE_STRIP,
+								4,
+								GL_UNSIGNED_INT,
+								0,
+								chunkData->count[side],
+								side * 4);
+					}
+
+				}
 			}
-			//cpu side z-component culling
-
-			int count = instance_count_perBuffer[buff][side].load(std::memory_order_relaxed);
-
-			//upload transformation matrix for current face
-			glBindVertexBuffer(1,
-					facesVBO[buff],
-					(long) face_offset[buff][side],
-					sizeof(QuadGPU_t));
-
-			glDrawElementsInstancedBaseVertex(GL_TRIANGLE_STRIP,
-					4,
-					GL_UNSIGNED_INT,
-					0,
-					count,
-					side * 4);
 		}
-
 		//ACTUAL DRAW END
 
 		// Put the stuff we've been drawing onto the visible area.

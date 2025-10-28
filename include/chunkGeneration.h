@@ -11,7 +11,8 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "chunkMap.h"
+#include "bufferMap.h"
+#include "optimize_buffer.h"
 
 /* STRUCTS */
 typedef struct vec3i_t{
@@ -41,6 +42,9 @@ extern std::mutex genChunksQueue_mutex;
 extern std::condition_variable updateThreadCV;
 
 extern ssize_t face_offset[2][6];
+
+extern std::queue<BufferCache_t> toUploadQueue;
+extern BufferMap bufferMap;
 
 /* FUNCTIONS */
 

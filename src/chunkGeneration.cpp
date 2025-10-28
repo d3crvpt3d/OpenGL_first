@@ -1,7 +1,7 @@
 #include "chunkGeneration.h"
+#include "bufferMap.h"
 #include "optimize_buffer.h"
 #include "chunkMap.h"
-#include "bufferMap.h"
 #include "perlinGeneration.hpp"
 
 #include <array>
@@ -15,7 +15,6 @@
 #include <queue>
 #include <sys/types.h>
 #include <thread>
-#include <stdio.h>
 #include <vector>
 
 #define DEBUG_MODE_CHUNK_GEN 0
@@ -23,6 +22,10 @@
 uint8_t programRunning = 1;
 vec3i_t currChunk;
 ChunkMap *chunkMap = nullptr;
+
+//queue for the main thread to upload to VBO
+std::queue<BufferCache_t> toUploadQueue;
+BufferMap bufferMap = BufferMap();
 
 //generate Spawn location by lastChunk != currChunk
 vec3i_t lastChunk;
@@ -149,8 +152,6 @@ void updateVramWorker(){
 	lastChunk.y = -2;
 	lastChunk.z = -2;
 	
-	static BufferLodMap *bufferCache = new BufferLodMap();
-
 	while(programRunning){
 
 		//new chunk
@@ -181,6 +182,7 @@ void updateVramWorker(){
 
 						Chunk_t *handle = chunkMap->at(x, y, z);
 
+						//check chunk validity
 						if( handle->x != x ||
 							handle->y != y ||
 							handle->z != z ||
@@ -216,80 +218,25 @@ void updateVramWorker(){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
-						uint8_t lod_idx = lod_index(x-cx, y-cy, z-cz);
-						BufferCache_t *cache = bufferCache->at(x, y, z, lod_idx);
+						BufferCache_t bufferData;
 
-						//check if already optimized
-						if(	!cache->initialized ||
-							cache->x != x ||
-							cache->y != y ||
-							cache->z != z){
+						bufferData.x = x;
+						bufferData.y = y;
+						bufferData.z = z;
 
-							//not in cache, so generate optimized data
-							cache->data = gen_optimized_buffer(*chunkMap,
-									x, y, z,
-									currChunk.x,
-									currChunk.y,
-									currChunk.z);
-							cache->initialized = true;
-							cache->x = x;
-							cache->y = y;
-							cache->z = z;
+						bufferData.data = gen_optimized_buffer(*chunkMap,
+								x, y, z,
+								currChunk.x,
+								currChunk.y,
+								currChunk.z);
 
-						}
-
-						//insert data into each side buffer
-						for(int side = 0; side < 6; side++){
-							optimized_buffer_data[side].insert(
-									optimized_buffer_data[side].end(),
-									cache->data[side].begin(),
-									cache->data[side].end());
-						}
+						//insert into Queue for main
+						//thread to upload to GPU
+						toUploadQueue.push(std::move(bufferData));
 
 					}
 				}
 			}
-			//optimized_buffer_data now has all instance data of all sides
-
-			//realistic max size ~100MB
-			ssize_t max_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
-
-			//get not used buffers
-			int write_buf = 1 - current_buffer.load(std::memory_order_relaxed);
-			QuadGPU_t *instance_data = (QuadGPU_t*) mapped_regions[write_buf];
-
-			//get total size in bytes
-			//+put size/offset information to offset
-			//them memcpy data to mapped buffer
-			ssize_t copy_size = 0;
-			for(int face = 0; face < 6; face++){
-				copy_size += sizeof(QuadGPU_t) * optimized_buffer_data[face].size();
-
-				if(face == 0){
-					face_offset[write_buf][face] = 0;
-				}else{
-					face_offset[write_buf][face] = sizeof(QuadGPU_t) * optimized_buffer_data[face-1].size()
-						 + face_offset[write_buf][face-1];
-				}
-
-				//check if memcpy would work
-				if(copy_size > max_size){
-					fprintf(stderr, "Buffer overflow prevented! %zu > %zu\n", copy_size, max_size);
-				}
-
-				//set size of new data
-				instance_count_perBuffer[write_buf][face].store(optimized_buffer_data[face].size(),
-						std::memory_order_release);
-
-				//copy optimized instance data to VRAM buffer
-				memcpy((QuadGPU_t*) ((uint64_t) instance_data + (uint64_t) face_offset[write_buf][face]),
-						optimized_buffer_data[face].data(),
-						sizeof(QuadGPU_t) * optimized_buffer_data[face].size());
-			}
-
-			//swap vram buffer pointer,
-			//now that all data is uploaded
-			current_buffer.store(write_buf, std::memory_order_release);
 
 			chunksTodo.store(0, std::memory_order_relaxed);
 		}else{
