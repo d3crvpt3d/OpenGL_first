@@ -110,7 +110,7 @@ BufferCache_t gen_optimized_buffer(
 					transparent(map.getBlockAtWorldPos(worldX - 1, worldY, worldZ))
 					: transparent(thisChunk->blocks[z][y][x-lod_num]);
 
-				side_visible[1] = (x + lod_num >= 63) ?
+				side_visible[1] = (x + lod_num >= 64) ?
 					transparent(map.getBlockAtWorldPos(worldX + 1, worldY, worldZ))
 					: transparent(thisChunk->blocks[z][y][x+lod_num]);
 
@@ -118,7 +118,7 @@ BufferCache_t gen_optimized_buffer(
 					transparent(map.getBlockAtWorldPos(worldX, worldY - 1, worldZ))
 					: transparent(thisChunk->blocks[z][y-lod_num][x]);
 
-				side_visible[3] = (y + lod_num >= 63) ?
+				side_visible[3] = (y + lod_num >= 64) ?
 					transparent(map.getBlockAtWorldPos(worldX, worldY + 1, worldZ))
 					: transparent(thisChunk->blocks[z][y+lod_num][x]);
 
@@ -126,7 +126,7 @@ BufferCache_t gen_optimized_buffer(
 					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ - 1))
 					: transparent(thisChunk->blocks[z-lod_num][y][x]);
 
-				side_visible[5] = (z + lod_num >= 63) ?
+				side_visible[5] = (z + lod_num >= 64) ?
 					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ + 1))
 					: transparent(thisChunk->blocks[z+lod_num][y][x]);
 

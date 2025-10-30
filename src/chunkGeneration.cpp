@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <mutex>
 #include <queue>
 #include <sys/types.h>
@@ -55,6 +56,7 @@ uint32_t gseed = 0; //currently 0
 
 std::mutex jobMutex;
 std::mutex updateThreadMutex;
+std::mutex currChunk_mutex;
 
 std::atomic<uint32_t> chunkDone{0};
 std::atomic<uint32_t> chunksTodo{0};
@@ -113,12 +115,6 @@ void generationWorker(){
 		int32_t z = currChunkCoord.z;
 		jobQueue.pop();
 
-		//save base chunk
-		vec3i_t myBaseChunk;
-		myBaseChunk.x = currChunk.x;
-		myBaseChunk.y = currChunk.y;
-		myBaseChunk.z = currChunk.z;
-
 		//unlock jobQueue
 		uqlock.unlock();
 		cv.notify_one();
@@ -135,6 +131,7 @@ void generationWorker(){
 }
 
 bool newChunk(){
+	std::lock_guard<std::mutex> lock(currChunk_mutex);
 	return	currChunk.x != lastChunk.x ||
 			currChunk.y != lastChunk.y ||
 			currChunk.z != lastChunk.z;
@@ -154,13 +151,17 @@ void updateVramWorker(){
 		//new chunk
 		if(newChunk()){
 
-			lastChunk.x = currChunk.x;
-			lastChunk.y = currChunk.y;
-			lastChunk.z = currChunk.z;
-
 			chunkDone.store(0, std::memory_order_release);
 
-			vec3i_t localChunk = {currChunk.x, currChunk.y, currChunk.z};
+			vec3i_t localChunk;
+			{
+				std::lock_guard<std::mutex> lock(currChunk_mutex);
+				lastChunk.x = currChunk.x;
+				lastChunk.y = currChunk.y;
+				lastChunk.z = currChunk.z;
+
+				localChunk = currChunk;
+			}
 
 			//clear queue from last chunk
 			jobMutex.lock();
@@ -204,25 +205,41 @@ void updateVramWorker(){
 				&& chunksTodo.load(std::memory_order_relaxed) > 0){
 			//chunk generation done
 
+			vec3i_t localChunk;
+			{
+				std::lock_guard<std::mutex> lock(currChunk_mutex);
+				localChunk = currChunk;
+			}
+
 			//optimize each chunk
-			int32_t cx = currChunk.x;
-			int32_t cy = currChunk.y;
-			int32_t cz = currChunk.z;
+			int32_t cx = localChunk.x;
+			int32_t cy = localChunk.y;
+			int32_t cz = localChunk.z;
 			for(int32_t z = cz-RENDERDISTANCE; z <= cz+RENDERDISTANCE; z++){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
 						//insert into Queue for main
 						//thread to upload to GPU
-						toUploadQueue_mutex.lock();
-
-						toUploadQueue.push(std::move(
+						
+						BufferCache_t tmp = std::move(
 									gen_optimized_buffer(*chunkMap,
 										x, y, z,
 										cx,
 										cy,
 										cz)
-									));
+									);
+						bool empty = true;
+						for(uint8_t i = 0; i < 6; i++){
+							empty = empty && tmp.size[i] == 0;
+						}
+						if(empty){
+							continue;
+						}
+
+						toUploadQueue_mutex.lock();
+
+						toUploadQueue.push(std::move(tmp));
 						
 						toUploadQueue_mutex.unlock();
 

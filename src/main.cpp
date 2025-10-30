@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <mutex>
 #include <pthread.h>
 #include <string.h>
 #include <string>
@@ -276,7 +277,7 @@ int main(){
 
 	//gen instance VBOs
 	std::array<GLuint, CHUNKS> tmpIDS;
-	glGenBuffers(CHUNKS*6, tmpIDS.data());
+	glGenBuffers(CHUNKS, tmpIDS.data());
 
 	//copy instanceVBO IDs to data structure
 	uint64_t idx = 0;
@@ -439,54 +440,61 @@ int main(){
 		//orphaning if data already there
 		//try_lock() for prob. 'speed'
 		if(toUploadQueue_mutex.try_lock()){
-			
-			if(!toUploadQueue.empty()){
 
-				//uploadQueue has instance Data of chunk
-				BufferCache_t q = std::move(toUploadQueue.front());
-				toUploadQueue.pop();
-				toUploadQueue_mutex.unlock();
+			//upload a*buffers per frame
+			for(uint32_t a = 0; a < 100; a++){
+				if(!toUploadQueue.empty()){
 
-				//get chunk that holds this chunks instanceVBO
-				ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
-				if(!chunk){
-					fprintf(stderr, "BufferMap data not there");
-					continue;
-				} //safety first
+					//uploadQueue has instance Data of chunk
+					BufferCache_t q = std::move(toUploadQueue.front());
+					toUploadQueue.pop();
+					toUploadQueue_mutex.unlock();
 
-				//update coords (ringbuffer)
-				chunk->x = q.x;
-				chunk->y = q.y;
-				chunk->z = q.z;
+					//get chunk that holds this chunks instanceVBO
+					ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
 
-				//set count and offset of each side
-				for(uint8_t side = 0; side < 6; side++){
-					chunk->count[side] = q.size[side];
-					chunk->offset[side] = q.offset[side];
+					//skip if empty
+					if(!chunk){
+						continue;
+					}
+
+					//update coords (ringbuffer)
+					chunk->x = q.x;
+					chunk->y = q.y;
+					chunk->z = q.z;
+
+					//set count and offset of each side
+					for(uint8_t side = 0; side < 6; side++){
+						chunk->count[side] = q.size[side];
+						chunk->offset[side] = q.offset[side];
+					}
+
+
+					//bind vbo of this chunk
+					glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
+
+					//Orphaning
+					glBufferData(GL_ARRAY_BUFFER,
+							q.data.size() * sizeof(QuadGPU_t),
+							NULL,
+							GL_DYNAMIC_DRAW);
+
+					//upload data to this VBO
+					if(!q.data.empty()){
+						glBufferSubData(GL_ARRAY_BUFFER,
+								0,
+								q.data.size() * sizeof(QuadGPU_t),
+								q.data.data());
+					}
+
+					//unbind for clean
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+				}else{
+					//nothing to upload in queue
+					toUploadQueue_mutex.unlock();
+					break;
 				}
-
-
-				//bind vbo of this chunk
-				glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
-
-				//Orphaning
-				glBufferData(GL_ARRAY_BUFFER,
-						q.data.size() * sizeof(QuadGPU_t),
-						NULL,
-						GL_DYNAMIC_DRAW);
-
-				//upload data to this VBO
-				glBufferSubData(GL_ARRAY_BUFFER,
-						0,
-						q.data.size() * sizeof(QuadGPU_t),
-						q.data.data());
-
-				//unbind for clean
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-			}else{
-				//nothing to upload in queue
-				toUploadQueue_mutex.unlock();
-			}
+			}//for loop end
 		}//queue not lockable
 
 
@@ -516,13 +524,16 @@ int main(){
 		float grace_space = camera.grace_space;
 
 		//for each chunk
-		for(uint64_t lz = currChunk.z - RENDERDISTANCE; lz <= currChunk.z + RENDERDISTANCE; lz++){
-			for(uint64_t ly = currChunk.y - RENDERDISTANCE; ly <= currChunk.y + RENDERDISTANCE; ly++){
-				for(uint64_t lx = currChunk.x - RENDERDISTANCE; lx <= currChunk.x + RENDERDISTANCE; lx++){
+		for(int64_t lz = currChunk.z - RENDERDISTANCE; lz <= currChunk.z + RENDERDISTANCE; lz++){
+			for(int64_t ly = currChunk.y - RENDERDISTANCE; ly <= currChunk.y + RENDERDISTANCE; ly++){
+				for(int64_t lx = currChunk.x - RENDERDISTANCE; lx <= currChunk.x + RENDERDISTANCE; lx++){
 
 					ChunkCPU_t *chunkData = bufferMap.at(lx, ly, lz);
 
-					if(chunkData->instanceVBO == 0){
+					if(chunkData->instanceVBO == 0
+							|| chunkData->x != lx
+							|| chunkData->y != ly
+							|| chunkData->z != lz){
 						continue;
 					}
 
@@ -539,7 +550,7 @@ int main(){
 						}
 
 						if(theta_face[side] > grace_space){
-							//continue; //TODO:CHECK IF WORKING
+							continue; //TODO:CHECK IF WORKING
 						}
 
 						glBindVertexBuffer(1,
@@ -690,9 +701,12 @@ void handle_keys(GLFWwindow *window){
 	}
 
 	//update currChunk
-	currChunk.x = worldToChunk(camera.xyz[0]);
-	currChunk.y = worldToChunk(camera.xyz[1]);
-	currChunk.z = worldToChunk(camera.xyz[2]);
+	{
+		std::lock_guard<std::mutex> lock(currChunk_mutex);
+		currChunk.x = worldToChunk(camera.xyz[0]);
+		currChunk.y = worldToChunk(camera.xyz[1]);
+		currChunk.z = worldToChunk(camera.xyz[2]);
+	}
 	updateThreadCV.notify_one();
 }
 
