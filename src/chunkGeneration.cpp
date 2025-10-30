@@ -219,9 +219,9 @@ void updateVramWorker(){
 						toUploadQueue.push(std::move(
 									gen_optimized_buffer(*chunkMap,
 										x, y, z,
-										currChunk.x,
-										currChunk.y,
-										currChunk.z)
+										cx,
+										cy,
+										cz)
 									));
 						
 						toUploadQueue_mutex.unlock();

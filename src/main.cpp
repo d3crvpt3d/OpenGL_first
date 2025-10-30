@@ -186,6 +186,35 @@ int main(){
 			face_index,
 			GL_STATIC_DRAW);
 
+	//aVertexPosition
+	glVertexAttribFormat(0,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, pos));
+	glVertexAttribBinding(0, 0);
+	glEnableVertexAttribArray(0);
+
+	//aNormal
+	glVertexAttribFormat(1,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, nml));
+	glVertexAttribBinding(1, 0);
+	glEnableVertexAttribArray(1);
+
+	//aTexCoord
+	glVertexAttribFormat(2,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, uv));
+	glVertexAttribBinding(2, 0);
+	glEnableVertexAttribArray(2);
+
+	//bind mesh VBO to binding idx 0
+	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 	
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");
@@ -259,40 +288,6 @@ int main(){
 			}
 		}
 	}
-
-
-	//mesh data
-	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
-	
-	//aVertexPosition
-	glVertexAttribFormat(0,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			offsetof(BaseVertex, pos));
-	glVertexAttribBinding(0, 0);
-	glEnableVertexAttribArray(0);
-
-	//aNormal
-	glVertexAttribFormat(1,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			offsetof(BaseVertex, nml));
-	glVertexAttribBinding(1, 0);
-	glEnableVertexAttribArray(1);
-
-	//aTexCoord
-	glVertexAttribFormat(2,
-			2,
-			GL_FLOAT,
-			GL_FALSE,
-			offsetof(BaseVertex, uv));
-	glVertexAttribBinding(2, 0);
-	glEnableVertexAttribArray(2);
-
-	//bind mesh VBO to binding idx 0
-	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 
 	//pos -> size -> type
 	glVertexAttribFormat(3, 3,
@@ -472,18 +467,22 @@ int main(){
 
 
 				//bind vbo of this chunk
-				glBindVertexBuffer(1,
-						chunk->instanceVBO,
-						0,
-						sizeof(QuadGPU_t));
+				glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
 
-				//TODO:do Orphaning
-
-				//upload data to this VBO
+				//Orphaning
 				glBufferData(GL_ARRAY_BUFFER,
 						q.data.size() * sizeof(QuadGPU_t),
-						q.data.data(),
+						NULL,
 						GL_DYNAMIC_DRAW);
+
+				//upload data to this VBO
+				glBufferSubData(GL_ARRAY_BUFFER,
+						0,
+						q.data.size() * sizeof(QuadGPU_t),
+						q.data.data());
+
+				//unbind for clean
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}else{
 				//nothing to upload in queue
 				toUploadQueue_mutex.unlock();

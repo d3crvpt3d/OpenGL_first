@@ -73,7 +73,11 @@ BufferCache_t gen_optimized_buffer(
 	//shouldnt be possible
 	if(thisChunk == nullptr){
 		fprintf(stderr,"recieved nullptr from chunkmap\n");
-		return {0};
+		BufferCache_t empty = {0};
+		empty.x = cx;
+		empty.y = cy;
+		empty.z = cz;
+		return empty;
 	}
 
 
@@ -106,7 +110,7 @@ BufferCache_t gen_optimized_buffer(
 					transparent(map.getBlockAtWorldPos(worldX - 1, worldY, worldZ))
 					: transparent(thisChunk->blocks[z][y][x-lod_num]);
 
-				side_visible[1] = (x == 63) ?
+				side_visible[1] = (x + lod_num >= 63) ?
 					transparent(map.getBlockAtWorldPos(worldX + 1, worldY, worldZ))
 					: transparent(thisChunk->blocks[z][y][x+lod_num]);
 
@@ -114,7 +118,7 @@ BufferCache_t gen_optimized_buffer(
 					transparent(map.getBlockAtWorldPos(worldX, worldY - 1, worldZ))
 					: transparent(thisChunk->blocks[z][y-lod_num][x]);
 
-				side_visible[3] = (y == 63) ?
+				side_visible[3] = (y + lod_num >= 63) ?
 					transparent(map.getBlockAtWorldPos(worldX, worldY + 1, worldZ))
 					: transparent(thisChunk->blocks[z][y+lod_num][x]);
 
@@ -122,7 +126,7 @@ BufferCache_t gen_optimized_buffer(
 					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ - 1))
 					: transparent(thisChunk->blocks[z-lod_num][y][x]);
 
-				side_visible[5] = (z == 63) ?
+				side_visible[5] = (z + lod_num >= 63) ?
 					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ + 1))
 					: transparent(thisChunk->blocks[z+lod_num][y][x]);
 
