@@ -3,7 +3,6 @@
 
 #include "chunkMap.h"
 #include "main.h"
-#include <array>
 #include <cstdint>
 #include <vector>
 
@@ -17,10 +16,12 @@ typedef struct{
 	int32_t x;
 	int32_t y;
 	int32_t z;
-	std::array<std::vector<QuadGPU_t>, 6> data;
+	uint64_t offset[6];
+	uint64_t size[6];
+	std::vector<QuadGPU_t> data; //put all 6 faces in one buffer with offset
 } BufferCache_t;
 
-std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
+BufferCache_t gen_optimized_buffer(
 		ChunkMap &map,
 		int32_t cx,
 		int32_t cy,

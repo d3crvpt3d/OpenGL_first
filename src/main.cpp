@@ -26,8 +26,8 @@
 #include "frustumCulling.h"
 #include "bufferMap.h"
 
-//#define TEXTURE_PATH "texData/firstGLAtlats.png"
-#define TEXTURE_PATH "texData/faithful_32.png"
+#define TEXTURE_PATH "texData/firstGLAtlats.png"
+//#define TEXTURE_PATH "texData/faithful_32.png"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -246,12 +246,9 @@ int main(){
 	glGenVertexArrays(1, &instanceVAO);
 	glBindVertexArray(instanceVAO);
 
-	//two instance buffers for double buffering
-	std::array<std::array<std::array<GLuint, RENDERSPAN>, RENDERSPAN>, RENDERSPAN> instanceVBO;
-
 	//gen instance VBOs
 	std::array<GLuint, CHUNKS> tmpIDS;
-	glGenBuffers(CHUNKS, tmpIDS.data());
+	glGenBuffers(CHUNKS*6, tmpIDS.data());
 
 	//copy instanceVBO IDs to data structure
 	uint64_t idx = 0;
@@ -294,6 +291,7 @@ int main(){
 	glVertexAttribBinding(2, 0);
 	glEnableVertexAttribArray(2);
 
+	//bind mesh VBO to binding idx 0
 	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 
 	//pos -> size -> type
@@ -301,21 +299,19 @@ int main(){
 			GL_FLOAT,
 			GL_FALSE,
 			offsetof(QuadGPU_t, xyz));
+	glVertexAttribBinding(3, 1);
+	glEnableVertexAttribArray(3);
 
 	glVertexAttribIFormat(4, 2,
 			GL_UNSIGNED_INT,
 			offsetof(QuadGPU_t, size));
+	glVertexAttribBinding(4, 1);
+	glEnableVertexAttribArray(4);
 
 	glVertexAttribIFormat(5, 1,
 			GL_UNSIGNED_SHORT,
 			offsetof(QuadGPU_t, type));
-	
-	glVertexAttribBinding(3, 1);
-	glVertexAttribBinding(4, 1);
 	glVertexAttribBinding(5, 1);
-
-	glEnableVertexAttribArray(3);
-	glEnableVertexAttribArray(4);
 	glEnableVertexAttribArray(5);
 
 	glVertexBindingDivisor(1, 1);
@@ -443,60 +439,50 @@ int main(){
 
 		//each frame upload one VBO
 		//orphaning if data already there
-		toUploadQueue_mutex.lock();
-		if(!toUploadQueue.empty()){
+		//try_lock() for prob. 'speed'
+		if(toUploadQueue_mutex.try_lock()){
+			
+			if(!toUploadQueue.empty()){
 
-			BufferCache_t q = std::move(toUploadQueue.front());
-			toUploadQueue.pop();
-			toUploadQueue_mutex.unlock();
+				//uploadQueue has instance Data of chunk
+				BufferCache_t q = std::move(toUploadQueue.front());
+				toUploadQueue.pop();
+				toUploadQueue_mutex.unlock();
 
-			ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
-			chunk->x = q.x;
-			chunk->y = q.y;
-			chunk->z = q.z;
+				//get chunk that holds this chunks instanceVBO
+				ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
+				if(!chunk){
+					fprintf(stderr, "BufferMap data not there");
+					continue;
+				} //safety first
 
-			if(!chunk){
-				fprintf(stderr, "BufferMap data not there");
-				continue;
-			} //safety first
+				//update coords (ringbuffer)
+				chunk->x = q.x;
+				chunk->y = q.y;
+				chunk->z = q.z;
 
-			//reserve space in first buffer
-			auto reserve = 0;
-			for(uint32_t side = 0; side < 6; side ++){
-				reserve += q.data.at(side).size();
+				//set count and offset of each side
+				for(uint8_t side = 0; side < 6; side++){
+					chunk->count[side] = q.size[side];
+					chunk->offset[side] = q.offset[side];
+				}
+
+
+				//TODO:do Orphaning
+
+				//bind vbo of this chunk
+				glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
+
+				//upload data to this VBO
+				glBufferData(GL_ARRAY_BUFFER,
+						q.data.size() * sizeof(QuadGPU_t),
+						q.data.data(),
+						GL_DYNAMIC_DRAW);
+			}else{
+				//nothing to upload in queue
+				toUploadQueue_mutex.unlock();
 			}
-			q.data.at(0).reserve(reserve);
-
-			chunk->count[0] = q.data.at(0).size();
-			chunk->offset[0] = 0;
-			for(uint8_t side = 1; side < 6; side++){
-				
-				//set size anmd offset 
-				//of data for draw
-				chunk->count[side] = q.data.at(side).size();
-				chunk->offset[side] = chunk->offset[side-1] + q.data.at(side-1).size() * sizeof(QuadGPU_t);
-
-				//put all into one vector
-				//to upload all at once
-				q.data.at(0).insert(
-						q.data.at(0).end(),
-						q.data.at(side).begin(),
-						q.data.at(side).end());
-
-
-
-			}
-
-			//bind vbo of this chunk
-			glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
-
-			glBufferData(GL_ARRAY_BUFFER,
-					q.data.at(0).size() * sizeof(QuadGPU_t),
-					q.data.at(0).data(),
-					GL_DYNAMIC_DRAW);
-		}else{
-			toUploadQueue_mutex.unlock();
-		}
+		}//queue not lockable
 
 
 		//DRAW of blocks
@@ -542,8 +528,8 @@ int main(){
 
 					for(uint8_t side = 0; side < 6; side++){
 
-						uint64_t count = chunkData->count[side];
-						if(!count){
+						//skip if empty side
+						if(!chunkData->count[side]){
 							continue;
 						}
 

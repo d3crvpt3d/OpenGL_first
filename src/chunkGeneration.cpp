@@ -205,10 +205,7 @@ void updateVramWorker(){
 
 		}else if(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed)
 				&& chunksTodo.load(std::memory_order_relaxed) > 0){
-
 			//chunk generation done
-
-			std::array<std::vector<QuadGPU_t>, 6> optimized_buffer_data;
 
 			//optimize each chunk
 			int32_t cx = currChunk.x;
@@ -218,22 +215,18 @@ void updateVramWorker(){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
-						BufferCache_t bufferData;
-
-						bufferData.x = x;
-						bufferData.y = y;
-						bufferData.z = z;
-
-						bufferData.data = gen_optimized_buffer(*chunkMap,
-								x, y, z,
-								currChunk.x,
-								currChunk.y,
-								currChunk.z);
-
 						//insert into Queue for main
 						//thread to upload to GPU
 						toUploadQueue_mutex.lock();
-						toUploadQueue.push(std::move(bufferData));
+
+						toUploadQueue.push(std::move(
+									gen_optimized_buffer(*chunkMap,
+										x, y, z,
+										currChunk.x,
+										currChunk.y,
+										currChunk.z)
+									));
+						
 						toUploadQueue_mutex.unlock();
 
 					}

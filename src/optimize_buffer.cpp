@@ -50,7 +50,7 @@ uint32_t lod_index(int32_t x, int32_t y, int32_t z){
 	return comp <= 6 ? comp : 0;
 }
 
-std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
+BufferCache_t gen_optimized_buffer(
 		ChunkMap &map,
 		int32_t cx,
 		int32_t cy,
@@ -73,7 +73,7 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
 	//shouldnt be possible
 	if(thisChunk == nullptr){
 		fprintf(stderr,"recieved nullptr from chunkmap\n");
-		return out_data;
+		return {0};
 	}
 
 
@@ -148,6 +148,40 @@ std::array<std::vector<QuadGPU_t>, 6> gen_optimized_buffer(
 			}
 		}
 	}
+	//end z
+	
+	//pack into one buffer
 
-	return out_data;
+	BufferCache_t packed_data = {0};
+
+	packed_data.x = cx;
+	packed_data.y = cy;
+	packed_data.z = cz;
+
+	//reserve space in packed_data buffer
+	uint64_t reserve = 0;
+	for(uint32_t side = 0; side < 6; side ++){
+
+		//set offset of face in byte
+		packed_data.offset[side] = reserve * sizeof(QuadGPU_t);
+
+		//set size of face
+		packed_data.size[side] = out_data.at(side).size();
+
+		//add num elements of side buffer to reserve
+		reserve += out_data.at(side).size();
+	}
+	packed_data.data.reserve(reserve);
+
+	//pack data
+	for(uint8_t side = 0; side < 6; side++){
+		//put all into one vector
+		//to upload all at once
+		packed_data.data.insert(
+				packed_data.data.end(),
+				out_data.at(side).begin(),
+				out_data.at(side).end());
+	}
+
+	return packed_data;
 }
