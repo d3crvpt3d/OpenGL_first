@@ -20,15 +20,25 @@ out vec2 vTexCoord;
 
 void main() {
 
-	vec3 worldPos = aVertexPosition + aQuadPos;
+
+	//lod resize
+	vec3 scaleVec = aQuadSize.x * aVertexPosition;
+
+	vec3 scaledPos = aVertexPosition * scaleVec;
+
+
+	//affine transformations
+	vec3 worldPos = aQuadPos + scaledPos;
 
 	vec4 cameraPos = vec4(worldPos - camPos, 1.0);
 
 	gl_Position = projMatrix * cameraPos;
 
+
 	//sunlight
 	vLight = max(0.2, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
 	
+
 	//offset texCoord.u by block type
 	vTexCoord = vec2(aTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, aTexCoord.y);
 

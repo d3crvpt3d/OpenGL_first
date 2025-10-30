@@ -1,15 +1,16 @@
-#include "main.h"
-#include "chunkMap.h"
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <mutex>
 #include <pthread.h>
 #include <string.h>
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -17,10 +18,14 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "main.h"
+#include "chunkMap.h"
 #include "chunkGeneration.h"
 #include "voxelTrace.h"
 #include "stb_image.h"
 #include "optimize_buffer.h"
+#include "frustumCulling.h"
+#include "bufferMap.h"
 
 //#define TEXTURE_PATH "texData/firstGLAtlats.png"
 #define TEXTURE_PATH "texData/faithful_32.png"
@@ -160,7 +165,11 @@ int main(){
 		0, 1, 2, 3
 	};
 	
-	GLuint faceVBO, faceEAO;
+	GLuint instanceVAO, faceVBO, faceEAO;
+
+	glGenVertexArrays(1, &instanceVAO);
+
+	glBindVertexArray(instanceVAO);
 	
 	//create cubeVBO
 	glGenBuffers(1, &faceVBO);
@@ -178,6 +187,35 @@ int main(){
 			face_index,
 			GL_STATIC_DRAW);
 
+	//aVertexPosition
+	glVertexAttribFormat(0,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, pos));
+	glVertexAttribBinding(0, 0);
+	glEnableVertexAttribArray(0);
+
+	//aNormal
+	glVertexAttribFormat(1,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, nml));
+	glVertexAttribBinding(1, 0);
+	glEnableVertexAttribArray(1);
+
+	//aTexCoord
+	glVertexAttribFormat(2,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			offsetof(BaseVertex, uv));
+	glVertexAttribBinding(2, 0);
+	glEnableVertexAttribArray(2);
+
+	//bind mesh VBO to binding idx 0
+	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 	
 	/* Load Shaders */
 	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");
@@ -237,108 +275,48 @@ int main(){
 	GLint camPos_loc = glGetUniformLocation(shader_program, "camPos");
 	
 
-	//create VAO/VBO buffer map
-	GLuint facesVAO;
-	GLuint facesVBO[2]; //two instance buffers for double buffering
-	
-	glGenVertexArrays(1, &facesVAO);
-	glGenBuffers(2, facesVBO);
+	//gen instance VBOs
+	std::array<GLuint, CHUNKS> tmpIDS;
+	glGenBuffers(CHUNKS, tmpIDS.data());
 
-	glBindVertexArray(facesVAO);
-
-	//mesh data
-	glBindBuffer(GL_ARRAY_BUFFER, faceVBO);
-	
-	//aVertexPosition
-	glVertexAttribFormat(0,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			offsetof(BaseVertex, pos));
-	glVertexAttribBinding(0, 0);
-	glEnableVertexAttribArray(0);
-
-	//aNormal
-	glVertexAttribFormat(1,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			offsetof(BaseVertex, nml));
-	glVertexAttribBinding(1, 0);
-	glEnableVertexAttribArray(1);
-
-	//aTexCoord
-	glVertexAttribFormat(2,
-			2,
-			GL_FLOAT,
-			GL_FALSE,
-			offsetof(BaseVertex, uv));
-	glVertexAttribBinding(2, 0);
-	glEnableVertexAttribArray(2);
-
-	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
-
-	//realistic max size ~100MB
-	ssize_t max_instance_size = sizeof(QuadGPU_t) * CHUNKS * (BLOCKS_PER_CHUNK / 8);
-
-	for(int i = 0; i < 2; i++){
-		glBindBuffer(GL_ARRAY_BUFFER, facesVBO[i]);
-
-		//persistend mapped buffer
-		glBufferStorage(GL_ARRAY_BUFFER,
-				max_instance_size,
-				nullptr,
-				GL_MAP_WRITE_BIT |
-				GL_MAP_PERSISTENT_BIT |
-				GL_MAP_COHERENT_BIT);
-
-		//map permanently
-		mapped_regions[i] = glMapBufferRange(GL_ARRAY_BUFFER,
-				0,
-				max_instance_size,
-				GL_MAP_WRITE_BIT |
-				GL_MAP_PERSISTENT_BIT |
-				GL_MAP_COHERENT_BIT);
-
-		//DEBUG
-		if(mapped_regions[i] == nullptr){
-			GLenum err = glGetError();
-			fprintf(stderr, "Failed to map buffer %d! GL Error: %d\n", i, err);
-			return -1;
+	//copy instanceVBO IDs to data structure
+	uint64_t idx = 0;
+	for(uint32_t z = 0; z < RENDERSPAN; z++){
+		for(uint32_t y = 0; y < RENDERSPAN; y++){
+			for(uint32_t x = 0; x < RENDERSPAN; x++){
+				ChunkCPU_t *cChunk = bufferMap.at(x, y, z);
+				cChunk->instanceVBO = tmpIDS[idx++];
+			}
 		}
 	}
-
-	//bind first buffer initially
-	glBindBuffer(GL_ARRAY_BUFFER, facesVBO[0]);
 
 	//pos -> size -> type
 	glVertexAttribFormat(3, 3,
 			GL_FLOAT,
 			GL_FALSE,
 			offsetof(QuadGPU_t, xyz));
+	glVertexAttribBinding(3, 1);
+	glEnableVertexAttribArray(3);
 
 	glVertexAttribIFormat(4, 2,
 			GL_UNSIGNED_INT,
 			offsetof(QuadGPU_t, size));
+	glVertexAttribBinding(4, 1);
+	glEnableVertexAttribArray(4);
 
 	glVertexAttribIFormat(5, 1,
 			GL_UNSIGNED_SHORT,
 			offsetof(QuadGPU_t, type));
-	
-	glVertexAttribBinding(3, 1);
-	glVertexAttribBinding(4, 1);
 	glVertexAttribBinding(5, 1);
-
-	glEnableVertexAttribArray(3);
-	glEnableVertexAttribArray(4);
 	glEnableVertexAttribArray(5);
-
-	glBindVertexBuffer(1, facesVBO[0], 0, sizeof(QuadGPU_t));
 
 	glVertexBindingDivisor(1, 1);
 
 	//bind CubeEAO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, faceEAO);
+
+	//dummy instanceVBO
+	glBindVertexBuffer(1, 0, 0, sizeof(QuadGPU_t));
 
 	glBindVertexArray(0);
 
@@ -458,14 +436,69 @@ int main(){
 				&place_block,
 				BLOCK_RANGE);
 
-		glUseProgram(shader_program);
-		
+		//each frame upload one VBO
+		//orphaning if data already there
+		//try_lock() for prob. 'speed'
+		if(toUploadQueue_mutex.try_lock()){
+
+			//upload a*buffers per frame
+			for(uint32_t a = 0; a < 100; a++){
+				if(!toUploadQueue.empty()){
+
+					//uploadQueue has instance Data of chunk
+					BufferCache_t q = std::move(toUploadQueue.front());
+					toUploadQueue.pop();
+					toUploadQueue_mutex.unlock();
+
+					//get chunk that holds this chunks instanceVBO
+					ChunkCPU_t *chunk = bufferMap.at(q.x, q.y, q.z);
+
+					//skip if empty
+					if(!chunk){
+						continue;
+					}
+
+					//update coords (ringbuffer)
+					chunk->x = q.x;
+					chunk->y = q.y;
+					chunk->z = q.z;
+
+					//set count and offset of each side
+					for(uint8_t side = 0; side < 6; side++){
+						chunk->count[side] = q.size[side];
+						chunk->offset[side] = q.offset[side];
+					}
+
+
+					//bind vbo of this chunk
+					glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
+
+					//Orphaning
+					glBufferData(GL_ARRAY_BUFFER,
+							q.data.size() * sizeof(QuadGPU_t),
+							NULL,
+							GL_DYNAMIC_DRAW);
+
+					//upload data to this VBO
+					if(!q.data.empty()){
+						glBufferSubData(GL_ARRAY_BUFFER,
+								0,
+								q.data.size() * sizeof(QuadGPU_t),
+								q.data.data());
+					}
+
+					//unbind for clean
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+				}else{
+					//nothing to upload in queue
+					toUploadQueue_mutex.unlock();
+					break;
+				}
+			}//for loop end
+		}//queue not lockable
+
 
 		//DRAW of blocks
-		glBindVertexArray(facesVAO);
-
-		int buff = current_buffer.load(std::memory_order_acquire);
-
 		//CPU side culling to skip sending backside of faces
 		float cos_yaw = cos(camera.yaw_pitch[0]);
 		float sin_yaw = sin(camera.yaw_pitch[0]);
@@ -486,31 +519,60 @@ int main(){
 		//end CPU side culling to skip sending backside of faces
 
 		//draw each face
+		glUseProgram(shader_program);
+		glBindVertexArray(instanceVAO);
 		float grace_space = camera.grace_space;
-		for(uint8_t side = 0; side < 6; side++){
 
-			//cpu side z-component culling
-			if(theta_face[side] > grace_space){
-				continue;
+		//for each chunk
+		for(int64_t lz = currChunk.z - RENDERDISTANCE; lz <= currChunk.z + RENDERDISTANCE; lz++){
+			for(int64_t ly = currChunk.y - RENDERDISTANCE; ly <= currChunk.y + RENDERDISTANCE; ly++){
+				for(int64_t lx = currChunk.x - RENDERDISTANCE; lx <= currChunk.x + RENDERDISTANCE; lx++){
+
+					ChunkCPU_t *chunkData = bufferMap.at(lx, ly, lz);
+
+					if(chunkData->instanceVBO == 0
+							|| chunkData->x != lx
+							|| chunkData->y != ly
+							|| chunkData->z != lz){
+						continue;
+					}
+
+					//TODO:implement
+					if(outOfFrustum(currChunk,
+								lx, ly, lz,
+								cam_normal_x,
+								cam_normal_y,
+								cam_normal_z)){
+						continue;
+					}
+
+					for(uint8_t side = 0; side < 6; side++){
+
+						//skip if empty side
+						if(!chunkData->count[side]){
+							continue;
+						}
+
+						if(theta_face[side] > grace_space){
+							continue; //TODO:CHECK IF WORKING
+						}
+
+						glBindVertexBuffer(1,
+								chunkData->instanceVBO,
+								chunkData->offset[side],
+								sizeof(QuadGPU_t));
+
+						glDrawElementsInstancedBaseVertex(GL_TRIANGLE_STRIP,
+								4,
+								GL_UNSIGNED_INT,
+								0,
+								chunkData->count[side],
+								side * 4);
+					}
+
+				}
 			}
-			//cpu side z-component culling
-
-			int count = instance_count_perBuffer[buff][side].load(std::memory_order_relaxed);
-
-			//upload transformation matrix for current face
-			glBindVertexBuffer(1,
-					facesVBO[buff],
-					(long) face_offset[buff][side],
-					sizeof(QuadGPU_t));
-
-			glDrawElementsInstancedBaseVertex(GL_TRIANGLE_STRIP,
-					4,
-					GL_UNSIGNED_INT,
-					0,
-					count,
-					side * 4);
 		}
-
 		//ACTUAL DRAW END
 
 		// Put the stuff we've been drawing onto the visible area.
@@ -643,9 +705,12 @@ void handle_keys(GLFWwindow *window){
 	}
 
 	//update currChunk
-	currChunk.x = worldToChunk(camera.xyz[0]);
-	currChunk.y = worldToChunk(camera.xyz[1]);
-	currChunk.z = worldToChunk(camera.xyz[2]);
+	{
+		std::lock_guard<std::mutex> lock(currChunk_mutex);
+		currChunk.x = worldToChunk(camera.xyz[0]);
+		currChunk.y = worldToChunk(camera.xyz[1]);
+		currChunk.z = worldToChunk(camera.xyz[2]);
+	}
 	updateThreadCV.notify_one();
 }
 

@@ -1,6 +1,5 @@
 #ifndef CHUNK_GENERATION
 #define CHUNK_GENERATION
-#include <atomic>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
@@ -12,7 +11,8 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "chunkMap.h"
+#include "bufferMap.h"
+#include "optimize_buffer.h"
 
 /* STRUCTS */
 typedef struct vec3i_t{
@@ -38,10 +38,14 @@ extern std::queue<vec3i_t> genChunksQueue; //queue of chunks ready to send to VR
 extern std::mutex jobMutex;
 extern std::mutex currChunk_mutex;
 extern std::mutex genChunksQueue_mutex;
+extern std::mutex toUploadQueue_mutex;
 
 extern std::condition_variable updateThreadCV;
 
 extern ssize_t face_offset[2][6];
+
+extern std::queue<BufferCache_t> toUploadQueue;
+extern BufferMap bufferMap;
 
 /* FUNCTIONS */
 

@@ -1,6 +1,6 @@
 # Voxel Render in OpenGL
 
-![alpha build](https://d3crypt3d.com/public/Screenshot%202025-10-17%20071843.png)
+![alpha build](https://d3crypt3d.com/public/Screenshot%202025-10-30%20220506.png)
 
 ## Linux
 
@@ -17,14 +17,16 @@ make <[dbg|default|clean]>
 ## TODO
 
 - [x] Real Worker Queue
-- [x] Put all Blocks into one VAO with double buffered VBO
 - [ ] Debug Mode
   - [ ] Debug Tree (to chose what to enable/disable)
   - [x] F3 Wireframe Toggle
   - [ ] Chunk borders
   - [ ] Coordinates
 - [ ] Optimize Chunk on VRAM
+  - [x] LODs
+    -[ ]better LODs
   - [x] Remove not Visible Blocks
+    - [x] Frustum Culling
   - [ ] Greedy Meshing
 - [ ] Interact with the world
   - [ ] Break Blocks
