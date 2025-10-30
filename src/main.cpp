@@ -27,8 +27,8 @@
 #include "frustumCulling.h"
 #include "bufferMap.h"
 
-//#define TEXTURE_PATH "texData/firstGLAtlats.png"
-#define TEXTURE_PATH "texData/faithful_32.png"
+#define TEXTURE_PATH "texData/firstGLAtlats.png"
+//#define TEXTURE_PATH "texData/faithful_32.png"
 
 #if defined(_WIN32)
 #include <windows.h>

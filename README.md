@@ -24,7 +24,7 @@ make <[dbg|default|clean]>
   - [ ] Coordinates
 - [ ] Optimize Chunk on VRAM
   - [x] LODs
-    -[ ]better LODs
+    - [ ] better LODs
   - [x] Remove not Visible Blocks
     - [x] Frustum Culling
   - [ ] Greedy Meshing
