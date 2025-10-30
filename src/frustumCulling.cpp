@@ -31,6 +31,12 @@ bool outOfFrustum(vec3i_t currChunk,
 	float cVecSize = sqrtf(	chunkVec.x*chunkVec.x+
 							chunkVec.y*chunkVec.y+
 							chunkVec.z*chunkVec.z);
+	
+	//TODO:change to good
+	if(cVecSize < 2.0){
+		return false;
+	}
+
 
 	vec3_t chunkNorm = {
 		chunkVec.x / cVecSize,
@@ -41,5 +47,5 @@ bool outOfFrustum(vec3i_t currChunk,
 
 
 
-	return dot(chunkNorm, view) < cosf(PI/4);
+	return dot(chunkNorm, view) < cosf(1.79*PI/4.0);
 }

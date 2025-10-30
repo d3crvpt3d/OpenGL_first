@@ -17,15 +17,16 @@ make <[dbg|default|clean]>
 ## TODO
 
 - [x] Real Worker Queue
-- [x] Put all Blocks into one VAO with double buffered VBO
 - [ ] Debug Mode
   - [ ] Debug Tree (to chose what to enable/disable)
   - [x] F3 Wireframe Toggle
   - [ ] Chunk borders
   - [ ] Coordinates
 - [ ] Optimize Chunk on VRAM
-  - [ ] LODs
+  - [x] LODs
+    -[ ]better LODs
   - [x] Remove not Visible Blocks
+    - [x] Frustum Culling
   - [ ] Greedy Meshing
 - [ ] Interact with the world
   - [ ] Break Blocks
