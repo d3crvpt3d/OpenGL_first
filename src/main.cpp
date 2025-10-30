@@ -27,8 +27,8 @@
 #include "frustumCulling.h"
 #include "bufferMap.h"
 
-#define TEXTURE_PATH "texData/firstGLAtlats.png"
-//#define TEXTURE_PATH "texData/faithful_32.png"
+//#define TEXTURE_PATH "texData/firstGLAtlats.png"
+#define TEXTURE_PATH "texData/faithful_32.png"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -538,7 +538,11 @@ int main(){
 					}
 
 					//TODO:implement
-					if(outOfFrustum()){
+					if(outOfFrustum(currChunk,
+								lx, ly, lz,
+								cam_normal_x,
+								cam_normal_y,
+								cam_normal_z)){
 						continue;
 					}
 
