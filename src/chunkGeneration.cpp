@@ -4,7 +4,6 @@
 #include "chunkMap.h"
 #include "perlinGeneration.hpp"
 
-#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <csignal>
@@ -66,8 +65,6 @@ std::condition_variable cv;
 std::condition_variable updateThreadCV;
 
 std::queue<vec3i_t> jobQueue;
-
-ssize_t face_offset[2][6] = {0}; //offset of each face inside vram buffer
 
 void addJob(int32_t x, int32_t y, int32_t z){
 

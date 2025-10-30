@@ -164,7 +164,11 @@ int main(){
 		0, 1, 2, 3
 	};
 	
-	GLuint faceVBO, faceEAO;
+	GLuint instanceVAO, faceVBO, faceEAO;
+
+	glGenVertexArrays(1, &instanceVAO);
+
+	glBindVertexArray(instanceVAO);
 	
 	//create cubeVBO
 	glGenBuffers(1, &faceVBO);
@@ -241,11 +245,6 @@ int main(){
 	GLint camPos_loc = glGetUniformLocation(shader_program, "camPos");
 	
 
-	//create VAO/VBO buffer map
-	GLuint instanceVAO;
-	glGenVertexArrays(1, &instanceVAO);
-	glBindVertexArray(instanceVAO);
-
 	//gen instance VBOs
 	std::array<GLuint, CHUNKS> tmpIDS;
 	glGenBuffers(CHUNKS*6, tmpIDS.data());
@@ -255,7 +254,8 @@ int main(){
 	for(uint32_t z = 0; z < RENDERSPAN; z++){
 		for(uint32_t y = 0; y < RENDERSPAN; y++){
 			for(uint32_t x = 0; x < RENDERSPAN; x++){
-				bufferMap.at(x, y, z)->instanceVBO = tmpIDS[idx++];
+				ChunkCPU_t *cChunk = bufferMap.at(x, y, z);
+				cChunk->instanceVBO = tmpIDS[idx++];
 			}
 		}
 	}
@@ -318,6 +318,9 @@ int main(){
 
 	//bind CubeEAO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, faceEAO);
+
+	//dummy instanceVBO
+	glBindVertexBuffer(1, 0, 0, sizeof(QuadGPU_t));
 
 	glBindVertexArray(0);
 
@@ -468,10 +471,13 @@ int main(){
 				}
 
 
-				//TODO:do Orphaning
-
 				//bind vbo of this chunk
-				glBindBuffer(GL_ARRAY_BUFFER, chunk->instanceVBO);
+				glBindVertexBuffer(1,
+						chunk->instanceVBO,
+						0,
+						sizeof(QuadGPU_t));
+
+				//TODO:do Orphaning
 
 				//upload data to this VBO
 				glBufferData(GL_ARRAY_BUFFER,
