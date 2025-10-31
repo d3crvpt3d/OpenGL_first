@@ -25,18 +25,15 @@ bool outOfFrustum(vec3i_t currChunk,
 
 	vec3_t view = {viewX, viewY, viewZ};
 
-
-	vec3_t chunkVec = {(float) (lx - currChunk.x), (float) (ly - currChunk.y), (float) (lz - currChunk.z)};
+	//add 1 to chunkVec in view direction
+	//to offset vector
+	vec3_t chunkVec = {(float) (lx - currChunk.x) + 2*viewX,
+		(float) (ly - currChunk.y) + 2*viewY,
+		(float) (lz - currChunk.z) + 2*viewZ};
 
 	float cVecSize = sqrtf(	chunkVec.x*chunkVec.x+
 							chunkVec.y*chunkVec.y+
 							chunkVec.z*chunkVec.z);
-	
-	//TODO:change to good
-	if(cVecSize < 2.0){
-		return false;
-	}
-
 
 	vec3_t chunkNorm = {
 		chunkVec.x / cVecSize,
@@ -46,6 +43,5 @@ bool outOfFrustum(vec3i_t currChunk,
 
 
 
-
-	return dot(chunkNorm, view) < cosf(1.79*PI/4.0);
+	return dot(chunkNorm, view) < cosf(PI/(2*1.78));
 }
