@@ -14,6 +14,13 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+
+//#define TEXTURE_PATH "texData/firstGLAtlats.png"
+#define TEXTURE_PATH "texData/faithful_32.png"
+
+#define CHUNK_UPLOAD_PER_FRAME 10
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -27,8 +34,6 @@
 #include "frustumCulling.h"
 #include "bufferMap.h"
 
-//#define TEXTURE_PATH "texData/firstGLAtlats.png"
-#define TEXTURE_PATH "texData/faithful_32.png"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -442,7 +447,7 @@ int main(){
 		if(toUploadQueue_mutex.try_lock()){
 
 			//upload a*buffers per frame
-			for(uint32_t a = 0; a < 100; a++){
+			for(uint32_t a = 0; a < CHUNK_UPLOAD_PER_FRAME; a++){
 				if(!toUploadQueue.empty()){
 
 					//uploadQueue has instance Data of chunk
