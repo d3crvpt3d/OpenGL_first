@@ -1,6 +1,5 @@
 #include "frustumCulling.h"
 #include "chunkGeneration.h"
-#include "main.h"
 #include <cmath>
 
 typedef struct{
@@ -16,6 +15,7 @@ float dot(vec3_t a, vec3_t b){
 }
 
 bool outOfFrustum(vec3i_t currChunk,
+		float fov_view_dot,
 		int32_t lx,
 		int32_t ly,
 		int32_t lz,
@@ -27,9 +27,10 @@ bool outOfFrustum(vec3i_t currChunk,
 
 	//add 1 to chunkVec in view direction
 	//to offset vector
-	vec3_t chunkVec = {(float) (lx - currChunk.x) + 2*viewX,
-		(float) (ly - currChunk.y) + 2*viewY,
-		(float) (lz - currChunk.z) + 2*viewZ};
+	vec3_t chunkVec = {
+		(float) (lx - currChunk.x) + viewX,
+		(float) (ly - currChunk.y) + viewY,
+		(float) (lz - currChunk.z) + viewZ};
 
 	float cVecSize = sqrtf(	chunkVec.x*chunkVec.x+
 							chunkVec.y*chunkVec.y+
@@ -43,5 +44,5 @@ bool outOfFrustum(vec3i_t currChunk,
 
 
 
-	return dot(chunkNorm, view) < cosf(PI/(2*1.78));
+	return dot(chunkNorm, view) < fov_view_dot;
 }

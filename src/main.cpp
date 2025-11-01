@@ -15,10 +15,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 
-//#define TEXTURE_PATH "texData/firstGLAtlats.png"
-#define TEXTURE_PATH "texData/faithful_32.png"
+#define TEXTURE_PATH "texData/firstGLAtlats.png"
+//#define TEXTURE_PATH "texData/faithful_32.png"
 
-#define CHUNK_UPLOAD_PER_FRAME 10
+#define CHUNK_UPLOAD_PER_FRAME 64
 
 
 #include <stdlib.h>
@@ -528,6 +528,11 @@ int main(){
 		glBindVertexArray(instanceVAO);
 		float grace_space = camera.grace_space;
 
+
+		//pre-calculate dot product of
+		//fov-vector and view direction
+		float fov_view_dot = 1/(1.78f*1.5f);
+
 		//for each chunk
 		for(int64_t lz = currChunk.z - RENDERDISTANCE; lz <= currChunk.z + RENDERDISTANCE; lz++){
 			for(int64_t ly = currChunk.y - RENDERDISTANCE; ly <= currChunk.y + RENDERDISTANCE; ly++){
@@ -542,8 +547,8 @@ int main(){
 						continue;
 					}
 
-					//TODO:implement
 					if(outOfFrustum(currChunk,
+								fov_view_dot,
 								lx, ly, lz,
 								cam_normal_x,
 								cam_normal_y,
