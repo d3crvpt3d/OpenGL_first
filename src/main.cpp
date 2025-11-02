@@ -222,35 +222,68 @@ int main(){
 	//bind mesh VBO to binding idx 0
 	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 	
-	/* Load Shaders */
-	const char *vertex_shader = loadShaders("../shaders/vertex.glsl");
-	const char *fragment_shader = loadShaders("../shaders/fragment.glsl");
-	
-	if(!vertex_shader || !fragment_shader){
-		fprintf(stderr, "vertex shader or fragment shader not locatable\n");
-		return -1;
-	}
-	
 	/* OpenGL Options */
 	//left hand coordinate system
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	glEnable(GL_CULL_FACE);
 	
-	/* Link Shaders */
+
+	/* Load Shaders */
+	//blocks
+	const char *blocks_vertex_shader = loadShaders("../shaders/blocks.vert");
+	const char *blocks_fragment_shader = loadShaders("../shaders/blocks.frag");
+	if(!blocks_vertex_shader || !blocks_fragment_shader){
+		fprintf(stderr, "blocks vertex shader or fragment shader not locatable\n");
+		return -1;
+	}
+
+	//skybox
+	const char *skybox_vs_source = loadShaders("../shaders/skybox.vert");
+	const char *skybox_fs_source = loadShaders("../shaders/skybox.frag");
+	if(!skybox_vs_source || !skybox_fs_source){
+		fprintf(stderr, "skybox vertex shader or fragment shader not locatable\n");
+		return -1;
+	}
+	
+	//create skybox shader
+	GLuint skybox_vs = glCreateShader(GL_VERTEX_SHADER);
+	GLuint skybox_fs = glCreateShader(GL_FRAGMENT_SHADER);
+
+	glShaderSource(skybox_vs, 1, &skybox_vs_source, NULL);
+	glShaderSource(skybox_fs, 1, &skybox_fs_source, NULL);
+
+	glCompileShader(skybox_vs);
+	glCompileShader(skybox_fs);
+
+	GLuint skybox_shader = glCreateProgram();
+	glAttachShader(skybox_shader, skybox_vs);
+	glAttachShader(skybox_shader, skybox_fs);
+
+	GLuint skyboxVAO;
+	glGenVertexArrays(1, &skyboxVAO);
+	glBindVertexArray(skyboxVAO);
+
+	GLfloat view_mat[16] = {};
+	glUniformMatrix4fv(glGetUniformLocation(skybox_shader, "vMatrix"), 
+			1, GL_TRUE, view_mat);
+
+
+
+	//create blocks shader
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
-	glShaderSource( vs, 1, &vertex_shader, NULL );
+	glShaderSource( vs, 1, &blocks_vertex_shader, NULL );
 	glCompileShader( vs );
 	
 	GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
-	glShaderSource( fs, 1, &fragment_shader, NULL );
+	glShaderSource( fs, 1, &blocks_fragment_shader, NULL );
 	glCompileShader( fs );
 	
-	GLuint shader_program = glCreateProgram();
-	glAttachShader( shader_program, vs );
-	glAttachShader( shader_program, fs );
+	GLuint blocks_shader = glCreateProgram();
+	glAttachShader( blocks_shader, vs );
+	glAttachShader( blocks_shader, fs );
 	
-	glLinkProgram( shader_program );
+	glLinkProgram( blocks_shader);
 	
 	/* Check Compilation Errors */
 	GLint success;
@@ -259,7 +292,7 @@ int main(){
 		char infoLog[512];
 		glGetShaderInfoLog(fs, 512, NULL, infoLog);
 		fprintf(stderr, "Fragment shader compilation failed: %s\n", infoLog);
-		free((void*)fragment_shader);
+		free((void*)blocks_fragment_shader);
 		return -1;
 	}
 	
@@ -268,16 +301,16 @@ int main(){
 		char infoLog[512];
 		glGetShaderInfoLog(vs, 512, NULL, infoLog);
 		fprintf(stderr, "Vertex shader compilation failed: %s\n", infoLog);
-		free((void*)vertex_shader);
+		free((void*)blocks_vertex_shader);
 		return -1;
 	}
 	
 	double currTime = glfwGetTime();
 	double lastTime;
 	
-	GLint face_loc = glGetUniformLocation(shader_program, "face");
-	GLint projMatrix_loc = glGetUniformLocation(shader_program, "projMatrix");
-	GLint camPos_loc = glGetUniformLocation(shader_program, "camPos");
+	GLint face_loc = glGetUniformLocation(blocks_shader, "face");
+	GLint projMatrix_loc = glGetUniformLocation(blocks_shader, "projMatrix");
+	GLint camPos_loc = glGetUniformLocation(blocks_shader, "camPos");
 	
 
 	//gen instance VBOs
@@ -325,8 +358,8 @@ int main(){
 
 	glBindVertexArray(0);
 
-	//use shader program
-	glUseProgram(shader_program);
+	//use blocks shader program
+	glUseProgram(blocks_shader);
 
 	//load textures
 	int texWidth, texHeight, texNrChannels;
@@ -362,7 +395,7 @@ int main(){
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(texData);
 	
-	glUniform1i(glGetUniformLocation(shader_program, "aTexture"), 0);
+	glUniform1i(glGetUniformLocation(blocks_shader, "aTexture"), 0);
 
 	//end load textures
 
@@ -524,7 +557,7 @@ int main(){
 		//end CPU side culling to skip sending backside of faces
 
 		//draw each face
-		glUseProgram(shader_program);
+		glUseProgram(blocks_shader);
 		glBindVertexArray(instanceVAO);
 		float grace_space = camera.grace_space;
 
@@ -578,7 +611,13 @@ int main(){
 				}
 			}
 		}
-		//ACTUAL DRAW END
+		//ACTUAL Blocks DRAW END
+
+		//DRAW SKYBOX
+		glUseProgram(skybox_shader);
+		glBindVertexArray(skyboxVAO);
+
+		//DRAW SKYBOX END
 
 		// Put the stuff we've been drawing onto the visible area.
 		glfwSwapBuffers( window );
@@ -593,8 +632,8 @@ int main(){
 
 	glfwTerminate();
 	
-	free((void*) vertex_shader);
-	free((void*) fragment_shader);
+	free((void*) blocks_vertex_shader);
+	free((void*) blocks_fragment_shader);
 	
 	return 0;
 }
