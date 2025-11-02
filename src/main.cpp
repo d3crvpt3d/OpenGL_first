@@ -14,9 +14,10 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
-
 //#define TEXTURE_PATH "texData/firstGLAtlats.png"
 #define TEXTURE_PATH "texData/faithful_32.png"
+
+#define SKYBOX_TEXTURE_PATH "texData/skybox_"
 
 #define CHUNK_UPLOAD_PER_FRAME 10
 
@@ -264,11 +265,93 @@ int main(){
 	glGenVertexArrays(1, &skyboxVAO);
 	glBindVertexArray(skyboxVAO);
 
-	GLfloat view_mat[16] = {};
-	glUniformMatrix4fv(glGetUniformLocation(skybox_shader, "vMatrix"), 
-			1, GL_TRUE, view_mat);
+	//create cubemap
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
 
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
 
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f
+	};
+
+	GLuint skyboxVBO;
+	glGenBuffers(1, &skyboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(skyboxVBO, sizeof(skyboxVertices),
+			skyboxVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT,
+			GL_FALSE, sizeof(GLfloat) * 3, 0);
+	glEnableVertexAttribArray(0);
+
+	GLuint skybox_texId;
+	glGenTextures(1, &skybox_texId);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texId);
+
+	//upload cubemap
+	int skyboxWidth, skyboxHeight, skyboxNrChannels;
+	std::filesystem::path skybox_exeRoot = getRelativeRootDir();
+
+	for(int i = 0; i < 6; i++){
+
+		std::filesystem::path skybox_img_path = skybox_exeRoot / "../" /
+			(SKYBOX_TEXTURE_PATH + std::to_string(i) + ".jpg");
+
+		uint8_t *skyboxTexData = stbi_load(skybox_img_path.u8string().c_str(),
+				&skyboxWidth,
+				&skyboxHeight,
+				&skyboxNrChannels,
+				0);
+		
+		if(!skyboxTexData){
+			fprintf(stderr, "Could not load image %s\n",
+					skybox_img_path.u8string().c_str());
+		}
+
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
+				GL_RGB,
+				skyboxWidth, skyboxHeight,
+				0, GL_RGB,
+				GL_UNSIGNED_BYTE, skyboxTexData);
+	}
+
+	GLuint skybox_vMatrix_loc = glGetUniformLocation(skybox_shader, "vMatrix");
 
 	//create blocks shader
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -615,8 +698,14 @@ int main(){
 
 		//DRAW SKYBOX
 		glUseProgram(skybox_shader);
+
 		glBindVertexArray(skyboxVAO);
 
+		//upload new projection Matrix
+		glUniformMatrix4fv(skybox_vMatrix_loc,
+				1, GL_TRUE, projMatrix);
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		//DRAW SKYBOX END
 
 		// Put the stuff we've been drawing onto the visible area.
