@@ -349,9 +349,19 @@ int main(){
 				skyboxWidth, skyboxHeight,
 				0, GL_RGB,
 				GL_UNSIGNED_BYTE, skyboxTexData);
+
+		stbi_image_free(skyboxTexData);
 	}
 
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
 	GLuint skybox_vMatrix_loc = glGetUniformLocation(skybox_shader, "vMatrix");
+
+	glBindVertexArray(0);
 
 	//create blocks shader
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
@@ -526,6 +536,8 @@ int main(){
 		handle_keys(window);
 
 
+		glUseProgram(blocks_shader);
+		glBindVertexArray(instanceVAO);
 		//update transformation matrix
 		GLfloat a = cos(camera.yaw_pitch[0]);
 		GLfloat b = sin(camera.yaw_pitch[0]);
