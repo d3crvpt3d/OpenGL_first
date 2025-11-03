@@ -260,6 +260,7 @@ int main(){
 	GLuint skybox_shader = glCreateProgram();
 	glAttachShader(skybox_shader, skybox_vs);
 	glAttachShader(skybox_shader, skybox_fs);
+	glLinkProgram(skybox_shader);
 
 	GLuint skyboxVAO;
 	glGenVertexArrays(1, &skyboxVAO);
@@ -267,54 +268,59 @@ int main(){
 
 	//create cubemap
 	float skyboxVertices[] = {
-		// positions          
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
+		//+x
+		1,-1,-1,
+		1,1,-1,
+		1,-1,1,
+		1,-1,1,
+		1,1,-1,
+		1,1,1,
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
+		//-x
+		-1,-1,-1,
+		-1,-1,1,
+		-1,1,-1,
+		-1,-1,1,
+		-1,1,1,
+		-1,1,-1,
 
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
+		//+y
+		-1,1,-1,
+		-1,1,1,
+		1,1,-1,
+		-1,1,1,
+		1,1,1,
+		1,1,-1,
 
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
+		//-y
+		-1,-1,-1,
+		1,-1,-1,
+		-1,-1,1,
+		1,-1,-1,
+		1,-1,1,
+		-1,-1,1,
 
-		-1.0f,  1.0f, -1.0f,
-		1.0f,  1.0f, -1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
+		//+z
+		-1,-1,1,
+		1,-1,1,
+		1,1,1,
+		-1,-1,1,
+		1,1,1,
+		-1,1,1,
 
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		1.0f, -1.0f,  1.0f
+		//-z
+		-1,-1,-1,
+		-1,1,-1,
+		1,1,-1,
+		-1,-1,-1,
+		1,1,-1,
+		1,-1,-1
 	};
 
 	GLuint skyboxVBO;
 	glGenBuffers(1, &skyboxVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(skyboxVBO, sizeof(skyboxVertices),
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices),
 			skyboxVertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT,
 			GL_FALSE, sizeof(GLfloat) * 3, 0);

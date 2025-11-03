@@ -5,7 +5,7 @@ out vec3 TexCoords;
 
 uniform mat4 vMatrix;
 
-int main(){
+void main(){
 
 	TexCoords = aPos;
 
