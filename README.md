@@ -17,6 +17,7 @@ make <[dbg|default|clean]>
 ## TODO
 
 - [x] Real Worker Queue
+- [x] Skybox
 - [ ] Debug Mode
   - [ ] Debug Tree (to chose what to enable/disable)
   - [x] F3 Wireframe Toggle
