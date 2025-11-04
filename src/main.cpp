@@ -517,6 +517,7 @@ int main(){
 	vec3i_t break_block = {0, 0, 0};
 	vec3i_t place_block = {0, 0, 0};
 
+	double title_cd_local = title_cd;
 	/* MAIN LOOP */
 	/* MAIN LOOP */
 	/* MAIN LOOP */
@@ -531,7 +532,6 @@ int main(){
 		deltaTime = currTime - lastTime;
 		
 		// set fps as title
-		static int32_t title_cd_local = title_cd;
 		title_cd_local -= deltaTime;
 		if(title_cd_local <= 0.0 && deltaTime > 0.0 ){
 			double fps = 1.0 / deltaTime;
