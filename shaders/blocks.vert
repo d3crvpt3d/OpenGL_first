@@ -36,7 +36,7 @@ void main() {
 
 
 	//sunlight
-	vLight = max(0.2, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
+	vLight = max(0.18, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
 	
 
 	//offset texCoord.u by block type
