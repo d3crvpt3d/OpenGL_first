@@ -1,6 +1,6 @@
 # Voxel Render in OpenGL
 
-![alpha build](https://d3crypt3d.com/public/Screenshot%202025-10-30%20220506.png)
+![alpha build](https://d3crypt3d.com/public/Screenshot%202025-11-04%20010709.png)
 
 ## Linux
 
