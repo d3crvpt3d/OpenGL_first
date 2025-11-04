@@ -70,7 +70,7 @@ Camera camera = {
 };
 
 double deltaTime;
-double title_cd = 0.1; //Update title only every 100ms (if changed change reset value in main loop)
+double title_cd = 1; //Update title only every 100ms (if changed change reset value in main loop)
 double xpos_old, ypos_old;
 GLint nonFreqLocations[4];
 
@@ -531,13 +531,14 @@ int main(){
 		deltaTime = currTime - lastTime;
 		
 		// set fps as title
-		title_cd -= deltaTime;
-		if(title_cd <= 0.0 && deltaTime > 0.0 ){
+		static int32_t title_cd_local = title_cd;
+		title_cd_local -= deltaTime;
+		if(title_cd_local <= 0.0 && deltaTime > 0.0 ){
 			double fps = 1.0 / deltaTime;
 			char tmp[32];
 			snprintf(tmp, sizeof(tmp), "FPS: %.2lf", fps);
 			glfwSetWindowTitle(window, tmp);
-			title_cd = 0.1; //reset value of title cd
+			title_cd_local = title_cd; //reset value of title cd
 		}
 
 		handle_keys(window);
