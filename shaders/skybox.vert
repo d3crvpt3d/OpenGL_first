@@ -9,6 +9,6 @@ void main(){
 
 	TexCoords = aPos;
 
-	gl_Position = vMatrix * vec4(aPos, 1.0);
+	gl_Position = vMatrix * vec4(aPos.xyz, 1.0);
 
 }

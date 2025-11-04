@@ -19,7 +19,7 @@
 
 #define SKYBOX_TEXTURE_PATH "texData/skybox_"
 
-#define CHUNK_UPLOAD_PER_FRAME 10
+#define CHUNK_UPLOAD_PER_FRAME 256
 
 
 #include <stdlib.h>
@@ -65,7 +65,7 @@ Camera camera = {
 	.xyz={0.0f, 0.0f, -1.0f},
 	.f = 1.0f,
 	.yaw_pitch={0.0f, 0.0f},
-	.near_far={0.01f, 1000.0f},
+	.near_far={0.01f, 10000.0f},
 	.aspectRatio=16.0f/9.0f,
 	.grace_space=PI-PI/(2.0*1.79),
 };
@@ -223,6 +223,7 @@ int main(){
 	//bind mesh VBO to binding idx 0
 	glBindVertexBuffer(0, faceVBO, 0, sizeof(BaseVertex));
 	
+	glBindVertexArray(0);
 	/* OpenGL Options */
 	//left hand coordinate system
 	glCullFace(GL_BACK);
@@ -269,52 +270,52 @@ int main(){
 	//create cubemap
 	float skyboxVertices[] = {
 		//+x
-		1,-1,-1,
-		1,1,-1,
-		1,-1,1,
-		1,-1,1,
-		1,1,-1,
-		1,1,1,
+		999,-999,-999,
+		999,999,-999,
+		999,-999,999,
+		999,-999,999,
+		999,999,-999,
+		999,999,999,
 
 		//-x
-		-1,-1,-1,
-		-1,-1,1,
-		-1,1,-1,
-		-1,-1,1,
-		-1,1,1,
-		-1,1,-1,
+		-999,-999,-999,
+		-999,-999,999,
+		-999,999,-999,
+		-999,-999,999,
+		-999,999,999,
+		-999,999,-999,
 
 		//+y
-		-1,1,-1,
-		-1,1,1,
-		1,1,-1,
-		-1,1,1,
-		1,1,1,
-		1,1,-1,
+		-999,999,-999,
+		-999,999,999,
+		999,999,-999,
+		-999,999,999,
+		999,999,999,
+		999,999,-999,
 
 		//-y
-		-1,-1,-1,
-		1,-1,-1,
-		-1,-1,1,
-		1,-1,-1,
-		1,-1,1,
-		-1,-1,1,
+		-999,-999,-999,
+		999,-999,-999,
+		-999,-999,999,
+		999,-999,-999,
+		999,-999,999,
+		-999,-999,999,
 
 		//+z
-		-1,-1,1,
-		1,-1,1,
-		1,1,1,
-		-1,-1,1,
-		1,1,1,
-		-1,1,1,
+		-999,-999,999,
+		999,-999,999,
+		999,999,999,
+		-999,-999,999,
+		999,999,999,
+		-999,999,999,
 
 		//-z
-		-1,-1,-1,
-		-1,1,-1,
-		1,1,-1,
-		-1,-1,-1,
-		1,1,-1,
-		1,-1,-1
+		-999,-999,-999,
+		-999,999,-999,
+		999,999,-999,
+		-999,-999,-999,
+		999,999,-999,
+		999,-999,-999
 	};
 
 	GLuint skyboxVBO;
@@ -369,6 +370,7 @@ int main(){
 
 	glBindVertexArray(0);
 
+	glBindVertexArray(instanceVAO);
 	//create blocks shader
 	GLuint vs = glCreateShader( GL_VERTEX_SHADER );
 	glShaderSource( vs, 1, &blocks_vertex_shader, NULL );
@@ -500,7 +502,7 @@ int main(){
 
 	//opengl state changes
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_LESS);
 	
 	glfwSetCursorPosCallback(window, cursor_callback);
 	
@@ -660,6 +662,8 @@ int main(){
 		//draw each face
 		glUseProgram(blocks_shader);
 		glBindVertexArray(instanceVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureAtlas);
 		float grace_space = camera.grace_space;
 
 		//for each chunk
@@ -676,7 +680,6 @@ int main(){
 						continue;
 					}
 
-					//TODO:implement
 					if(outOfFrustum(currChunk,
 								lx, ly, lz,
 								cam_normal_x,
@@ -715,6 +718,7 @@ int main(){
 		//ACTUAL Blocks DRAW END
 
 		//DRAW SKYBOX
+		glDepthFunc(GL_LEQUAL);
 		glUseProgram(skybox_shader);
 
 		glBindVertexArray(skyboxVAO);
@@ -724,6 +728,7 @@ int main(){
 				1, GL_TRUE, projMatrix);
 
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDepthFunc(GL_LEQUAL);
 		//DRAW SKYBOX END
 
 		// Put the stuff we've been drawing onto the visible area.
