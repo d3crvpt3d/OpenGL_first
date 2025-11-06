@@ -1,4 +1,3 @@
-#include <array>
 #include <atomic>
 #include <cmath>
 #include <cstddef>
@@ -10,12 +9,11 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
-#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 
-//#define TEXTURE_PATH "texData/firstGLAtlats.png"
-#define TEXTURE_PATH "texData/faithful_32.png"
+#define TEXTURE_PATH "texData/firstGLAtlats.png"
+//#define TEXTURE_PATH "texData/faithful_32.png"
 
 #define SKYBOX_TEXTURE_PATH "texData/skybox_"
 
@@ -461,6 +459,13 @@ int main(){
 	//use blocks shader program
 	glUseProgram(blocks_shader);
 
+	glUniform1i(
+			glGetUniformLocation(blocks_shader, "aTexture")
+			, 0);
+	glUniform1i(
+			glGetUniformLocation(blocks_shader, "aSkybox")
+			, 1);
+
 	//load textures
 	int texWidth, texHeight, texNrChannels;
 	uint32_t textureAtlas;
@@ -662,8 +667,13 @@ int main(){
 		//draw each face
 		glUseProgram(blocks_shader);
 		glBindVertexArray(instanceVAO);
+		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureAtlas);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texId);
+
 		float grace_space = camera.grace_space;
 
 		//for each chunk

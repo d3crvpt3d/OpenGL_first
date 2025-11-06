@@ -15,8 +15,10 @@ uniform mat4 projMatrix;
 uniform vec3 camPos;
 
 //output
-out float vLight;
 out vec2 vTexCoord;
+
+out vec3 vNormal;
+out vec3 vViewDir;
 
 void main() {
 
@@ -34,12 +36,9 @@ void main() {
 
 	gl_Position = projMatrix * cameraPos;
 
-
-	//sunlight
-	vLight = max(0.18, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
-	
-
 	//offset texCoord.u by block type
 	vTexCoord = vec2(aTexCoord.x + float(aQuadType & 0xFFFF) * 0.0625, aTexCoord.y);
 
+	vNormal = aNormal;
+	vViewDir = worldPos - camPos;
 }

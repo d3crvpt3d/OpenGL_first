@@ -2,17 +2,23 @@
 
 //texture
 uniform sampler2D aTexture;
+uniform samplerCube aSkybox;
 
 in vec2 vTexCoord;
-in float vLight;
+
+in vec3 vNormal;
+in vec3 vViewDir;
 
 out vec4 FragColor;
 
 void main() {
 	
-	//FragColor = vec4(vec3(gl_FragCoord.z), 1.0); //use for depth map
-	
-	FragColor = vLight * texture(aTexture, vTexCoord);
+	//tex color
+	vec4 blockColor = texture(aTexture, vTexCoord);
 
-	//FragColor = vLight * vec4(0.5, 0.5, 0.5, 1.0);
+	//sample cubemap
+	vec4 skyLight = texture(aSkybox, vNormal);
+
+	FragColor = blockColor * skyLight;
+
 }
