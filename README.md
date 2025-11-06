@@ -18,6 +18,8 @@ make <[dbg|default|clean]>
 
 - [x] Real Worker Queue
 - [x] Skybox
+  - [x] Skybox lighting
+    - [ ] Better
 - [ ] Debug Mode
   - [ ] Debug Tree (to chose what to enable/disable)
   - [x] F3 Wireframe Toggle
@@ -25,7 +27,7 @@ make <[dbg|default|clean]>
   - [ ] Coordinates
 - [ ] Optimize Chunk on VRAM
   - [x] LODs
-    - [ ] better LODs
+    - [ ] fix LODs
   - [x] Remove not Visible Blocks
     - [x] Frustum Culling
   - [ ] Greedy Meshing
