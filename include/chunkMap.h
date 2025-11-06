@@ -11,10 +11,11 @@
 extern std::mutex chunkMap_mutex;
 
 /* DEFINES */
-#define RENDERDISTANCE 4 //8*64 = 32*16
+#define RENDERDISTANCE 8 //8*64 = 32*16
+
+
 #define CHUNK_WDH 64	//chunk width/depth/height
 #define BLOCKS_PER_CHUNK (CHUNK_WDH * CHUNK_WDH * CHUNK_WDH)
-
 #define RENDERSPAN (2*RENDERDISTANCE+1) //from x-renderdistance to x+renderdistance in chunks
 #define CACHE_SPAN 32
 #define CHUNKS RENDERSPAN * RENDERSPAN * RENDERSPAN

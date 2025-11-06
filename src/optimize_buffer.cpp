@@ -7,7 +7,7 @@
 #include <vector>
 
 #define TRANSPARENT_MASK 0x80 //uint16_t
-#define LOD_BIAS -1
+#define LOD_BIAS -2
 
 bool transparent(uint16_t id){
 	return !id || (id & TRANSPARENT_MASK);
