@@ -69,8 +69,6 @@ std::condition_variable updateThreadCV;
 
 std::queue<vec3i_t> jobQueue;
 
-std::barrier sync_point(std::thread::hardware_concurrency() - 1);
-
 void addJob(int32_t x, int32_t y, int32_t z){
 
 	jobQueue.push({x, y, z});
@@ -127,43 +125,106 @@ void generateTask(){
 		updateThreadCV.notify_one();
 }
 
-void optimizeTask(){
-	//TODO
+typedef struct {
+	vec3i_t xyz;
+	vec3i_t chunk;
+} optimizeElement_t;
+
+std::queue<optimizeElement_t> optimizeQueue;
+std::mutex optimizeQueue_mutex;
+
+void optimizeTask(int x, int y, int z, int cx, int cy, int cz){
+
+	BufferCache_t tmp = std::move(
+			gen_optimized_buffer(*chunkMap,
+				x, y, z,
+				cx,
+				cy,
+				cz)
+			);
+	bool empty = true;
+	for(uint8_t i = 0; i < 6; i++){
+		empty = empty && tmp.size[i] == 0;
+	}
+	if(empty){
+		return;
+	}
+
+	toUploadQueue_mutex.lock();
+
+	toUploadQueue.push(std::move(tmp));
+
+	toUploadQueue_mutex.unlock();
 }
+
+std::barrier sync_point(std::thread::hardware_concurrency() - 1);
+std::atomic<uint32_t> genDone{0};
+
+std::atomic<uint32_t> generation_task_counter{0};
 
 void generationWorker(){
 	
-	static std::atomic<uint32_t> task_counter[2]{0};
-
 	while(programRunning){
+
+		uint32_t cval = chunksTodo.load(std::memory_order_acquire);
+		while(cval == 0 && programRunning){
+			chunksTodo.wait(cval, std::memory_order_acquire);
+			cval = chunksTodo.load(std::memory_order_acquire);
+		}
+		if(!programRunning){
+			break;
+		}
 
 		//generate chunk data
 		while(true){
 			
-			uint32_t task_idx = task_counter[0] += 1;
+			uint32_t task_idx = generation_task_counter.fetch_add(1, std::memory_order_relaxed);
 			
-			if(task_idx >= chunksTodo || !programRunning){
+			if(task_idx >= chunksTodo.load(std::memory_order_relaxed) || !programRunning){
 				break;
 			}
 
 			generateTask();
 		}
 
+		//wait until all threads are
+		//done with chunk gen
 		sync_point.arrive_and_wait();
+
+		//wait for scheduler signal
+		cval = chunksTodo.load(std::memory_order_acquire);
+		while(cval != 0 && programRunning){
+			chunksTodo.wait(cval, std::memory_order_acquire);
+			cval = chunksTodo.load(std::memory_order_acquire);
+		}
+		if(!programRunning){
+			break;
+		}
 
 		//optimize chunk data
 		//TODO: optimize only adjacent chunks
 		while(true){
 			
-			uint32_t task_idx = task_counter[1] += 1;
+			optimizeQueue_mutex.lock();
+
+			if(!optimizeQueue.empty()){
+
+				optimizeElement_t a = optimizeQueue.front();
+				optimizeQueue.pop();
+				optimizeTask(a.xyz.x, a.xyz.y, a.xyz.z, a.chunk.x, a.chunk.y, a.chunk.z);
+				optimizeQueue_mutex.unlock();
 			
-			if(task_idx >= CHUNKS || !programRunning){
+			}else{
+				optimizeQueue_mutex.unlock();
 				break;
 			}
 
-			optimizeTask();
 		}
 
+		//tell how many threads are done
+		//so thread sceduler can put new command
+		genDone.fetch_add(1, std::memory_order_relaxed);
+		updateThreadCV.notify_one();
 	}
 }
 
@@ -186,7 +247,11 @@ void updateVramWorker(){
 	while(programRunning){
 
 		//new chunk
-		if(newChunk()){
+		if(genDone.load(std::memory_order_acquire) == (threadVec.size() - 1)
+				&& newChunk()){
+
+			genDone.store(0, std::memory_order_relaxed);
+			generation_task_counter.store(0, std::memory_order_relaxed);
 
 			chunkDone.store(0, std::memory_order_release);
 
@@ -200,9 +265,9 @@ void updateVramWorker(){
 				localChunk = currChunk;
 			}
 
-			//clear queue from last chunk
 			jobMutex.lock();
 			
+			//should not be possible
 			while(!jobQueue.empty()){
 				jobQueue.pop();
 			}
@@ -234,6 +299,7 @@ void updateVramWorker(){
 			}
 
 			chunksTodo.store(localtodo, std::memory_order_relaxed);
+			chunksTodo.notify_all();
 
 			jobMutex.unlock();
 			cv.notify_all();
@@ -248,6 +314,7 @@ void updateVramWorker(){
 				localChunk = currChunk;
 			}
 
+			optimizeQueue_mutex.lock();
 			//optimize each chunk
 			int32_t cx = localChunk.x;
 			int32_t cy = localChunk.y;
@@ -256,35 +323,17 @@ void updateVramWorker(){
 				for(int32_t y = cy-RENDERDISTANCE; y <= cy+RENDERDISTANCE; y++){
 					for(int32_t x = cx-RENDERDISTANCE; x <= cx+RENDERDISTANCE; x++){
 
-						//insert into Queue for main
-						//thread to upload to GPU
-						
-						BufferCache_t tmp = std::move(
-									gen_optimized_buffer(*chunkMap,
-										x, y, z,
-										cx,
-										cy,
-										cz)
-									);
-						bool empty = true;
-						for(uint8_t i = 0; i < 6; i++){
-							empty = empty && tmp.size[i] == 0;
-						}
-						if(empty){
-							continue;
-						}
-
-						toUploadQueue_mutex.lock();
-
-						toUploadQueue.push(std::move(tmp));
-						
-						toUploadQueue_mutex.unlock();
+						//tell workers to optimize this chunk
+						optimizeQueue.push({{x, y, z}, {cx, cy, cz}});
 
 					}
 				}
 			}
 
+			optimizeQueue_mutex.unlock();
+			//tell worker threads to start
 			chunksTodo.store(0, std::memory_order_relaxed);
+			chunksTodo.notify_all();
 		}else{
 			//currently nothing to do
 			std::unique_lock updateThreaduq(updateThreadMutex);
@@ -325,6 +374,7 @@ void clearThreads(){
 	programRunning = 0;//make threads end waiting
 	cv.notify_all(); //notify if currently waiting
 	updateThreadCV.notify_one();
+	chunksTodo.notify_all();
 
 	while(!threadVec.empty()){
 		threadVec.back().join();

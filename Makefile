@@ -4,7 +4,7 @@ BUILD_DIR := build
 SRC_DIR := src
 INCLUDE_DIR := include
 LINKER_FLAGS := -lglfw -lX11 -lGL -lm
-FLAGS := -std=c++20
+FLAGS := -std=c++20 -fpermissive
 
 ifneq ($(OS), Windows_NT)
 OS := $(shell uname -s)
