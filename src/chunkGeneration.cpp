@@ -4,6 +4,7 @@
 #include "chunkMap.h"
 #include "perlinGeneration.hpp"
 
+#include <barrier> //c++20
 #include <atomic>
 #include <condition_variable>
 #include <csignal>
@@ -68,6 +69,8 @@ std::condition_variable updateThreadCV;
 
 std::queue<vec3i_t> jobQueue;
 
+std::barrier sync_point(std::thread::hardware_concurrency() - 1);
+
 void addJob(int32_t x, int32_t y, int32_t z){
 
 	jobQueue.push({x, y, z});
@@ -90,11 +93,7 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 
 }
 
-
-void generationWorker(){
-
-	//conditional variable wait
-	while(programRunning){
+void generateTask(){
 
 		//lock jobQueue
 		std::unique_lock<std::mutex> uqlock(jobMutex);
@@ -105,7 +104,7 @@ void generationWorker(){
 		if(!programRunning){
 			uqlock.unlock();
 			cv.notify_one();
-			break;
+			return;
 		}
 
 		//get first job and update next job
@@ -126,6 +125,44 @@ void generationWorker(){
 
 		//notify chunk to check if now all data generated
 		updateThreadCV.notify_one();
+}
+
+void optimizeTask(){
+	//TODO
+}
+
+void generationWorker(){
+	
+	static std::atomic<uint32_t> task_counter[2]{0};
+
+	while(programRunning){
+
+		//generate chunk data
+		while(true){
+			
+			uint32_t task_idx = task_counter[0] += 1;
+			
+			if(task_idx >= chunksTodo || !programRunning){
+				break;
+			}
+
+			generateTask();
+		}
+
+		sync_point.arrive_and_wait();
+
+		//optimize chunk data
+		//TODO: optimize only adjacent chunks
+		while(true){
+			
+			uint32_t task_idx = task_counter[1] += 1;
+			
+			if(task_idx >= CHUNKS || !programRunning){
+				break;
+			}
+
+			optimizeTask();
+		}
 
 	}
 }
@@ -269,11 +306,12 @@ void setUpThreads(){
 	chunkMap = new ChunkMap();
 
 	programRunning = 1;
-	
-	threadVec.reserve(std::thread::hardware_concurrency());
+	uint32_t num_threads = std::thread::hardware_concurrency();
+
+	threadVec.reserve(num_threads);
 
 	//chunk generation threads
-	for(uint32_t id = 0; id < std::thread::hardware_concurrency() - 1; id++){
+	for(uint32_t id = 0; id < num_threads - 1; id++){
 		threadVec.push_back(std::thread(generationWorker));
 	}
 
