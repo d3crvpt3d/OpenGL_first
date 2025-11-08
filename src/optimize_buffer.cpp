@@ -106,29 +106,77 @@ BufferCache_t gen_optimized_buffer(
 
 				//TODO: if not same chunk, check every of face
 				//check each direction
-				side_visible[0] = (x == 0) ?
-					transparent(map.getBlockAtWorldPos(worldX - 1, worldY, worldZ))
-					: transparent(thisChunk->blocks[z][y][x-lod_num]);
+				//-x
+				if (x == 0){
+					for(uint32_t a = 0; a < lod_num; a++){
+						for(uint32_t b = 0; b < lod_num; b++){
+							side_visible[0] |= transparent(
+									map.getBlockAtWorldPos(worldX-1, worldY+a, worldZ+b));
+						}
+					}
+				}else{
+					side_visible[0] = transparent(thisChunk->blocks[z][y][x-lod_num]);
+				}
+				
+				//+x
+				if (x+lod_num > 63){
+					for(uint32_t a = 0; a < lod_num; a++){
+						for(uint32_t b = 0; b < lod_num; b++){
+							side_visible[1] |= transparent(
+									map.getBlockAtWorldPos(worldX + lod_num, worldY+a, worldZ+b));
+						}
+					}
+				}else{
+					side_visible[1] = transparent(thisChunk->blocks[z][y][x+lod_num]);
+				}
 
-				side_visible[1] = (x + lod_num >= 64) ?
-					transparent(map.getBlockAtWorldPos(worldX + 1, worldY, worldZ))
-					: transparent(thisChunk->blocks[z][y][x+lod_num]);
+				//-y
+				if (y == 0){
+					for(uint32_t a = 0; a < lod_num; a++){
+						for(uint32_t b = 0; b < lod_num; b++){
+							side_visible[2] |= transparent(
+									map.getBlockAtWorldPos(worldX+a, worldY-1, worldZ+b));
+						}
+					}
+				}else{
+					side_visible[2] = transparent(thisChunk->blocks[z][y-lod_num][x]);
+				}
+				
+				//+y
+				if (y+lod_num > 63){
+					for(uint32_t a = 0; a < lod_num; a++){
+						for(uint32_t b = 0; b < lod_num; b++){
+							side_visible[3] |= transparent(
+									map.getBlockAtWorldPos(worldX+a, worldY+lod_num, worldZ+b));
+						}
+					}
+				}else{
+					side_visible[3] = transparent(thisChunk->blocks[z][y+lod_num][x]);
+				}
 
-				side_visible[2] = (y == 0) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY - 1, worldZ))
-					: transparent(thisChunk->blocks[z][y-lod_num][x]);
-
-				side_visible[3] = (y + lod_num >= 64) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY + 1, worldZ))
-					: transparent(thisChunk->blocks[z][y+lod_num][x]);
-
-				side_visible[4] = (z == 0) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ - 1))
-					: transparent(thisChunk->blocks[z-lod_num][y][x]);
-
-				side_visible[5] = (z + lod_num >= 64) ?
-					transparent(map.getBlockAtWorldPos(worldX, worldY, worldZ + 1))
-					: transparent(thisChunk->blocks[z+lod_num][y][x]);
+				//-z
+				if (z == 0){
+					for(uint32_t a = 0; a < lod_num; a++){
+						for(uint32_t b = 0; b < lod_num; b++){
+							side_visible[4] |= transparent(
+									map.getBlockAtWorldPos(worldX+a, worldY+b, worldZ-1));
+						}
+					}
+				}else{
+					side_visible[4] = transparent(thisChunk->blocks[z-lod_num][y][x]);
+				}
+				
+				//+z
+				if (z+lod_num > 63){
+					for(uint32_t a = 0; a < lod_num; a++){
+						for(uint32_t b = 0; b < lod_num; b++){
+							side_visible[5] |= transparent(
+									map.getBlockAtWorldPos(worldX+a, worldY+b, worldZ+lod_num));
+						}
+					}
+				}else{
+					side_visible[5] = transparent(thisChunk->blocks[z+lod_num][y][x]);
+				}
 
 
 				//push each visible face
