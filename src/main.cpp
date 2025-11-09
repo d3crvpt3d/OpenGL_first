@@ -12,8 +12,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
-//#define TEXTURE_PATH "texData/firstGLAtlats.png"
-#define TEXTURE_PATH "texData/faithful_32.png"
+#define TEXTURE_PATH "texData/firstGLAtlats.png"
+//#define TEXTURE_PATH "texData/faithful_32.png"
 
 #define SKYBOX_TEXTURE_PATH "texData/skybox_"
 
@@ -338,7 +338,7 @@ int main(){
 		std::filesystem::path skybox_img_path = skybox_exeRoot / "../" /
 			(SKYBOX_TEXTURE_PATH + std::to_string(i) + ".jpg");
 
-		uint8_t *skyboxTexData = stbi_load(skybox_img_path.u8string().c_str(),
+		uint8_t *skyboxTexData = stbi_load((char *)skybox_img_path.u8string().c_str(),
 				&skyboxWidth,
 				&skyboxHeight,
 				&skyboxNrChannels,
@@ -346,7 +346,7 @@ int main(){
 		
 		if(!skyboxTexData){
 			fprintf(stderr, "Could not load image %s\n",
-					skybox_img_path.u8string().c_str());
+					(char *)skybox_img_path.u8string().c_str());
 		}
 
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
@@ -481,7 +481,7 @@ int main(){
 	//relative texData path
 	std::filesystem::path exeRoot = getRelativeRootDir();
 	std::filesystem::path img_path = exeRoot / "../" / TEXTURE_PATH;
-	uint8_t *texData = stbi_load(img_path.u8string().c_str(),
+	uint8_t *texData = stbi_load((char *)img_path.u8string().c_str(),
 			&texWidth,
 			&texHeight,
 			&texNrChannels,
@@ -767,10 +767,10 @@ char *loadShaders(const char* relative_path){
 	std::filesystem::path exeRoot = getRelativeRootDir();
 	std::filesystem::path new_path = exeRoot / relative_path;
 	//open shader files
-	FILE *fptr = fopen(new_path.u8string().c_str(), "rb");
+	FILE *fptr = fopen((char *)new_path.u8string().c_str(), "rb");
 	
 	if(!fptr){
-		fprintf(stderr, "%s does not exist\n", new_path.u8string().c_str());
+		fprintf(stderr, "%s does not exist\n", (char *)new_path.u8string().c_str());
 		return NULL;
 	}
 	

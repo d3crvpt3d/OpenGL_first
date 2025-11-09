@@ -59,13 +59,13 @@ std::mutex jobMutex;
 std::mutex updateThreadMutex;
 std::mutex currChunk_mutex;
 
-std::atomic<uint32_t> chunkDone{0};
-std::atomic<uint32_t> chunksTodo{0};
-
 std::vector<std::thread> threadVec;
 
 std::condition_variable cv;
 std::condition_variable updateThreadCV;
+
+std::atomic<uint32_t> chunksOptimized{0};
+std::atomic<uint32_t> chunksGenerated{0};
 
 std::queue<vec3i_t> jobQueue;
 
@@ -89,40 +89,6 @@ void generateChunk(int32_t x, int32_t y, int32_t z){
 	
 	generate_chunk_with_caves(*chunkMap, x, y, z);
 
-}
-
-void generateTask(){
-
-		//lock jobQueue
-		std::unique_lock<std::mutex> uqlock(jobMutex);
-
-		//give the mutex away and sleep until jobQueue is not empty
-		cv.wait(uqlock, []{return !jobQueue.empty() || !programRunning;});
-
-		if(!programRunning){
-			uqlock.unlock();
-			cv.notify_one();
-			return;
-		}
-
-		//get first job and update next job
-		vec3i_t currChunkCoord = jobQueue.front();
-		int32_t x = currChunkCoord.x;
-		int32_t y = currChunkCoord.y;
-		int32_t z = currChunkCoord.z;
-		jobQueue.pop();
-
-		//unlock jobQueue
-		uqlock.unlock();
-		cv.notify_one();
-
-		//generate raw chunk data
-		generateChunk(x, y, z);
-
-		chunkDone.fetch_add(1, std::memory_order_relaxed);
-
-		//notify chunk to check if now all data generated
-		updateThreadCV.notify_one();
 }
 
 typedef struct {
@@ -158,73 +124,85 @@ void optimizeTask(int x, int y, int z, int cx, int cy, int cz){
 }
 
 std::barrier sync_point(std::thread::hardware_concurrency() - 1);
-std::atomic<uint32_t> genDone{0};
-
-std::atomic<uint32_t> generation_task_counter{0};
 
 void generationWorker(){
 	
 	while(programRunning){
 
-		uint32_t cval = chunksTodo.load(std::memory_order_acquire);
-		while(cval == 0 && programRunning){
-			chunksTodo.wait(cval, std::memory_order_acquire);
-			cval = chunksTodo.load(std::memory_order_acquire);
+		//wait until jobQueue not empty and
+		//have mutex
+		{
+			std::unique_lock<std::mutex> lock(jobMutex);
+			cv.wait(lock, []{return !programRunning || !jobQueue.empty();});
 		}
+		cv.notify_all();
+
 		if(!programRunning){
 			break;
 		}
 
 		//generate chunk data
 		while(true){
-			
-			uint32_t task_idx = generation_task_counter.fetch_add(1, std::memory_order_relaxed);
-			
-			if(task_idx >= chunksTodo.load(std::memory_order_relaxed) || !programRunning){
+
+			if(!programRunning){
+				return;
+			}
+
+			//lock jobQueue
+			jobMutex.lock();
+
+			if(jobQueue.empty()){
 				break;
 			}
 
-			generateTask();
+			//get first job and update next job
+			vec3i_t currChunkCoord = jobQueue.front();
+			jobQueue.pop();
+			jobMutex.unlock();
+			cv.notify_all();
+
+			int32_t x = currChunkCoord.x;
+			int32_t y = currChunkCoord.y;
+			int32_t z = currChunkCoord.z;
+
+			//generate raw chunk data
+			generateChunk(x, y, z);
+			chunksGenerated.fetch_add(1, std::memory_order_relaxed);
+			updateThreadCV.notify_all();
 		}
 
 		//wait until all threads are
 		//done with chunk gen
 		sync_point.arrive_and_wait();
 
-		//wait for scheduler signal
-		cval = chunksTodo.load(std::memory_order_acquire);
-		while(cval != 0 && programRunning){
-			chunksTodo.wait(cval, std::memory_order_acquire);
-			cval = chunksTodo.load(std::memory_order_acquire);
-		}
-		if(!programRunning){
-			break;
-		}
-
 		//optimize chunk data
 		//TODO: optimize only adjacent chunks
 		while(true){
-			
-			optimizeQueue_mutex.lock();
 
-			if(!optimizeQueue.empty()){
-
-				optimizeElement_t a = optimizeQueue.front();
-				optimizeQueue.pop();
-				optimizeTask(a.xyz.x, a.xyz.y, a.xyz.z, a.chunk.x, a.chunk.y, a.chunk.z);
-				optimizeQueue_mutex.unlock();
+			std::unique_lock<std::mutex> lock(optimizeQueue_mutex);
+			cv.wait(lock, []{
+					return !optimizeQueue.empty() || !programRunning;});
 			
-			}else{
-				optimizeQueue_mutex.unlock();
+			if(!programRunning){
+				return;
+			}
+
+			//chunk optimize done
+			if(optimizeQueue.empty()){
 				break;
 			}
 
+			optimizeElement_t a = optimizeQueue.front();
+			optimizeQueue.pop();
+
+			lock.unlock();
+			cv.notify_all();
+
+			optimizeTask(a.xyz.x, a.xyz.y, a.xyz.z, a.chunk.x, a.chunk.y, a.chunk.z);
+			chunksOptimized.fetch_add(1, std::memory_order_relaxed);
+			updateThreadCV.notify_all();
 		}
 
-		//tell how many threads are done
-		//so thread sceduler can put new command
-		genDone.fetch_add(1, std::memory_order_relaxed);
-		updateThreadCV.notify_one();
 	}
 }
 
@@ -247,13 +225,7 @@ void updateVramWorker(){
 	while(programRunning){
 
 		//new chunk
-		if(genDone.load(std::memory_order_acquire) == (threadVec.size() - 1)
-				&& newChunk()){
-
-			genDone.store(0, std::memory_order_relaxed);
-			generation_task_counter.store(0, std::memory_order_relaxed);
-
-			chunkDone.store(0, std::memory_order_release);
+		if(newChunk()){
 
 			vec3i_t localChunk;
 			{
@@ -266,7 +238,8 @@ void updateVramWorker(){
 			}
 
 			jobMutex.lock();
-			
+			chunksGenerated.store(0, std::memory_order_relaxed);
+			chunksOptimized.store(0, std::memory_order_relaxed);
 			//should not be possible
 			while(!jobQueue.empty()){
 				jobQueue.pop();
@@ -297,24 +270,22 @@ void updateVramWorker(){
 					}
 				}
 			}
-
-			chunksTodo.store(localtodo, std::memory_order_relaxed);
-			chunksTodo.notify_all();
+			//get optimize mutex before letting other threads
+			//free from jobMutex
+			optimizeQueue_mutex.lock();
 
 			jobMutex.unlock();
 			cv.notify_all();
 
-		}else if(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed)
-				&& chunksTodo.load(std::memory_order_relaxed) > 0){
-			//chunk generation done
-
-			vec3i_t localChunk;
+			//wait for generation done
 			{
-				std::lock_guard<std::mutex> lock(currChunk_mutex);
-				localChunk = currChunk;
+				std::unique_lock<std::mutex> lock(jobMutex);
+				updateThreadCV.wait(lock, [localtodo]{
+						return localtodo >= chunksGenerated.load(std::memory_order_relaxed);});
 			}
 
-			optimizeQueue_mutex.lock();
+			//---chunk generation done---
+
 			//optimize each chunk
 			int32_t cx = localChunk.x;
 			int32_t cy = localChunk.y;
@@ -332,19 +303,13 @@ void updateVramWorker(){
 
 			optimizeQueue_mutex.unlock();
 			//tell worker threads to start
-			chunksTodo.store(0, std::memory_order_relaxed);
-			chunksTodo.notify_all();
+			cv.notify_all();
 		}else{
 			//currently nothing to do
 			std::unique_lock updateThreaduq(updateThreadMutex);
 
 			updateThreadCV.wait(updateThreaduq,
-					[]{
-					return newChunk() || !programRunning ||
-					(chunkDone.load(std::memory_order_relaxed) == chunksTodo.load(std::memory_order_relaxed)
-					 && chunksTodo.load(std::memory_order_relaxed) > 0);
-					});
-
+					[]{return newChunk() || !programRunning;});
 		}
 	}
 }
@@ -374,7 +339,6 @@ void clearThreads(){
 	programRunning = 0;//make threads end waiting
 	cv.notify_all(); //notify if currently waiting
 	updateThreadCV.notify_one();
-	chunksTodo.notify_all();
 
 	while(!threadVec.empty()){
 		threadVec.back().join();
