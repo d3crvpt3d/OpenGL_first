@@ -267,52 +267,52 @@ int main(){
 	//create cubemap
 	float skyboxVertices[] = {
 		//+x
-		999,-999,-999,
-		999,999,-999,
-		999,-999,999,
-		999,-999,999,
-		999,999,-999,
-		999,999,999,
+		1,-1,-1,
+		1,1,-1,
+		1,-1,1,
+		1,-1,1,
+		1,1,-1,
+		1,1,1,
 
 		//-x
-		-999,-999,-999,
-		-999,-999,999,
-		-999,999,-999,
-		-999,-999,999,
-		-999,999,999,
-		-999,999,-999,
+		-1,-1,-1,
+		-1,-1,1,
+		-1,1,-1,
+		-1,-1,1,
+		-1,1,1,
+		-1,1,-1,
 
 		//+y
-		-999,999,-999,
-		-999,999,999,
-		999,999,-999,
-		-999,999,999,
-		999,999,999,
-		999,999,-999,
+		-1,1,-1,
+		-1,1,1,
+		1,1,-1,
+		-1,1,1,
+		1,1,1,
+		1,1,-1,
 
 		//-y
-		-999,-999,-999,
-		999,-999,-999,
-		-999,-999,999,
-		999,-999,-999,
-		999,-999,999,
-		-999,-999,999,
+		-1,-1,-1,
+		1,-1,-1,
+		-1,-1,1,
+		1,-1,-1,
+		1,-1,1,
+		-1,-1,1,
 
 		//+z
-		-999,-999,999,
-		999,-999,999,
-		999,999,999,
-		-999,-999,999,
-		999,999,999,
-		-999,999,999,
+		-1,-1,1,
+		1,-1,1,
+		1,1,1,
+		-1,-1,1,
+		1,1,1,
+		-1,1,1,
 
 		//-z
-		-999,-999,-999,
-		-999,999,-999,
-		999,999,-999,
-		-999,-999,-999,
-		999,999,-999,
-		999,-999,-999
+		-1,-1,-1,
+		-1,1,-1,
+		1,1,-1,
+		-1,-1,-1,
+		1,1,-1,
+		1,-1,-1
 	};
 
 	GLuint skyboxVBO;
@@ -337,7 +337,7 @@ int main(){
 		std::filesystem::path skybox_img_path = skybox_exeRoot / "../" /
 			(SKYBOX_TEXTURE_PATH + std::to_string(i) + ".jpg");
 
-		uint8_t *skyboxTexData = stbi_load(skybox_img_path.u8string().c_str(),
+		uint8_t *skyboxTexData = stbi_load((char *)skybox_img_path.u8string().c_str(),
 				&skyboxWidth,
 				&skyboxHeight,
 				&skyboxNrChannels,
@@ -345,7 +345,7 @@ int main(){
 		
 		if(!skyboxTexData){
 			fprintf(stderr, "Could not load image %s\n",
-					skybox_img_path.u8string().c_str());
+					(char *)skybox_img_path.u8string().c_str());
 		}
 
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
@@ -480,7 +480,7 @@ int main(){
 	//relative texData path
 	std::filesystem::path exeRoot = getRelativeRootDir();
 	std::filesystem::path img_path = exeRoot / "../" / TEXTURE_PATH;
-	uint8_t *texData = stbi_load(img_path.u8string().c_str(),
+	uint8_t *texData = stbi_load((char *)img_path.u8string().c_str(),
 			&texWidth,
 			&texHeight,
 			&texNrChannels,
@@ -738,7 +738,7 @@ int main(){
 				1, GL_TRUE, projMatrix);
 
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glDepthFunc(GL_LEQUAL);
+		glDepthFunc(GL_LESS);
 		//DRAW SKYBOX END
 
 		// Put the stuff we've been drawing onto the visible area.
@@ -766,10 +766,10 @@ char *loadShaders(const char* relative_path){
 	std::filesystem::path exeRoot = getRelativeRootDir();
 	std::filesystem::path new_path = exeRoot / relative_path;
 	//open shader files
-	FILE *fptr = fopen(new_path.u8string().c_str(), "rb");
+	FILE *fptr = fopen((char *)new_path.u8string().c_str(), "rb");
 	
 	if(!fptr){
-		fprintf(stderr, "%s does not exist\n", new_path.u8string().c_str());
+		fprintf(stderr, "%s does not exist\n", (char *)new_path.u8string().c_str());
 		return NULL;
 	}
 	
