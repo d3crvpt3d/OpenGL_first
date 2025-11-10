@@ -15,6 +15,7 @@ uniform mat4 projMatrix;
 uniform vec3 camPos;
 
 //output
+out float vDistanceToFrag;
 out vec2 vTexCoord;
 
 out vec3 vNormal;
@@ -41,4 +42,5 @@ void main() {
 
 	vNormal = aNormal;
 	vViewDir = worldPos - camPos;
+	vDistanceToFrag = length(vViewDir.xyz);
 }
