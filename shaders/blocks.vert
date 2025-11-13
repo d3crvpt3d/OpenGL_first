@@ -15,7 +15,7 @@ uniform mat4 projMatrix;
 uniform vec3 camPos;
 
 //output
-out float vLight;
+out vec3 vLight;
 out vec2 vTexCoord;
 
 void main() {
@@ -35,8 +35,13 @@ void main() {
 	gl_Position = projMatrix * cameraPos;
 
 
-	//sunlight
-	vLight = max(0.18, dot(aNormal, vec3(0.408248, 0.816497, 0.408248)));
+	//calculate light in vertex shader, because normals are the same on each face
+	vec3 sunColor = vec3(1.0);
+	vec3 sunDir = normalize(vec3(0.4336, 1.0, -0.5664));
+	vec3 ambient = vec3(0.125);
+
+	//for now no specular lighting
+	vLight = ambient + clamp(sunColor * dot(sunDir, aNormal), 0.0, 1.0);
 	
 
 	//offset texCoord.u by block type
